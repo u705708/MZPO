@@ -272,7 +272,7 @@ namespace MZPO.Processors
                     (3812128, new List<string>(){"mirk.msk.ru", "facebook"}, "mirk.msk.ru", "mirk.msk.ru-facebook", "facebook", 2576764),
                     (3812131, new List<string>(){"mzpo.education", "facebook"}, "mzpo.education", "mzpo.education-facebook", "facebook", 2576764),
                     (3812134, new List<string>(){"skillbank.su", "facebook"}, "skillbank.su", "skillbank.su-facebook", "facebook", 2576764),
-                    (3812137, new List<string>(){"mzpokurs.com", "facebook"}, "mzpokurs.com", "mzpokurs.com-facebook", "facebook", 2576764)
+                    (3812137, new List<string>(){ "cruche-academy.ru", "facebook"}, "cruche-academy.ru", "cruche-academy.ru-facebook", "facebook", 2576764)
                 };                            //Список воронок соцсетей и соответствующих значений полей
 
             if (pipelines.Any(x => x.Item1 == lead.pipeline_id))                                                        //Если сделка в одной из воронок из списка
