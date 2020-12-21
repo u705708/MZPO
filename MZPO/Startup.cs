@@ -25,7 +25,12 @@ namespace MZPO
 
             services.AddDbContext<MySQLContext>(opt => opt.UseMySql(
                 Configuration.GetConnectionString("MySQLConnection"), 
-                new MySqlServerVersion(new Version(5, 7, 31))));
+                new MySqlServerVersion(new Version(5, 7, 31)),
+                builder =>
+                {
+                    builder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                }
+                ));
 
             services.AddScoped<IAccountRepo, AccountRepo>();
             services.AddScoped<ICityRepo, CityRepo>();
