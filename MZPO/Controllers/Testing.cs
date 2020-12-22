@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MZPO.AmoRepo;
 using MZPO.Data;
 using MZPO.Processors;
 using MZPO.Services;
@@ -29,6 +30,7 @@ namespace MZPO.Controllers
         {
             _amo = amo;
             //_acc = amo.GetAccountById(28395871);
+            //_acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
         }
 
@@ -40,7 +42,7 @@ namespace MZPO.Controllers
 
             //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria("filter[cf][639081]=www.skillbank.su"), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
 
-            //return Ok(leadRepo.GetById(23154053));
+            //return Ok(leadRepo.GetById(27922401));
 
             //return Ok();
 

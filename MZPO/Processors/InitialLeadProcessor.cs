@@ -143,7 +143,7 @@ namespace MZPO.Processors
         {
             var source = GetFieldValue(639085);
             if (source == null) return;
-            if (source.Contains("Прямой") || source.Contains("Коллтрекинг"))
+            if (source.Contains("Прямой") || source.Contains("Коллтрекинг") || source.Contains("instagram"))
             {
                 for (int i = 1; i <= 30; i++)
                 {
@@ -259,7 +259,7 @@ namespace MZPO.Processors
         {
             var pipelines = new List<(int, List<string>, string, string, string, int)>(){
                     (3326584, new List<string>(){"mzpo-s.ru", "insta"}, "mzpo-s.ru", "mzpo-s.ru_instagram", "instagram", 2576764),
-                    (3223441, new List<string>(){"skillbank.ru", "insta"}, "skillbank.ru", "skillbank.su-instagram", "instagram", 2576764),
+                    (3223441, new List<string>(){"skillbank.su", "insta"}, "skillbank.su", "skillbank.su-instagram", "instagram", 2576764),
                     (3308590, new List<string>(){"mirk.msk.ru", "insta"}, "mirk.msk.ru", "mirk.msk.ru-instagram", "instagram", 6158035),
                     (3308629, new List<string>(){"mzpokurs.com", "insta"}, "mzpokurs.com", "mzpokurs.com-instagram", "instagram", 2576764),
                     (3467149, new List<string>(){"mzpo-s.ru", "vkontakte"}, "mzpo-s.ru", "mzpo-s.ru-vk", "vk", 2576764),

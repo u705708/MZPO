@@ -1,0 +1,2 @@
+leads[add][0][id]=27928041&leads[add][0][name]=test&leads[add][0][status_id]=35001112&leads[add][0][price]=0&leads[add][0][responsible_user_id]=2375146&leads[add][0][last_modified]=1608619716&leads[add][0][modified_user_id]=2375146&leads[add][0][created_user_id]=2375146&leads[add][0][date_create]=1608619716&leads[add][0][pipeline_id]=3558781&leads[add][0][account_id]=19453687&leads[add][0][created_at]=1608619716&leads[add][0][updated_at]=1608619716&account[subdomain]=mzpoeducation&account[id]=19453687&account[_links][self]=https://mzpoeducation.amocrm.ru
+--**--**--
