@@ -190,6 +190,13 @@ namespace MZPO.Processors
                     SetFieldValue(639075, "Прямой звонок");                                                             //Тип обращения
                     SetTag("Прямой звонок");
                 }
+                #endregion
+            #region Instagram
+                else if (source.Contains("instagram"))
+                {
+                    SetFieldValue(639075, "instagram");
+                }
+
             }
             #endregion
 
