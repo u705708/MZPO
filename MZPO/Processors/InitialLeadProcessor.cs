@@ -73,10 +73,22 @@ namespace MZPO.Processors
         #region Phase1
         private void PhaseOne()
         {
-            #region Тег по сайту
+            #region Врач-косметолог
             var site = GetFieldValue(639081);
             var applicationType = GetFieldValue(639075);
+            var pageURL = GetFieldValue(639083);
 
+            if (pageURL != null)
+            {
+                if (pageURL.Contains("vrach-kosmetolog"))                                                               //Если посадочная страница содержит врач-косметолог
+                {
+                    SetFieldValue(639081, "mirk.vrach.kosmetolog");                                                     //Устанавливаем сайт
+                    //SetFieldValue(639075, "");                                                                        //И тип обращения
+                }
+            }
+            #endregion
+
+            #region Тег по сайту
             if (site != null)                                                                                           //Если поле сайт не пустое
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
