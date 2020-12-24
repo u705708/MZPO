@@ -74,8 +74,6 @@ namespace MZPO.Processors
         private void PhaseOne()
         {
             #region Врач-косметолог
-            var site = GetFieldValue(639081);
-            var applicationType = GetFieldValue(639075);
             var pageURL = GetFieldValue(639083);
 
             if (pageURL != null)
@@ -89,6 +87,9 @@ namespace MZPO.Processors
             #endregion
 
             #region Тег по сайту
+            var site = GetFieldValue(639081);
+            var applicationType = GetFieldValue(639075);
+
             if (site != null)                                                                                           //Если поле сайт не пустое
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
