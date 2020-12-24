@@ -197,19 +197,18 @@ namespace MZPO.Processors
                     SetTag("Коллтрекинг");
                 }
                 #endregion
+            #region Instagram
+                else if (source.Contains("instagram"))
+                {
+                    SetFieldValue(639075, "instagram");
+                }
+                #endregion
             #region Прямой звонок
                 else if (tags.Any(x => x.name == "Прямой звонок") || source.Contains("Прямой звонок"))                  //Если прямой звонок
                 {
                     SetFieldValue(639075, "Прямой звонок");                                                             //Тип обращения
                     SetTag("Прямой звонок");
                 }
-                #endregion
-            #region Instagram
-                else if (source.Contains("instagram"))
-                {
-                    SetFieldValue(639075, "instagram");
-                }
-
             }
             #endregion
 
