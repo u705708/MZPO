@@ -40,7 +40,9 @@ namespace MZPO.Services
             using (var scope = scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
-                result = db.GetCityByEngName(engName).Result.RusName;
+                var cityPair = db.GetCityByEngName(engName).Result;
+                if (cityPair == null) throw new Exception($"Не задано значение для города {engName}");
+                result = cityPair.RusName;
             }
             return result;
         }
