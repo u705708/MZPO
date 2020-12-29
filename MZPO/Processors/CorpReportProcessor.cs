@@ -32,7 +32,7 @@ namespace MZPO.Processors
             compRepo = _acc.GetRepo<Company>();
         }
 
-        List<(int, string)> managers = new List<(int, string)>
+        private readonly List<(int, string)> managers = new List<(int, string)>
         {
             (2375116, "Киреева Светлана"),
             (2375122, "Васина Елена"),

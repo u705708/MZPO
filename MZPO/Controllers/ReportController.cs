@@ -36,11 +36,8 @@ namespace MZPO.Controllers
         [HttpGet("{from},{to}")]                                                                                        //Запрашиваем отчёт для диапазона дат
         public ActionResult Get(string from, string to)
         {
-            long dateFrom;
-            long dateTo;
-
-            if (!long.TryParse(from, out dateFrom) &
-                !long.TryParse(to, out dateTo)) return BadRequest("Incorrect dates");
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
 
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;

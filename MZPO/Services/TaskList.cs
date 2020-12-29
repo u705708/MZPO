@@ -17,7 +17,7 @@ namespace MZPO.Services
             public DateTime timeStarted;
         }
         
-        private List<(Task, CancellationTokenSource, string, string, string, DateTime)> _taskList;
+        private readonly List<(Task, CancellationTokenSource, string, string, string, DateTime)> _taskList;
 
         public TaskList()
         {

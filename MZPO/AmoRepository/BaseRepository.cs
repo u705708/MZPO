@@ -75,7 +75,7 @@ namespace MZPO.AmoRepo
 
         public T GetById(int id)
         {
-            var uri = $"{_apiAddress}{_entityLink}/{id.ToString()}";                                                    //?with = contacts,leads,catalog_elements,customers
+            var uri = $"{_apiAddress}{_entityLink}/{id}";                                                               //?with = contacts,leads,catalog_elements,customers
 
               Request request = new Request("GET", uri, _auth);
             return GetResult<T>(request, new T());

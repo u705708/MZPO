@@ -31,8 +31,8 @@ namespace MZPO.Controllers
         {
             //_amo = amo;
             //_acc = amo.GetAccountById(28395871);
-            _acc = amo.GetAccountById(19453687);
-            _processQueue = processQueue;
+            //_acc = amo.GetAccountById(19453687);
+            //_processQueue = processQueue;
         }
 
         // GET: api/<Testing>
@@ -68,14 +68,14 @@ namespace MZPO.Controllers
 
         // GET api/<Testing>/5
         //[HttpGet("{input}")]
-        public FileStreamResult Get(string input)
-        {
-            var stream = new FileStream("report.xls", FileMode.Open);
-            return new FileStreamResult(stream, "application/vnd.ms-excel")
-            {
-                FileDownloadName = "report.xls"
-            };
-        }
+        //public FileStreamResult Get(string input)
+        //{
+        //    var stream = new FileStream("report.xls", FileMode.Open);
+        //    return new FileStreamResult(stream, "application/vnd.ms-excel")
+        //    {
+        //        FileDownloadName = "report.xls"
+        //    };
+        //}
 
         //POST api/<Testing>
         [HttpPost]
