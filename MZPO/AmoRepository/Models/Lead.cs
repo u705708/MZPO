@@ -63,7 +63,7 @@ namespace MZPO.AmoRepo
             public LossReason loss_reason { get; set; }                         //Требуется GET параметр with. Причина отказа сделки
             public IList<Tag> tags { get; set; }                                //Данные тегов, привязанных к сделке
             public IList<Contact> contacts { get; set; }                        //Требуется GET параметр with. Данные контактов, привязанных к сделке
-            public IList<Companies> companies { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
+            public IList<Company> companies { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
             public IList<CatalogElements> catalog_elements { get; set; }        //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
 
             public class LossReason

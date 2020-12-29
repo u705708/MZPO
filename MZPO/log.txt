@@ -1,3 +1,0 @@
-22.12.2020 11:57:47 : Warning: Unable to update token: Value cannot be null. (Parameter 'value')
-24.12.2020 16:24:16 : Warning message: Не задано значение для города eerre; Сделка: 23224755
-24.12.2020 16:24:18 : Success: Lead 23224755

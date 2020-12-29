@@ -12,6 +12,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -28,9 +29,9 @@ namespace MZPO.Controllers
 
         public Testing(Amo amo, TaskList processQueue)
         {
-            _amo = amo;
+            //_amo = amo;
             //_acc = amo.GetAccountById(28395871);
-            //_acc = amo.GetAccountById(19453687);
+            _acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
         }
 
@@ -38,11 +39,22 @@ namespace MZPO.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            //var leadRepo = _acc.GetRepo<Lead>();
+            long dateFrom = 1606770000;
+            long dateTo = 1609448400;
+            
+            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationToken token = cts.Token;
+            Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                      //Создаём экземпляр процессора сделки
+                               new CorpReportProcessor(_acc, _processQueue, token, dateFrom, dateTo));
 
-            //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria("filter[cf][639081]=www.skillbank.su"), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
+            Task task = Task.Run(() => corpReportProcessor.Value.Run());                                               //Запускаем его
+            _processQueue.Add(task, cts, "0", _acc.name, "CorpReport");                                                //И добавляем в очередь
+            return Ok();
 
-            //return Ok(leadRepo.GetById(27922401));
+            //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria("filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[created_at][from]=1606770000&filter[created_at][to]=1609448400"), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
+            //return Ok(leadRepo.GetByCriteria("filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[custom_fields_values][118675][from]=1606770000&filter[custom_fields_values][118675][to]=1609448400&filter[responsible_user_id]=2375122"));
+            //return Ok(compRepo.GetById(30980589));
+            //return Ok(leadRepo.GetById(27996831));
 
             //return Ok();
 
@@ -51,7 +63,7 @@ namespace MZPO.Controllers
             //var proc = new TestProcessor(leadRepo);
             //proc.Run();
 
-            return Ok();
+            //return Ok();
         }
 
         // GET api/<Testing>/5

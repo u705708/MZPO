@@ -329,7 +329,11 @@ namespace MZPO.Processors
         #region Processor
         public override async void Run()
         {
-            if (_token.IsCancellationRequested) return;
+            if (_token.IsCancellationRequested)
+            {
+                _processQueue.Remove(lead.id.ToString());
+                return;
+            }
             try
             {
                 if (lead == null) throw new Exception("No lead returned from amoCRM");

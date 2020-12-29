@@ -11,7 +11,8 @@ namespace MZPO.Processors
         protected readonly IBaseRepo<Lead> _leadRepo;
         protected readonly AmoAccount _acc;
         protected readonly TaskList _processQueue;
-        protected readonly CancellationToken _token; private readonly string _uid;
+        protected readonly CancellationToken _token; 
+        private readonly string _uid;
 
         public UnsortedProcessor(string uid, AmoAccount acc, TaskList processQueue, CancellationToken token)         //Процессор принимает сделку из Неразобранного
         {
@@ -26,7 +27,11 @@ namespace MZPO.Processors
         #region Realization
         public void Run()
         {
-            if (_token.IsCancellationRequested) return;
+            if (_token.IsCancellationRequested)
+            {
+                _processQueue.Remove(_uid);
+                return;
+            }
             try
             {
                 _leadRepo.AcceptUnsorted(_uid);                                                                         //принимаем из Неразобранного по uid

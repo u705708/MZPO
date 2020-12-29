@@ -35,6 +35,7 @@ namespace MZPO.Services
             {
                 var line = _taskList.Where(x => x.Item3 == id).FirstOrDefault();
                 _taskList.Remove(line);
+                GC.Collect();
             }
         }
 
