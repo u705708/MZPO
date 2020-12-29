@@ -39,16 +39,16 @@ namespace MZPO.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            long dateFrom = 1606770000;
-            long dateTo = 1609448400;
+            //long dateFrom = 1606770000;
+            //long dateTo = 1609448400;
             
-            CancellationTokenSource cts = new CancellationTokenSource();
-            CancellationToken token = cts.Token;
-            Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                      //Создаём экземпляр процессора сделки
-                               new CorpReportProcessor(_acc, _processQueue, token, dateFrom, dateTo));
+            //CancellationTokenSource cts = new CancellationTokenSource();
+            //CancellationToken token = cts.Token;
+            //Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                      //Создаём экземпляр процессора сделки
+            //                   new CorpReportProcessor(_acc, _processQueue, token, dateFrom, dateTo));
 
-            Task task = Task.Run(() => corpReportProcessor.Value.Run());                                               //Запускаем его
-            _processQueue.Add(task, cts, "0", _acc.name, "CorpReport");                                                //И добавляем в очередь
+            //Task task = Task.Run(() => corpReportProcessor.Value.Run());                                               //Запускаем его
+            //_processQueue.Add(task, cts, "0", _acc.name, "CorpReport");                                                //И добавляем в очередь
             return Ok();
 
             //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria("filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[created_at][from]=1606770000&filter[created_at][to]=1609448400"), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
@@ -68,14 +68,14 @@ namespace MZPO.Controllers
 
         // GET api/<Testing>/5
         //[HttpGet("{input}")]
-        //public FileStreamResult Get(string input)
-        //{
-        //    var stream = new FileStream("report.xls", FileMode.Open);
-        //    return new FileStreamResult(stream, "application/vnd.ms-excel")
-        //    {
-        //        FileDownloadName = "report.xls"
-        //    };
-        //}
+        public FileStreamResult Get(string input)
+        {
+            var stream = new FileStream("report.xls", FileMode.Open);
+            return new FileStreamResult(stream, "application/vnd.ms-excel")
+            {
+                FileDownloadName = "report.xls"
+            };
+        }
 
         //POST api/<Testing>
         [HttpPost]

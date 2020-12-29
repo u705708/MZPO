@@ -338,9 +338,5 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/MZPO/Александр Пуцков 12-2020.csv
-/MZPO/Алена Федосова 12-2020.csv
-/MZPO/Алферова Лилия 12-2020.csv
-/MZPO/Васина Елена 12-2020.csv
-/MZPO/Ирина Сорокина 12-2020.csv
-/MZPO/Киреева Светлана 12-2020.csv
+/MZPO/report.xlsx
+/MZPO/log.txt
