@@ -44,8 +44,8 @@ namespace MZPO.Controllers
             Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                         //Создаём экземпляр процессора
                                new CorpReportProcessor(_acc, _processQueue, token, dateFrom, dateTo));
 
-            Task task = Task.Run(() => corpReportProcessor.Value.Run());                                               //Запускаем его
-            _processQueue.Add(task, cts, "report_corp", _acc.name, "CorpReport");                                                //И добавляем в очередь
+            Task task = Task.Run(() => corpReportProcessor.Value.Run());                                                //Запускаем его
+            _processQueue.Add(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь
             return Ok();
         }
     }
