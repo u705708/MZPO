@@ -29,13 +29,17 @@ namespace MZPO.Processors
             contRepo = _acc.GetRepo<Contact>();
         }
 
-        List<(int, string)> managers = new List<(int, string)>
+        private readonly List<(int, string)> managers = new List<(int, string)>
         {
             (2375116, "Киреева Светлана"),
             (2375122, "Васина Елена"),
             (2375131, "Алферова Лилия"),
             (2884132, "Ирина Сорокина"),
-            (6028753, "Алена Федосова")
+            (6028753, "Алена Федосова"),
+            (6630727, "Елена Зубатых"),
+            (3770773, "Шталева Лидия"),
+            (6200629, "Харшиладзе Леван"),
+            (6346882, "Мусихина Юлия")
         };
         #endregion
 
@@ -52,71 +56,82 @@ namespace MZPO.Processors
             {
                 if (_token.IsCancellationRequested) break;
 
-                var allLeads = leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=19529785&filter[responsible_user_id]={m.Item1}&with=companies,contacts");
+                List<string> criteria = new List<string>()
+                {
+                    $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=142&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
+                    $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=19529785&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
+                    $"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=142&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
+                    $"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={m.Item1}&with=companies,contacts"
+                };
 
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 using StreamWriter sw = new StreamWriter($"{m.Item2}.csv", true, Encoding.GetEncoding("windows-1251"));
-                //sw.WriteLine("Номер сделки;Название контакта;Название компании;Есть телефоны?;Есть email?;ЛПР");
+                sw.WriteLine("Номер сделки;Название контакта;Название компании;Есть телефоны?;Есть email?;ЛПР");
 
-                if (allLeads == null) continue;
-
-                foreach (var l in allLeads)
+                foreach (var cr in criteria)
                 {
-                    if (_token.IsCancellationRequested) break;
+                    var allLeads = leadRepo.GetByCriteria(cr);
 
-                    int leadNumber = l.id;
-                    string contactName;
-                    string companyName;
-                    bool phoneAdded = false;
-                    bool emailAdded = false;
-                    string LPR = "";
+                    if (allLeads == null) continue;
 
-                    Company company;
-                    List<Contact> contacts = new List<Contact>();
+                    foreach (var l in allLeads)
+                    {
+                        if (_token.IsCancellationRequested) break;
 
-                    if (leadNumber == 19849577) continue;
+                        int leadNumber = l.id;
+                        string contactName;
+                        string companyName;
+                        bool phoneAdded = false;
+                        bool emailAdded = false;
+                        string LPR = "";
 
-                    if (l._embedded.companies.Any())
-                        company = compRepo.GetById(l._embedded.companies.FirstOrDefault().id);
-                    else
-                        company = new Company();
+                        Company company;
+                        List<Contact> contacts = new List<Contact>();
 
-                    companyName = company.name;
+                        if (leadNumber == 19849577) continue;
 
-                    if ((company.custom_fields_values != null) &&
-                        company.custom_fields_values.Any(x => x.field_id == 640657))
-                        LPR = (string)company.custom_fields_values.FirstOrDefault(x => x.field_id == 640657).values[0].value;
+                        if (l._embedded.companies.Any())
+                            company = compRepo.GetById(l._embedded.companies.FirstOrDefault().id);
+                        else
+                            company = new Company();
 
-                    if ((l._embedded.contacts != null) &&
-                        (l._embedded.contacts.Any()))
-                        foreach(var c in l._embedded.contacts)
-                            contacts.Add(contRepo.GetById(c.id));
+                        companyName = company.name;
 
-                    if (contacts.Any())
-                        contactName = contacts.First().name;
-                    else contactName = "";
+                        if ((company.custom_fields_values != null) &&
+                            company.custom_fields_values.Any(x => x.field_id == 640657))
+                            LPR = (string)company.custom_fields_values.FirstOrDefault(x => x.field_id == 640657).values[0].value;
 
-                    if ((company.custom_fields_values != null) &&
-                        company.custom_fields_values.Any(x => x.field_id == 33575))
-                        phoneAdded = true;
-                    if ((company.custom_fields_values != null) &&
-                        company.custom_fields_values.Any(x => x.field_id == 33577))
-                        emailAdded = true;
+                        if ((l._embedded.contacts != null) &&
+                            (l._embedded.contacts.Any()))
+                            foreach (var c in l._embedded.contacts)
+                                contacts.Add(contRepo.GetById(c.id));
 
-                    if (contacts.Any())
-                        foreach (var c in contacts)
-                        {
-                            if (c.custom_fields_values == null) continue;
-                            if (c.custom_fields_values.Any(x => x.field_id == 33575))
-                                phoneAdded = true;
-                            if (c.custom_fields_values.Any(x => x.field_id == 33577))
-                                emailAdded = true;
-                        }
+                        if (contacts.Any())
+                            contactName = contacts.First().name;
+                        else contactName = "";
 
-                    if (!phoneAdded || !emailAdded)
-                        sw.WriteLine($"{leadNumber};{contactName};{companyName};{phoneAdded};{emailAdded};{LPR}");
+                        if ((company.custom_fields_values != null) &&
+                            company.custom_fields_values.Any(x => x.field_id == 33575))
+                            phoneAdded = true;
+                        if ((company.custom_fields_values != null) &&
+                            company.custom_fields_values.Any(x => x.field_id == 33577))
+                            emailAdded = true;
+
+                        if (contacts.Any())
+                            foreach (var c in contacts)
+                            {
+                                if (c.custom_fields_values == null) continue;
+                                if (c.custom_fields_values.Any(x => x.field_id == 33575))
+                                    phoneAdded = true;
+                                if (c.custom_fields_values.Any(x => x.field_id == 33577))
+                                    emailAdded = true;
+                            }
+
+                        if (!phoneAdded || !emailAdded)
+                            sw.WriteLine($"{leadNumber};{contactName};{companyName};{phoneAdded};{emailAdded};{LPR}");
+                    }
+                    GC.Collect();
                 }
-                GC.Collect();
             }
             _processQueue.Remove("report_data");
         }

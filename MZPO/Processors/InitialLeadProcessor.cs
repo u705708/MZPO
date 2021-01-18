@@ -337,8 +337,8 @@ namespace MZPO.Processors
             try
             {
                 if (lead == null) throw new Exception("No lead returned from amoCRM");
-                //if (lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
-                //{
+                if (lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
+                {
                     FormName();
                     PhaseOne();
                     _leadRepo.AddNotes(lead.id, "Phase 1 finished.");
@@ -351,13 +351,13 @@ namespace MZPO.Processors
 
                     PhaseTwo();
                     _leadRepo.AddNotes(lead.id, "Phase 2 finished.");
-                //}
-                //else
-                //{
-                //    SocialNetworks();
-                //}
+            }
+                else
+            {
+                SocialNetworks();
+            }
 
-                _processQueue.Remove(lead.id.ToString());
+            _processQueue.Remove(lead.id.ToString());
                 Log.Add($"Success: Lead {lead.id}");
             }
             catch (Exception e) 

@@ -6,6 +6,7 @@ namespace MZPO.AmoRepo
     public class Contact : IModel
     {
         [JsonIgnore]
+#pragma warning disable IDE1006 // Naming Styles
         public static string entityLink { get => "contacts"; }                      //Возвращается название ссылки на сущность, не сериализуется в JSON
 
         public int id { get; set; }                                                 //ID контакта
@@ -77,5 +78,6 @@ namespace MZPO.AmoRepo
                 public int catalog_id { get; set; }                                 //ID списка, в котором находится элемент 
             }
         }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

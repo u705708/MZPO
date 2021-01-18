@@ -9,7 +9,7 @@ namespace MZPO.Services
     public class Amo
     {
         #region Definition
-        private IList<AmoAccount> _accounts;
+        private readonly IList<AmoAccount> _accounts;
 
         private readonly DataProvider dataProvider;
         private readonly AmoProvider amoProvider;

@@ -4,8 +4,9 @@ namespace MZPO.AmoRepo
 {
     public class CustomField
     {
-		public int id { get; set; }											//ID поля
-		public string name { get; set; }									//Название поля
+#pragma warning disable IDE1006 // Naming Styles
+        public int id { get; set; }                                         //ID поля
+        public string name { get; set; }									//Название поля
 		public string code { get; set; }									//Код поля, по-которому можно обновлять значение в сущности, без передачи ID поля
 		public int? sort { get; set; }										//Сортировка поля
 		public string type { get; set; }									//Тип поля. Список доступных полей
@@ -34,5 +35,6 @@ namespace MZPO.AmoRepo
 			public int? status_id { get; set; }								//ID статуса, для перехода в который данное поле обязательно к заполнению. Данный ключ возвращается только при получении списка полей контактов, сделок и компаний
 			public int? pipeline_id { get; set; }							//ID воронки, для перехода в который данное поле обязательно к заполнению. Данный ключ возвращается только при получении списка полей контактов, сделок и компаний 
 		}
+#pragma warning restore IDE1006 // Naming Styles
 	}
 }
