@@ -29,10 +29,10 @@ namespace MZPO.Controllers
 
         public Testing(Amo amo, TaskList processQueue)
         {
-            //_amo = amo;
+            _amo = amo;
             //_acc = amo.GetAccountById(28395871);
-            //_acc = amo.GetAccountById(19453687);
-            //_processQueue = processQueue;
+            _acc = amo.GetAccountById(19453687);
+            _processQueue = processQueue;
         }
 
         // GET: api/<Testing>
@@ -41,7 +41,7 @@ namespace MZPO.Controllers
         {
             //long dateFrom = 1606770000;
             //long dateTo = 1609448400;
-            
+
             //CancellationTokenSource cts = new CancellationTokenSource();
             //CancellationToken token = cts.Token;
             //Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                      //Создаём экземпляр процессора сделки
@@ -49,14 +49,20 @@ namespace MZPO.Controllers
 
             //Task task = Task.Run(() => corpReportProcessor.Value.Run());                                               //Запускаем его
             //_processQueue.Add(task, cts, "0", _acc.name, "CorpReport");                                                //И добавляем в очередь
-            return Ok();
+            //return Ok();
+
+            //var contactRepo = _acc.GetRepo<Contact>();
+            //var companyRepo = _acc.GetRepo<Company>();
+            //var leadRepo = _acc.GetRepo<Lead>();
 
             //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria("filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[created_at][from]=1606770000&filter[created_at][to]=1609448400"), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
             //return Ok(leadRepo.GetByCriteria("filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[custom_fields_values][118675][from]=1606770000&filter[custom_fields_values][118675][to]=1609448400&filter[responsible_user_id]=2375122"));
-            //return Ok(compRepo.GetById(30980589));
-            //return Ok(leadRepo.GetById(27996831));
+            //return Ok(JsonConvert.SerializeObject(leadRepo.GetById(27200619), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
+            //return Ok(companyRepo.GetById(1494207));
+            //return Ok(contactRepo.GetById(46146799));
+            //return Ok(leadRepo.GetById(26375219));
 
-            //return Ok();
+            return Ok();
 
             //var _list = JsonConvert.DeserializeObject<Dictionary<int, string>>(File.ReadAllText(@"todo.json"));
 

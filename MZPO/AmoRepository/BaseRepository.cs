@@ -25,7 +25,9 @@ namespace MZPO.AmoRepo
         #region Supplementary methods
         public IEnumerable<T> GetEmbedded(EntityList entity)
         {
-            return (List<T>)entity.GetType().GetNestedType("Embedded").GetField(_entityLink).GetValue(entity._embedded);
+            if (entity._embedded != null)
+                return (List<T>)entity.GetType().GetNestedType("Embedded").GetField(_entityLink).GetValue(entity._embedded);
+            else return null;
         }
 
         private O GetResult<O>(Request request, O o)
@@ -71,13 +73,13 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}?{criteria}";
 
             return GetEmbedded(GetList(uri));
-        }                                                           //Exception в GetEmbedded при возврате пустого списка - починить
+        }
 
         public T GetById(int id)
         {
-            var uri = $"{_apiAddress}{_entityLink}/{id}";                                                               //?with = contacts,leads,catalog_elements,customers
+            var uri = $"{_apiAddress}{_entityLink}/{id}?with=leads,contacts,companies";                                                               //?with = contacts,leads,catalog_elements,customers
 
-              Request request = new Request("GET", uri, _auth);
+            Request request = new Request("GET", uri, _auth);
             return GetResult<T>(request, new T());
         }
 
