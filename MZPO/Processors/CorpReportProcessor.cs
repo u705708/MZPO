@@ -1,4 +1,6 @@
-﻿using MZPO.AmoRepo;
+﻿using Google.Apis.Sheets.v4;
+using Google.Apis.Sheets.v4.Data;
+using MZPO.AmoRepo;
 using MZPO.Services;
 using OfficeOpenXml;
 using System;
@@ -15,7 +17,7 @@ namespace MZPO.Processors
         #region Definition
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
-        private readonly GSheets _gSheets;
+        private readonly SheetsService _service;
         private readonly long _dateFrom;
         private readonly long _dateTo;
         private readonly BaseRepository<Lead> leadRepo;
@@ -26,7 +28,7 @@ namespace MZPO.Processors
         {
             _acc = acc;
             _processQueue = processQueue;
-            _gSheets = gSheets;
+            _service = gSheets.GetService();
             _dateFrom = dateFrom;
             _dateTo = dateTo;
             _token = token;
@@ -46,6 +48,112 @@ namespace MZPO.Processors
             //(6200629, "Харшиладзе Леван"),
             //(6346882, "Мусихина Юлия")
         };
+
+        private List<Request> requestContainer;
+        #endregion
+
+        #region Supplementary methods
+        private void PrepareSheets()
+        {
+            string SpreadsheetId = "1OTrCdmjYRCKKdr64wLY46Rx_yAffx7li4jSxzz2C4mc";
+            
+            requestContainer = new List<Request>();
+            var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
+            foreach (var s in spreadsheet.Sheets)
+            {
+                Console.WriteLine($"{s.Properties.Index}, {s.Properties.Title}");
+                if (s.Properties.Index == 0) continue;
+                requestContainer.Add(new Request() { DeleteSheet = new DeleteSheetRequest() { SheetId = s.Properties.SheetId } });
+            }
+
+            foreach (var m in managers)
+            {
+                requestContainer.Add(new Request()
+                {
+                    AddSheet = new AddSheetRequest()
+                    {
+                        Properties = new SheetProperties()
+                        {
+                            GridProperties = new GridProperties()
+                            {
+                                ColumnCount = 11,
+                                FrozenRowCount = 1
+                            },
+                            Title = m.Item2,
+                            SheetId = m.Item1
+                        }
+                    }
+                });
+
+                var centerAlignment = new CellFormat()
+                {
+                    TextFormat = new TextFormat()
+                    {
+                        Bold = true,
+                        FontSize = 11
+                    },
+                    HorizontalAlignment = "CENTER",
+                    VerticalAlignment = "MIDDLE"
+                };
+
+                var leftAlignment = new CellFormat()
+                {
+                    TextFormat = new TextFormat()
+                    {
+                        Bold = true,
+                        FontSize = 11
+                    },
+                    HorizontalAlignment = "LEFT",
+                    VerticalAlignment = "MIDDLE"
+                };
+
+                requestContainer.Add(new Request()
+                {
+                    UpdateCells = new UpdateCellsRequest()
+                    {
+
+                        Fields = "*",
+                        Start = new GridCoordinate() { ColumnIndex = 0, RowIndex = 0, SheetId = m.Item1 },
+                        Rows = new List<RowData>() { new RowData() { Values = new List<CellData>(){
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Оганизация"} },
+                            new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Назначение платежа"} },
+                            new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Кол-во человек"} },
+                            new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Стоимость, руб."} },
+                            new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Сумма, руб."} },
+                            new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Дата прихода"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Расчет"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Исполнитель"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Номер сделки"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "% сделки"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Вознаграждение"} }
+                            } }
+                        }
+                    }
+                });
+
+                var width = new List<int>() { 370, 95, 60, 84, 93, 107, 91, 107, 115, 79, 131 };
+                int i = 0;
+
+                foreach (var c in width)
+                {
+                    requestContainer.Add(new Request()
+                    {
+                        UpdateDimensionProperties = new UpdateDimensionPropertiesRequest()
+                        {
+                            Fields = "PixelSize",
+                            Range = new DimensionRange() { SheetId = m.Item1, Dimension = "COLUMNS", StartIndex = i, EndIndex = i + 1 },
+                            Properties = new DimensionProperties() { PixelSize = c }
+                        }
+                    });
+                    i++;
+                }
+            }
+
+            var batchRequest = new BatchUpdateSpreadsheetRequest();
+            batchRequest.Requests = requestContainer;
+
+            _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+        }
         #endregion
 
         #region Realization
@@ -56,6 +164,8 @@ namespace MZPO.Processors
                 _processQueue.Remove("0");
                 return;
             }
+
+            PrepareSheets();
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();

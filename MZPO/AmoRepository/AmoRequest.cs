@@ -5,7 +5,7 @@ using System.Net.Http.Headers;
 
 namespace MZPO.AmoRepo
 {
-    public class Request
+    public class AmoRequest
     {
         #region Definition
         private readonly AuthProvider _auth;
@@ -14,7 +14,7 @@ namespace MZPO.AmoRepo
         private readonly HttpContent _content;
         private readonly string content;
 
-        public Request(string httpMethod, string uri, string content, AuthProvider auth)
+        public AmoRequest(string httpMethod, string uri, string content, AuthProvider auth)
         {
             _httpMethod = new HttpMethod(httpMethod);
             _uri = new Uri(uri);
@@ -23,7 +23,7 @@ namespace MZPO.AmoRepo
             this.content = content;
         }
 
-        public Request(string httpMethod, string uri, AuthProvider auth)
+        public AmoRequest(string httpMethod, string uri, AuthProvider auth)
         {
             _httpMethod = new HttpMethod(httpMethod);
             _uri = new Uri(uri);

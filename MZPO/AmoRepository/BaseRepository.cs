@@ -30,7 +30,7 @@ namespace MZPO.AmoRepo
             else return null;
         }
 
-        private O GetResult<O>(Request request, O o)
+        private O GetResult<O>(AmoRequest request, O o)
         {
             try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), o); }
             catch (Exception e) { throw new Exception("Unable to process response : " + e.Message); }
@@ -44,7 +44,7 @@ namespace MZPO.AmoRepo
 
             while (entityList._links.ContainsKey("next"))
             {
-                Request request = new Request("GET", entityList._links["next"].href, _auth);
+                AmoRequest request = new AmoRequest("GET", entityList._links["next"].href, _auth);
                 
                 var next = entityList._links["next"].href;
                 var response = request.GetResponse();
@@ -63,7 +63,7 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            Request request = new Request("POST", uri, content, _auth);
+            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
             EntityList result = new EntityList();
             return GetEmbedded(GetResult<EntityList>(request, result));
         }
@@ -79,7 +79,7 @@ namespace MZPO.AmoRepo
         {
             var uri = $"{_apiAddress}{_entityLink}/{id}?with=leads,contacts,companies";                                                               //?with = contacts,leads,catalog_elements,customers
 
-            Request request = new Request("GET", uri, _auth);
+            AmoRequest request = new AmoRequest("GET", uri, _auth);
             return GetResult<T>(request, new T());
         }
 
@@ -88,7 +88,7 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            Request request = new Request("PATCH", uri, content, _auth);
+            AmoRequest request = new AmoRequest("PATCH", uri, content, _auth);
             EntityList result = new EntityList();
             return GetEmbedded(GetResult<EntityList>(request, result));
         }
@@ -106,7 +106,7 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}/notes";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            Request request = new Request("POST", uri, content, _auth);
+            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
             EntityList result = new EntityList();
             return GetResult<EntityList>(request, result)._embedded.notes.ToList();
         }
@@ -126,7 +126,7 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}/tags";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            Request request = new Request("POST", uri, content, _auth);
+            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
             EntityList result = new EntityList();
             return GetResult<EntityList>(request, result)._embedded.tags.ToList();
         }
@@ -145,7 +145,7 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}/custom_fields";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            Request request = new Request("POST", uri, content, _auth);
+            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
             EntityList result = new EntityList();
             return GetResult<EntityList>(request, result)._embedded.custom_fields.ToList();
         }
@@ -156,7 +156,7 @@ namespace MZPO.AmoRepo
         {
             var uri = $"{_apiAddress}leads/unsorted/{uid}/accept";
 
-            Request request = new Request("POST", uri, _auth);
+            AmoRequest request = new AmoRequest("POST", uri, _auth);
 
             try { request.GetResponse(); }
             catch (Exception e) { throw new Exception($"Unable to accept unsorted: {e.Message}"); }
