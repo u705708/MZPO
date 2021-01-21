@@ -14,11 +14,13 @@ namespace MZPO.Controllers
     {
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
+        private readonly GSheets _gSheets;
 
-        public ReportController(Amo amo, TaskList processQueue)
+        public ReportController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
+            _gSheets = gSheets;
         }
 
         // GET: reports/corporate
@@ -42,7 +44,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                         //Создаём экземпляр процессора
-                               new CorpReportProcessor(_acc, _processQueue, token, dateFrom, dateTo));
+                               new CorpReportProcessor(_acc, _processQueue, _gSheets, token, dateFrom, dateTo));
 
             Task task = Task.Run(() => corpReportProcessor.Value.Run());                                                //Запускаем его
             _processQueue.Add(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь

@@ -15,16 +15,18 @@ namespace MZPO.Processors
         #region Definition
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
+        private readonly GSheets _gSheets;
         private readonly long _dateFrom;
         private readonly long _dateTo;
         private readonly BaseRepository<Lead> leadRepo;
         private readonly BaseRepository<Company> compRepo;
         protected readonly CancellationToken _token;
 
-        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, CancellationToken token, long dateFrom, long dateTo)
+        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, CancellationToken token, long dateFrom, long dateTo)
         {
             _acc = acc;
             _processQueue = processQueue;
+            _gSheets = gSheets;
             _dateFrom = dateFrom;
             _dateTo = dateTo;
             _token = token;
@@ -34,12 +36,12 @@ namespace MZPO.Processors
 
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
-            (2375116, "Киреева Светлана"),
-            (2375122, "Васина Елена"),
-            (2375131, "Алферова Лилия"),
-            (2884132, "Ирина Сорокина"),
-            (6028753, "Алена Федосова"),
-            (6630727, "Елена Зубатых")//,
+            //(2375116, "Киреева Светлана"),
+            (2375122, "Васина Елена")//,
+            //(2375131, "Алферова Лилия"),
+            //(2884132, "Ирина Сорокина"),
+            //(6028753, "Алена Федосова"),
+            //(6630727, "Елена Зубатых")//,
             //(3770773, "Шталева Лидия"),
             //(6200629, "Харшиладзе Леван"),
             //(6346882, "Мусихина Юлия")

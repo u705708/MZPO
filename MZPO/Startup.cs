@@ -28,7 +28,7 @@ namespace MZPO
                 new MySqlServerVersion(new Version(5, 7, 31)),
                 builder =>
                 {
-                    builder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                    builder.EnableRetryOnFailure(6, TimeSpan.FromSeconds(20), null);
                 }
                 ));
 
@@ -39,6 +39,7 @@ namespace MZPO
 
             services.AddSingleton<Amo>();
             services.AddSingleton<TaskList>();
+            services.AddTransient<GSheets>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
