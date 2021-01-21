@@ -2,12 +2,9 @@
 using Google.Apis.Sheets.v4.Data;
 using MZPO.AmoRepo;
 using MZPO.Services;
-using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace MZPO.Processors
@@ -23,12 +20,14 @@ namespace MZPO.Processors
         private readonly BaseRepository<Lead> leadRepo;
         private readonly BaseRepository<Company> compRepo;
         protected readonly CancellationToken _token;
+        private readonly string SpreadsheetId;
 
-        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, CancellationToken token, long dateFrom, long dateTo)
+        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, CancellationToken token, long dateFrom, long dateTo)
         {
             _acc = acc;
             _processQueue = processQueue;
             _service = gSheets.GetService();
+            SpreadsheetId = spreadsheetId;
             _dateFrom = dateFrom;
             _dateTo = dateTo;
             _token = token;
@@ -38,8 +37,8 @@ namespace MZPO.Processors
 
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
-            //(2375116, "Киреева Светлана"),
-            (2375122, "Васина Елена")//,
+            (2375116, "Киреева Светлана")//,
+            //(2375122, "Васина Елена"),
             //(2375131, "Алферова Лилия"),
             //(2884132, "Ирина Сорокина"),
             //(6028753, "Алена Федосова"),
@@ -55,8 +54,6 @@ namespace MZPO.Processors
         #region Supplementary methods
         private void PrepareSheets()
         {
-            string SpreadsheetId = "1OTrCdmjYRCKKdr64wLY46Rx_yAffx7li4jSxzz2C4mc";
-            
             requestContainer = new List<Request>();
             var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
             foreach (var s in spreadsheet.Sheets)
@@ -131,7 +128,7 @@ namespace MZPO.Processors
                     }
                 });
 
-                var width = new List<int>() { 370, 95, 60, 84, 93, 107, 91, 107, 115, 79, 131 };
+                var width = new List<int>() { 370, 95, 60, 84, 93, 107, 89, 107, 115, 79, 131 };
                 int i = 0;
 
                 foreach (var c in width)
@@ -167,9 +164,6 @@ namespace MZPO.Processors
 
             PrepareSheets();
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-
             foreach (var m in managers)
             {
                 if (_token.IsCancellationRequested) return;
@@ -183,36 +177,33 @@ namespace MZPO.Processors
                     ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)
                     );
 
-                var worksheet = package.Workbook.Worksheets.Add(m.Item2);
+                var valueRange = new ValueRange();
+                valueRange.Values = new List<IList<object>>();
 
-                #region Header
-                worksheet.Cells["A1"].Value = "Оганизация";
-                worksheet.Cells["B1"].Value = "Назначение платежа";
-                worksheet.Cells["C1"].Value = "Кол-во человек";
-                worksheet.Cells["D1"].Value = "Стоимость, руб.";
-                worksheet.Cells["E1"].Value = "Сумма, руб.";
-                worksheet.Cells["F1"].Value = "Дата прихода";
-                worksheet.Cells["G1"].Value = "Расчет";
-                worksheet.Cells["H1"].Value = "Исполнитель";
-                worksheet.Cells["I1"].Value = "Номер сделки";
-                worksheet.Cells["J1"].Value = "% сделки";
-                worksheet.Cells["K1"].Value = "Вознаграждение";
-                #endregion
-
-                int row = 1;
                 foreach (var l in leads)
                 {
                     if (_token.IsCancellationRequested) return;
-                    row++;
+
+                    string A = "";
+                    string B = "";
+                    int C;
+                    int D;
+                    int E;
+                    string F = "";
+                    string G = "";
+                    string H = "";
+                    int I;
+                    int J;
+                    int K;
 
                     #region Оганизация
                     if (l._embedded.companies.Any())
-                        worksheet.Cells[$"A{row}"].Value = compRepo.GetById(l._embedded.companies.FirstOrDefault().id).name;
+                        A = compRepo.GetById(l._embedded.companies.FirstOrDefault().id).name;
                     #endregion
 
                     #region Назначение платежа
                     if (l.custom_fields_values.Any(x => x.field_id == 118509))
-                        worksheet.Cells[$"B{row}"].Value = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118509).values[0].value;
+                        B = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118509).values[0].value;
                     #endregion
 
                     #region Кол-во человек
@@ -221,15 +212,15 @@ namespace MZPO.Processors
                         Int32.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 611005).values[0].value, out students);
                     else
                         students = 1;
-                    worksheet.Cells[$"C{row}"].Value = students;
-                    #endregion
-
-                    #region Стоимость
-                    worksheet.Cells[$"D{row}"].Formula = $"E{row}/C{row}";
+                    C = students;
                     #endregion
 
                     #region Сумма
-                    worksheet.Cells[$"E{row}"].Value = l.price;
+                    E = (int)l.price;
+                    #endregion
+
+                    #region Стоимость
+                    D = E / C;
                     #endregion
 
                     #region Дата прихода
@@ -238,21 +229,21 @@ namespace MZPO.Processors
                         payment_date_unix = (long)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118675).values[0].value;
                     else
                         payment_date_unix = 0;
-                    worksheet.Cells[$"F{row}"].Value = DateTimeOffset.FromUnixTimeSeconds(payment_date_unix).UtcDateTime.AddHours(3);
+                    F = DateTimeOffset.FromUnixTimeSeconds(payment_date_unix).UtcDateTime.AddHours(3).ToShortDateString();
                     #endregion
 
                     #region Расчет
                     if (l.custom_fields_values.Any(x => x.field_id == 118545))
-                        worksheet.Cells[$"G{row}"].Value = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118545).values[0].value;
+                        G = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118545).values[0].value;
                     #endregion
 
                     #region Испольнитель
                     if (l.custom_fields_values.Any(x => x.field_id == 162301))
-                        worksheet.Cells[$"H{row}"].Value = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 162301).values[0].value;
+                        H = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 162301).values[0].value;
                     #endregion
 
                     #region Номер сделки
-                    worksheet.Cells[$"I{row}"].Value = l.id;
+                    I = l.id;
                     #endregion
 
                     #region % сделки
@@ -261,57 +252,28 @@ namespace MZPO.Processors
                         Int32.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 613663).values[0].value, out percent);
                     else
                         percent = 0;
-                    worksheet.Cells[$"J{row}"].Value = percent;
+                    J = percent;
                     #endregion
 
                     #region Вознаграждение
-                    worksheet.Cells[$"K{row}"].Formula = $"E{row}*J{row}/100";
+                    K = E * J / 100;
                     #endregion
+
+                    valueRange.Values.Add( new List<object>() { A, B, C, D, E, F, G, H, I, J, K } );
                 }
 
-                #region Format
-
-                worksheet.Cells[$"D2:E{row}"].Style.Numberformat.Format = "#,##0.00";
-                worksheet.Cells[$"K2:K{row}"].Style.Numberformat.Format = "#,##0.00";
-                worksheet.Cells[$"F2:F{row}"].Style.Numberformat.Format = "mm-dd-yy";
-
-                worksheet.Column(1).Width = 35.84;
-                worksheet.Column(2).Width = 11.2;
-                worksheet.Column(3).Width = 7;
-                worksheet.Column(4).Width = 9.8;
-                worksheet.Column(5).Width = 11.76;
-                worksheet.Column(6).Width = 13.44;
-                worksheet.Column(7).Width = 12.6;
-                worksheet.Column(8).Width = 13.44;
-                worksheet.Column(9).Width = 14;
-                worksheet.Column(10).Width = 9.24;
-                worksheet.Column(11).Width = 16.8;
-
-                worksheet.Cells["A1:K1"].Style.Font.Bold = true;
-                worksheet.Cells[$"A{row + 1}:K{row + 1}"].Style.Font.Bold = true;
-                #endregion
-
                 #region Finals
-                row++;
+                var appendRequest = _service.Spreadsheets.Values.Append(valueRange, SpreadsheetId, $"{m.Item2}!A:K");
+                appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
+                await appendRequest.ExecuteAsync();
 
-                worksheet.Cells[$"A{row}"].Value = "Итого:";
-                worksheet.Cells[$"E{row}"].Formula = $"SUM(E2:E{row - 1})";
-                worksheet.Cells[$"K{row}"].Formula = $"SUM(K2:K{row - 1})";
-
-                worksheet.Calculate();
+                //worksheet.Cells[$"A{row}"].Value = "Итого:";
+                //worksheet.Cells[$"E{row}"].Formula = $"SUM(E2:E{row - 1})";
+                //worksheet.Cells[$"K{row}"].Formula = $"SUM(K2:K{row - 1})";
                 #endregion
 
                 GC.Collect();
             }
-
-            #region Saving file
-            package.Workbook.Properties.Title = "Отчёт о продажах корпоративного отдела";
-            package.Workbook.Properties.Author = "mzpo2amo";
-
-            package.Workbook.Properties.Company = "МЦПО";
-
-            await package.SaveAsAsync(new FileInfo("report.xlsx"));
-            #endregion
 
             _processQueue.Remove("report_corp");
         }
