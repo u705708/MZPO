@@ -15,23 +15,21 @@ namespace MZPO.Controllers
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
         private readonly GSheets _gSheets;
+        private readonly string sheetId;
 
         public ReportController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
             _gSheets = gSheets;
+            sheetId = "1OTrCdmjYRCKKdr64wLY46Rx_yAffx7li4jSxzz2C4mc";
         }
 
         // GET: reports/corporate
         [HttpGet]
-        public FileStreamResult Get()
+        public ActionResult Get()
         {
-            var stream = new FileStream("report.xlsx", FileMode.Open);
-            return new FileStreamResult(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            {
-                FileDownloadName = "report.xlsx"
-            };
+            return Redirect($"https://docs.google.com/spreadsheets/d/{sheetId}/");
         }
 
         // GET reports/corporate/1606770000,1609448400
@@ -44,7 +42,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                         //Создаём экземпляр процессора
-                               new CorpReportProcessor(_acc, _processQueue, _gSheets, "1OTrCdmjYRCKKdr64wLY46Rx_yAffx7li4jSxzz2C4mc", token, dateFrom, dateTo));
+                               new CorpReportProcessor(_acc, _processQueue, _gSheets, sheetId, token, dateFrom, dateTo));
 
             Task task = Task.Run(() => corpReportProcessor.Value.Run());                                                //Запускаем его
             _processQueue.Add(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь

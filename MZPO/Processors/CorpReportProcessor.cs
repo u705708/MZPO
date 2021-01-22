@@ -35,20 +35,19 @@ namespace MZPO.Processors
             compRepo = _acc.GetRepo<Company>();
         }
 
+        private List<Request> requestContainer;
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
-            (2375116, "Киреева Светлана")//,
-            //(2375122, "Васина Елена"),
-            //(2375131, "Алферова Лилия"),
-            //(2884132, "Ирина Сорокина"),
-            //(6028753, "Алена Федосова"),
-            //(6630727, "Елена Зубатых")//,
+            (2375116, "Киреева Светлана"),
+            (2375122, "Васина Елена"),
+            (2375131, "Алферова Лилия"),
+            (2884132, "Ирина Сорокина"),
+            (6028753, "Алена Федосова"),
+            (6630727, "Елена Зубатых")//,
             //(3770773, "Шталева Лидия"),
             //(6200629, "Харшиладзе Леван"),
             //(6346882, "Мусихина Юлия")
         };
-
-        private List<Request> requestContainer;
         #endregion
 
         #region Supplementary methods
@@ -151,6 +150,98 @@ namespace MZPO.Processors
 
             _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
         }
+
+        private void PrepareRow(int sheetId, string A, string B, int C, string D, int E, string F, string G, string H, int I, int J, string K)
+        {
+            var rows = new List<RowData>();
+            rows.Add(new RowData()
+            {
+                Values = new List<CellData>(){
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = A},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = B},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ NumberValue = C},
+                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = D},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ NumberValue = E},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = F},
+                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "DATE" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = G},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = H},
+                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ NumberValue = I},
+                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ NumberValue = J},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER" }} },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue() { FormulaValue = K},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } }
+                }
+            });
+
+            requestContainer.Add(new Request()
+            {
+                AppendCells = new AppendCellsRequest()
+                {
+                    Fields = '*',
+                    Rows = rows,
+                    SheetId = sheetId
+                }
+            }
+            );
+        }
+
+        private void LastRow(int sheetId)
+        {
+            var rows = new List<RowData>();
+            rows.Add(new RowData()
+            {
+                Values = new List<CellData>(){
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = "Итого:"},
+                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "RIGHT", TextFormat = new TextFormat(){ Bold = true } } },
+                         new CellData(),
+                         new CellData(),
+                         new CellData(),
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=SUM(E2:E{requestContainer.Count + 1})"},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
+                         new CellData(),
+                         new CellData(),
+                         new CellData(),
+                         new CellData(),
+                         new CellData(),
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=SUM(K2:K{requestContainer.Count + 1})"},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } }
+                }
+            });
+
+            requestContainer.Add(new Request()
+            {
+                AppendCells = new AppendCellsRequest()
+                {
+                    Fields = '*',
+                    Rows = rows,
+                    SheetId = sheetId
+                }
+            }
+            );
+        }
         #endregion
 
         #region Realization
@@ -177,24 +268,25 @@ namespace MZPO.Processors
                     ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)
                     );
 
-                var valueRange = new ValueRange();
-                valueRange.Values = new List<IList<object>>();
+                requestContainer = new List<Request>();
 
                 foreach (var l in leads)
                 {
                     if (_token.IsCancellationRequested) return;
 
+                    #region Field init
                     string A = "";
                     string B = "";
                     int C;
-                    int D;
+                    string D;
                     int E;
                     string F = "";
                     string G = "";
                     string H = "";
                     int I;
                     int J;
-                    int K;
+                    string K;
+                    #endregion
 
                     #region Оганизация
                     if (l._embedded.companies.Any())
@@ -220,7 +312,7 @@ namespace MZPO.Processors
                     #endregion
 
                     #region Стоимость
-                    D = E / C;
+                    D = $"=E{requestContainer.Count + 2}/C{requestContainer.Count + 2}";
                     #endregion
 
                     #region Дата прихода
@@ -256,20 +348,20 @@ namespace MZPO.Processors
                     #endregion
 
                     #region Вознаграждение
-                    K = E * J / 100;
+                    K = $"=E{requestContainer.Count + 2}*J{requestContainer.Count + 2}/100";
                     #endregion
 
-                    valueRange.Values.Add( new List<object>() { A, B, C, D, E, F, G, H, I, J, K } );
+                    PrepareRow(m.Item1, A, B, C, D, E, F, G, H, I, J, K);
                 }
 
                 #region Finals
-                var appendRequest = _service.Spreadsheets.Values.Append(valueRange, SpreadsheetId, $"{m.Item2}!A:K");
-                appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
-                await appendRequest.ExecuteAsync();
 
-                //worksheet.Cells[$"A{row}"].Value = "Итого:";
-                //worksheet.Cells[$"E{row}"].Formula = $"SUM(E2:E{row - 1})";
-                //worksheet.Cells[$"K{row}"].Formula = $"SUM(K2:K{row - 1})";
+                LastRow(m.Item1);
+
+                var batchRequest = new BatchUpdateSpreadsheetRequest();
+                batchRequest.Requests = requestContainer;
+
+                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
                 #endregion
 
                 GC.Collect();
