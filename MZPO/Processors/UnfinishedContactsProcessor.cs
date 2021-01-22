@@ -38,12 +38,12 @@ namespace MZPO.Processors
         private List<Request> requestContainer;
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
-            (2375116, "Киреева Светлана"),
             (2375122, "Васина Елена"),
+            (2375116, "Киреева Светлана"),
             (2375131, "Алферова Лилия"),
-            (2884132, "Ирина Сорокина"),
-            (6028753, "Алена Федосова"),
             (6630727, "Елена Зубатых"),
+            (6028753, "Алена Федосова"),
+            (2884132, "Ирина Сорокина"),
             (3770773, "Шталева Лидия"),
             (6200629, "Харшиладзе Леван"),
             (6346882, "Мусихина Юлия")
@@ -165,8 +165,8 @@ namespace MZPO.Processors
             #region Prepare data
             var rows = new List<RowData>();
 
-            string Dt = D ? "Да" : "Нет";
-            string Et = E ? "Да" : "Нет";
+            string Dt = D ? "Да" : "";
+            string Et = E ? "Да" : "";
 
             rows.Add(new RowData()
             {
@@ -208,10 +208,6 @@ namespace MZPO.Processors
 
         private void ProcessLead(Lead l, int sheetId)
         {
-            #region Filtering bad leads
-            if (l.id == 19849577) return;
-            #endregion
-
             #region Preparing fields
             int leadNumber = l.id;
             string contactName;
@@ -228,7 +224,7 @@ namespace MZPO.Processors
             if (l._embedded.companies.Any())
                 company = compRepo.GetById(l._embedded.companies.FirstOrDefault().id);
             else
-                company = new Company();
+                company = new Company() { name = $"Сделка {leadNumber} без компании" };
 
             companyName = company.name;
 
@@ -252,7 +248,8 @@ namespace MZPO.Processors
             if ((l._embedded.contacts != null) &&
                 (l._embedded.contacts.Any()))
                 foreach (var c in l._embedded.contacts)
-                    contacts.Add(contRepo.GetById(c.id));
+                    try { contacts.Add(contRepo.GetById(c.id)); }
+                    catch { continue; }
             #endregion
 
             #region Getting contact name if any
@@ -309,35 +306,40 @@ namespace MZPO.Processors
             }
 
             #region Remove duplicates
-            requestContainer.Add(new Request()
+            if (requestContainer.Any())
             {
-                DeleteDuplicates = new DeleteDuplicatesRequest()
+                requestContainer.Add(new Request()
                 {
-                    Range = new GridRange()
+                    DeleteDuplicates = new DeleteDuplicatesRequest()
                     {
-                        SheetId = m.Item1,
-                        StartColumnIndex = 0,
-                        EndColumnIndex = 6,
-                        StartRowIndex = 1,
-                        EndRowIndex = requestContainer.Count+2
-                    },
-                    ComparisonColumns = new List<DimensionRange>() { new DimensionRange()
+                        Range = new GridRange()
+                        {
+                            SheetId = m.Item1,
+                            StartColumnIndex = 0,
+                            EndColumnIndex = 6,
+                            StartRowIndex = 1,
+                            EndRowIndex = requestContainer.Count + 2
+                        },
+                        ComparisonColumns = new List<DimensionRange>() { new DimensionRange()
                     {
                         SheetId = m.Item1,
                         Dimension = "COLUMNS",
                         StartIndex = 2,
                         EndIndex = 3
                     } }
-                }
-            });
-
+                    }
+                });
+            }
             #endregion
 
             #region Updating sheet
-            var batchRequest = new BatchUpdateSpreadsheetRequest();
-            batchRequest.Requests = requestContainer;
+            if (requestContainer.Any())
+            {
+                var batchRequest = new BatchUpdateSpreadsheetRequest();
+                batchRequest.Requests = requestContainer;
 
-            _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+                _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+            }
             #endregion
         }
         #endregion
