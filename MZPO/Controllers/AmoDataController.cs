@@ -14,11 +14,15 @@ namespace MZPO.Controllers
     {
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
+        private readonly GSheets _gSheets;
+        private readonly string sheetId;
 
-        public AmoDataController(Amo amo, TaskList processQueue)
+        public AmoDataController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
+            _gSheets = gSheets;
+            sheetId = "";
         }
 
         // GET: reports/data
@@ -32,24 +36,8 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => dataReportProcessor.Value.Run());                                                //Запускаем его
             _processQueue.Add(task, cts, "report_data", _acc.name, "DataReport");                                       //И добавляем в очередь
+
             return Ok();
         }
-
-        // GET reports/data/1606770000,1609448400
-        //[HttpGet("{from},{to}")]                                                                                        //Запрашиваем отчёт для диапазона дат
-        //public ActionResult Get(string from, string to)
-        //{
-        //    if (!long.TryParse(from, out long dateFrom) &
-        //        !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
-
-        //    CancellationTokenSource cts = new CancellationTokenSource();
-        //    CancellationToken token = cts.Token;
-        //    Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                         //Создаём экземпляр процессора
-        //                       new CorpReportProcessor(_acc, _processQueue, token, dateFrom, dateTo));
-
-        //    Task task = Task.Run(() => corpReportProcessor.Value.Run());                                                //Запускаем его
-        //    _processQueue.Add(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь
-        //    return Ok();
-        //}
     }
 }

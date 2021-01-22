@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace MZPO.Processors
 {
-    public class UnsortedProcessor
+    public class UnsortedProcessor : IProcessor
     {
         #region Definition
         protected readonly IBaseRepo<Lead> _leadRepo;

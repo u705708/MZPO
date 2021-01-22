@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace MZPO.Processors
 {
-    public class UnfinishedContactsProcessor
+    public class UnfinishedContactsProcessor : IProcessor
     {
         #region Definition
         private readonly TaskList _processQueue;

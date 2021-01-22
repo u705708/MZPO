@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace MZPO.Processors
 {
-    public class MassProcessor
+    public class MassProcessor : IProcessor
     {
         protected readonly IBaseRepo<Lead> _leadRepo;
         public List<Entry> list;

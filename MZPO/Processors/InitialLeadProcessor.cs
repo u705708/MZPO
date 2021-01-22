@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.Processors
 {
-    public class InitialLeadProcessor : AbstractProcessor                                                               //Процессор осуществляет первоначальную обработку сделок
+    public class InitialLeadProcessor : AbstractProcessor, IProcessor                                                               //Процессор осуществляет первоначальную обработку сделок
     {
         #region Definition
         public InitialLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, CancellationToken token) 
