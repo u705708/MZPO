@@ -22,7 +22,7 @@ namespace MZPO.Controllers
             _acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
             _gSheets = gSheets;
-            sheetId = "";
+            sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk";
         }
 
         // GET: reports/data
@@ -32,7 +32,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<UnfinishedContactsProcessor> dataReportProcessor = new Lazy<UnfinishedContactsProcessor>(() =>                         //Создаём экземпляр процессора
-                               new UnfinishedContactsProcessor(_acc, _processQueue, token));
+                               new UnfinishedContactsProcessor(_acc, _gSheets, sheetId, _processQueue, token));
 
             Task task = Task.Run(() => dataReportProcessor.Value.Run());                                                //Запускаем его
             _processQueue.Add(task, cts, "report_data", _acc.name, "DataReport");                                       //И добавляем в очередь

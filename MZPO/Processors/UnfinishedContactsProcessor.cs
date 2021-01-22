@@ -1,4 +1,6 @@
-﻿using MZPO.AmoRepo;
+﻿using Google.Apis.Sheets.v4;
+using Google.Apis.Sheets.v4.Data;
+using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
 using System.Collections.Generic;
@@ -14,21 +16,26 @@ namespace MZPO.Processors
         #region Definition
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
+        private readonly SheetsService _service;
+        private readonly string SpreadsheetId;
         private readonly BaseRepository<Lead> leadRepo;
         private readonly BaseRepository<Company> compRepo;
         private readonly BaseRepository<Contact> contRepo;
         protected readonly CancellationToken _token;
 
-        public UnfinishedContactsProcessor(AmoAccount acc, TaskList processQueue, CancellationToken token)
+        public UnfinishedContactsProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
         {
             _acc = acc;
             _processQueue = processQueue;
             _token = token;
+            _service = gSheets.GetService();
+            SpreadsheetId = spreadsheetId;
             leadRepo = _acc.GetRepo<Lead>();
             compRepo = _acc.GetRepo<Company>();
             contRepo = _acc.GetRepo<Contact>();
         }
 
+        private List<Request> requestContainer;
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
             (2375116, "Киреева Светлана"),
@@ -43,6 +50,298 @@ namespace MZPO.Processors
         };
         #endregion
 
+        #region Supplementary methods
+        private void PrepareSheets()
+        {
+            #region Retrieving spreadsheet
+            requestContainer = new List<Request>();
+            var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
+            #endregion
+
+            #region Deleting existing sheets except first
+            foreach (var s in spreadsheet.Sheets)
+            {
+                if (s.Properties.Index == 0) continue;
+                requestContainer.Add(new Request() { DeleteSheet = new DeleteSheetRequest() { SheetId = s.Properties.SheetId } });
+            }
+            #endregion
+
+            #region Creating CellFormat for alignment
+            var centerAlignment = new CellFormat()
+            {
+                TextFormat = new TextFormat()
+                {
+                    Bold = true,
+                    FontSize = 11
+                },
+                HorizontalAlignment = "CENTER",
+                VerticalAlignment = "MIDDLE"
+            };
+
+            var leftAlignment = new CellFormat()
+            {
+                TextFormat = new TextFormat()
+                {
+                    Bold = true,
+                    FontSize = 11
+                },
+                HorizontalAlignment = "LEFT",
+                VerticalAlignment = "MIDDLE"
+            };
+            #endregion
+
+            foreach (var m in managers)
+            {
+                #region Adding sheet
+                requestContainer.Add(new Request()
+                {
+                    AddSheet = new AddSheetRequest()
+                    {
+                        Properties = new SheetProperties()
+                        {
+                            GridProperties = new GridProperties()
+                            {
+                                ColumnCount = 6,
+                                FrozenRowCount = 1
+                            },
+                            Title = m.Item2,
+                            SheetId = m.Item1
+                        }
+                    }
+                });
+                #endregion
+
+                #region Adding header
+                requestContainer.Add(new Request()
+                {
+                    UpdateCells = new UpdateCellsRequest()
+                    {
+
+                        Fields = "*",
+                        Start = new GridCoordinate() { ColumnIndex = 0, RowIndex = 0, SheetId = m.Item1 },
+                        Rows = new List<RowData>() { new RowData() { Values = new List<CellData>(){
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Номер сделки"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Название контакта"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Название компании"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Есть телефоны"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Есть email?"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "ЛПР"} }
+                            } }
+                        }
+                    }
+                });
+                #endregion
+
+                #region Adjusting column width
+                var width = new List<int>() { 116, 144, 300, 124, 92, 200 };
+                int i = 0;
+
+                foreach (var c in width)
+                {
+                    requestContainer.Add(new Request()
+                    {
+                        UpdateDimensionProperties = new UpdateDimensionPropertiesRequest()
+                        {
+                            Fields = "PixelSize",
+                            Range = new DimensionRange() { SheetId = m.Item1, Dimension = "COLUMNS", StartIndex = i, EndIndex = i + 1 },
+                            Properties = new DimensionProperties() { PixelSize = c }
+                        }
+                    });
+                    i++;
+                }
+                #endregion
+            }
+
+            #region Executing request
+            var batchRequest = new BatchUpdateSpreadsheetRequest();
+            batchRequest.Requests = requestContainer;
+
+            _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+            #endregion
+        }
+
+        private void PrepareRow(int sheetId, int A, string B, string C, bool D, bool E, string F)
+        {
+            #region Prepare data
+            var rows = new List<RowData>();
+
+            string Dt = D ? "Да" : "Нет";
+            string Et = E ? "Да" : "Нет";
+
+            rows.Add(new RowData()
+            {
+                Values = new List<CellData>(){
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ NumberValue = A},
+                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = B},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = C},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = Dt},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = Et},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = F},
+                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                }
+            });
+            #endregion
+
+            #region Add request
+            requestContainer.Add(new Request()
+            {
+                AppendCells = new AppendCellsRequest()
+                {
+                    Fields = '*',
+                    Rows = rows,
+                    SheetId = sheetId
+                }
+            });
+            #endregion
+        }
+
+        private void ProcessLead(Lead l, int sheetId)
+        {
+            #region Filtering bad leads
+            if (l.id == 19849577) return;
+            #endregion
+
+            #region Preparing fields
+            int leadNumber = l.id;
+            string contactName;
+            string companyName;
+            bool phoneAdded = false;
+            bool emailAdded = false;
+            string LPR = "";
+
+            Company company;
+            List<Contact> contacts = new List<Contact>();
+            #endregion
+
+            #region Processing associated company
+            if (l._embedded.companies.Any())
+                company = compRepo.GetById(l._embedded.companies.FirstOrDefault().id);
+            else
+                company = new Company();
+
+            companyName = company.name;
+
+            #region Getting LPR
+            if ((company.custom_fields_values != null) &&
+                company.custom_fields_values.Any(x => x.field_id == 640657))
+                LPR = (string)company.custom_fields_values.FirstOrDefault(x => x.field_id == 640657).values[0].value;
+            #endregion
+
+            #region Checking company for contacts
+            if ((company.custom_fields_values != null) &&
+                company.custom_fields_values.Any(x => x.field_id == 33575))
+                phoneAdded = true;
+            if ((company.custom_fields_values != null) &&
+                company.custom_fields_values.Any(x => x.field_id == 33577))
+                emailAdded = true;
+            #endregion
+            #endregion
+
+            #region Collecting associated contacts
+            if ((l._embedded.contacts != null) &&
+                (l._embedded.contacts.Any()))
+                foreach (var c in l._embedded.contacts)
+                    contacts.Add(contRepo.GetById(c.id));
+            #endregion
+
+            #region Getting contact name if any
+            if (contacts.Any())
+                contactName = contacts.First().name;
+            else contactName = "";
+            #endregion
+
+            #region Checking contacts
+            if (contacts.Any())
+                foreach (var c in contacts)
+                {
+                    if (c.custom_fields_values == null) continue;
+                    if (c.custom_fields_values.Any(x => x.field_id == 33575))
+                        phoneAdded = true;
+                    if (c.custom_fields_values.Any(x => x.field_id == 33577))
+                        emailAdded = true;
+                }
+            #endregion
+
+            #region Preparing row if needed
+            if (!phoneAdded || !emailAdded)
+                PrepareRow(sheetId, leadNumber, contactName, companyName, phoneAdded, emailAdded, LPR);
+            #endregion
+        }
+
+        private void ProcessManager((int, string) m)
+        {
+            requestContainer = new List<Request>();
+
+            #region Preparing criteria for amo requests
+            List<string> criteria = new List<string>()
+                {
+                    $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=142&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
+                    $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=19529785&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
+                    $"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=142&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
+                    $"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={m.Item1}&with=companies,contacts"
+                };
+            #endregion
+
+            foreach (var cr in criteria)
+            {
+                var allLeads = leadRepo.GetByCriteria(cr);
+
+                if (allLeads == null) continue;
+
+                foreach (var l in allLeads)
+                {
+                    if (_token.IsCancellationRequested) break;
+
+                    ProcessLead(l, m.Item1);
+                }
+                GC.Collect();
+            }
+
+            #region Remove duplicates
+            requestContainer.Add(new Request()
+            {
+                DeleteDuplicates = new DeleteDuplicatesRequest()
+                {
+                    Range = new GridRange()
+                    {
+                        SheetId = m.Item1,
+                        StartColumnIndex = 0,
+                        EndColumnIndex = 6,
+                        StartRowIndex = 1,
+                        EndRowIndex = requestContainer.Count+2
+                    },
+                    ComparisonColumns = new List<DimensionRange>() { new DimensionRange()
+                    {
+                        SheetId = m.Item1,
+                        Dimension = "COLUMNS",
+                        StartIndex = 2,
+                        EndIndex = 3
+                    } }
+                }
+            });
+
+            #endregion
+
+            #region Updating sheet
+            var batchRequest = new BatchUpdateSpreadsheetRequest();
+            batchRequest.Requests = requestContainer;
+
+            _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+            #endregion
+        }
+        #endregion
+
         #region Realization
         public void Run()
         {
@@ -52,86 +351,13 @@ namespace MZPO.Processors
                 return;
             }
 
+            PrepareSheets();
+
             foreach (var m in managers)
             {
                 if (_token.IsCancellationRequested) break;
 
-                List<string> criteria = new List<string>()
-                {
-                    $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=142&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
-                    $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=19529785&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
-                    $"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=142&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
-                    $"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={m.Item1}&with=companies,contacts"
-                };
-
-                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                using StreamWriter sw = new StreamWriter($"{m.Item2}.csv", true, Encoding.GetEncoding("windows-1251"));
-                sw.WriteLine("Номер сделки;Название контакта;Название компании;Есть телефоны?;Есть email?;ЛПР");
-
-                foreach (var cr in criteria)
-                {
-                    var allLeads = leadRepo.GetByCriteria(cr);
-
-                    if (allLeads == null) continue;
-
-                    foreach (var l in allLeads)
-                    {
-                        if (_token.IsCancellationRequested) break;
-
-                        int leadNumber = l.id;
-                        string contactName;
-                        string companyName;
-                        bool phoneAdded = false;
-                        bool emailAdded = false;
-                        string LPR = "";
-
-                        Company company;
-                        List<Contact> contacts = new List<Contact>();
-
-                        if (leadNumber == 19849577) continue;
-
-                        if (l._embedded.companies.Any())
-                            company = compRepo.GetById(l._embedded.companies.FirstOrDefault().id);
-                        else
-                            company = new Company();
-
-                        companyName = company.name;
-
-                        if ((company.custom_fields_values != null) &&
-                            company.custom_fields_values.Any(x => x.field_id == 640657))
-                            LPR = (string)company.custom_fields_values.FirstOrDefault(x => x.field_id == 640657).values[0].value;
-
-                        if ((l._embedded.contacts != null) &&
-                            (l._embedded.contacts.Any()))
-                            foreach (var c in l._embedded.contacts)
-                                contacts.Add(contRepo.GetById(c.id));
-
-                        if (contacts.Any())
-                            contactName = contacts.First().name;
-                        else contactName = "";
-
-                        if ((company.custom_fields_values != null) &&
-                            company.custom_fields_values.Any(x => x.field_id == 33575))
-                            phoneAdded = true;
-                        if ((company.custom_fields_values != null) &&
-                            company.custom_fields_values.Any(x => x.field_id == 33577))
-                            emailAdded = true;
-
-                        if (contacts.Any())
-                            foreach (var c in contacts)
-                            {
-                                if (c.custom_fields_values == null) continue;
-                                if (c.custom_fields_values.Any(x => x.field_id == 33575))
-                                    phoneAdded = true;
-                                if (c.custom_fields_values.Any(x => x.field_id == 33577))
-                                    emailAdded = true;
-                            }
-
-                        if (!phoneAdded || !emailAdded)
-                            sw.WriteLine($"{leadNumber};{contactName};{companyName};{phoneAdded};{emailAdded};{LPR}");
-                    }
-                    GC.Collect();
-                }
+                ProcessManager(m);
             }
             _processQueue.Remove("report_data");
         }

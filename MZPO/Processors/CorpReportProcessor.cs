@@ -16,12 +16,12 @@ namespace MZPO.Processors
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
         private readonly SheetsService _service;
+        private readonly string SpreadsheetId;
         private readonly long _dateFrom;
         private readonly long _dateTo;
         private readonly BaseRepository<Lead> leadRepo;
         private readonly BaseRepository<Company> compRepo;
         protected readonly CancellationToken _token;
-        private readonly string SpreadsheetId;
 
         public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, CancellationToken token, long dateFrom, long dateTo)
         {
@@ -59,7 +59,7 @@ namespace MZPO.Processors
             var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
             #endregion
 
-            #region Deleting existing sheets
+            #region Deleting existing sheets except first
             foreach (var s in spreadsheet.Sheets)
             {
                 if (s.Properties.Index == 0) continue;
@@ -93,7 +93,7 @@ namespace MZPO.Processors
 
             foreach (var m in managers)
             {
-                #region Adding sheet prperties
+                #region Adding sheet
                 requestContainer.Add(new Request()
                 {
                     AddSheet = new AddSheetRequest()
