@@ -30,8 +30,8 @@ namespace MZPO.Controllers
         public Testing(Amo amo, TaskList processQueue)
         {
             _amo = amo;
-            //_acc = amo.GetAccountById(28395871);
-            _acc = amo.GetAccountById(19453687);
+            _acc = amo.GetAccountById(28395871);
+            //_acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
         }
 
@@ -60,16 +60,22 @@ namespace MZPO.Controllers
             //return Ok(JsonConvert.SerializeObject(leadRepo.GetById(27200619), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
             //return Ok(companyRepo.GetById(1494207));
             //return Ok(contactRepo.GetById(46146799));
-            return Ok(leadRepo.GetById(26375219));
+            return Ok(leadRepo.GetNotes(23257195));
 
-            //return Ok();
+            //string crit = @"filter[pipeline_id][0]=3198184&filter[pipeline_id][0]=3566374&filter[pipeline_id][0]=3558964&filter[pipeline_id][0]=3558991&filter[pipeline_id][0]=3558922&filter[created_at][from]=1606770000&filter[created_at][to]=1609448399&filter[responsible_user_id]=2375107";
+            //string crit = @"filter[pipeline_id][0]=3198184&filter[created_at][from]=1606770000&filter[created_at][to]=1609448399&filter[responsible_user_id]=2375107";
+
+            //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria(crit), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
+            //return Ok(leadRepo.GetByCriteria(crit));
+
+
+            return Ok();
 
             //var _list = JsonConvert.DeserializeObject<Dictionary<int, string>>(File.ReadAllText(@"todo.json"));
 
             //var proc = new TestProcessor(leadRepo);
             //proc.Run();
 
-            //return Ok();
         }
 
         // GET api/<Testing>/5
