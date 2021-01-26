@@ -245,21 +245,35 @@ namespace MZPO.Processors
             #endregion
 
             #region Collecting associated contacts
+
+            var contactIdList = new List<int>();
+            var criteria = new StringBuilder("");
+            int i = 0;
+
+
             if ((l._embedded.contacts != null) &&
                 (l._embedded.contacts.Any()))
                 foreach (var c in l._embedded.contacts)
-                    try { contacts.Add(contRepo.GetById(c.id)); }
-                    catch { continue; }
+                    contactIdList.Add(c.id); 
+            if ((company._embedded != null) &&
+                (company._embedded.contacts != null) &&
+                (company._embedded.contacts.Any()))
+                foreach (var c in company._embedded.contacts)
+                    contactIdList.Add(c.id);
+
+            contacts.AddRange(contRepo.BulkGetById(contactIdList));
             #endregion
 
             #region Getting contact name if any
-            if (contacts.Any())
+            if ((contacts != null) &&
+                contacts.Any())
                 contactName = contacts.First().name;
             else contactName = "";
             #endregion
 
             #region Checking contacts
-            if (contacts.Any())
+            if ((contacts != null) && 
+                contacts.Any())
                 foreach (var c in contacts)
                 {
                     if (c.custom_fields_values == null) continue;
@@ -294,6 +308,8 @@ namespace MZPO.Processors
             {
                 var allLeads = leadRepo.GetByCriteria(cr);
 
+                int counter = 0;
+
                 if (allLeads == null) continue;
 
                 foreach (var l in allLeads)
@@ -301,6 +317,7 @@ namespace MZPO.Processors
                     if (_token.IsCancellationRequested) break;
 
                     ProcessLead(l, m.Item1);
+                    counter++;
                 }
                 GC.Collect();
             }
@@ -353,14 +370,20 @@ namespace MZPO.Processors
                 return;
             }
 
+            Log.Add("Start");
+
             PrepareSheets();
 
             foreach (var m in managers)
             {
+                Log.Add($"Start: {m.Item2}");
                 if (_token.IsCancellationRequested) break;
 
                 ProcessManager(m);
+                Log.Add($"Finish: {m.Item2}");
             }
+
+            Log.Add("Finish");
             _processQueue.Remove("report_data");
         }
         #endregion

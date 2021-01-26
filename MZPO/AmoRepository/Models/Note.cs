@@ -4,6 +4,7 @@ namespace MZPO.AmoRepo
 {
     public class Note
     {
+#pragma warning disable IDE1006 // Naming Styles
         public int id { get; set; }                         //ID примечания
         public int? entity_id { get; set; }                 //ID родительской сущности примечания
         public int? created_by { get; set; }                //ID пользователя, создавший примечание
@@ -69,5 +70,6 @@ namespace MZPO.AmoRepo
                 public string reason { get; set; }
             }
         }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

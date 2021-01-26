@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 
 namespace MZPO.AmoRepo
 {
@@ -45,11 +46,14 @@ namespace MZPO.AmoRepo
             while (entityList._links.ContainsKey("next"))
             {
                 AmoRequest request = new AmoRequest("GET", entityList._links["next"].href, _auth);
-                
+                string response = "";
+
                 var next = entityList._links["next"].href;
-                var response = request.GetResponse();
+                try { response = request.GetResponse(); }
+                catch(Exception e) { Log.Add($"Bad response: {e}"); }
+                if (response == "") break;
                 try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), entityList); }
-                catch (Exception e) { entityList._links.Remove("next"); Log.Add(e.Message); }
+                catch (Exception e) { entityList._links.Remove("next"); Log.Add($"Unexpected end of List in GetList():{e}"); }
                 if (entityList._links.ContainsKey("next") && (next == entityList._links["next"].href)) entityList._links.Remove("next");
             }
 
@@ -73,6 +77,23 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}?{criteria}";
 
             return GetEmbedded(GetList(uri));
+        }
+
+        public IEnumerable<T> BulkGetById(IEnumerable<int> ids)
+        {
+            int i = 0;
+            StringBuilder criteria = new StringBuilder("");
+            List<T> result = new List<T>();
+            
+            if (ids.Any())
+            {
+                foreach (var id in ids.Distinct())
+                    criteria.Append($"filter[id][{i++}]={id}&");
+                criteria.Append($"with=companies,contacts,leads");
+
+                result.AddRange(GetByCriteria(criteria.ToString()));
+            }
+            return result;
         }
 
         public T GetById(int id)
