@@ -73,11 +73,6 @@ namespace MZPO.AmoRepo
                 public string name { get; set; }                                //Название причины отказа
             }
 
-            public class Companies
-            {
-                public int id { get; set; }                                     //ID контакта, привязанного к сделке
-            }
-
             public class CatalogElements
             {
                 public int id { get; set; }                                     //ID элемента, привязанного к сделке

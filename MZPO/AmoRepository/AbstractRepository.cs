@@ -20,7 +20,8 @@ namespace MZPO.AmoRepo
                 public IEnumerable<Lead> leads;
                 public IEnumerable<Contact> contacts;
                 //public IEnumerable<Customer> customers;
-                //public IEnumerable<Company> companies;
+                public IEnumerable<Company> companies;
+                public IEnumerable<Event> events;
                 public IEnumerable<Note> notes;
                 public IEnumerable<Tag> tags;
                 public IEnumerable<CustomField> custom_fields;

@@ -115,6 +115,13 @@ namespace MZPO.AmoRepo
         }
         public IEnumerable<T> Save(T payload) => Save(new List<T>() { payload });
 
+        public IEnumerable<Event> GetEvents(int id)
+        {
+            var uri = $"{_apiAddress}events?filter[entity]=lead&filter[entity_id][]={id}";
+
+            return GetList(uri)._embedded.events.ToList();
+        }
+
         public IEnumerable<Note> GetNotes(int id)
         {
             var uri = $"{_apiAddress}{_entityLink}/{id}/notes";

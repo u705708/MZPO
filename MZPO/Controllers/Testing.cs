@@ -60,7 +60,10 @@ namespace MZPO.Controllers
             //return Ok(JsonConvert.SerializeObject(leadRepo.GetById(27200619), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
             //return Ok(companyRepo.GetById(1494207));
             //return Ok(contactRepo.GetById(46146799));
-            return Ok(leadRepo.GetNotes(23257195));
+            
+            var notes = leadRepo.GetEvents(23459475);
+            var filteredNotes = notes;
+            return Ok(filteredNotes);
 
             //string crit = @"filter[pipeline_id][0]=3198184&filter[pipeline_id][0]=3566374&filter[pipeline_id][0]=3558964&filter[pipeline_id][0]=3558991&filter[pipeline_id][0]=3558922&filter[created_at][from]=1606770000&filter[created_at][to]=1609448399&filter[responsible_user_id]=2375107";
             //string crit = @"filter[pipeline_id][0]=3198184&filter[created_at][from]=1606770000&filter[created_at][to]=1609448399&filter[responsible_user_id]=2375107";
@@ -69,7 +72,7 @@ namespace MZPO.Controllers
             //return Ok(leadRepo.GetByCriteria(crit));
 
 
-            return Ok();
+            //return Ok();
 
             //var _list = JsonConvert.DeserializeObject<Dictionary<int, string>>(File.ReadAllText(@"todo.json"));
 

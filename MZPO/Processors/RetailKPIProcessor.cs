@@ -83,7 +83,7 @@ namespace MZPO.Processors
         #region Supplementary methods
         private void AddHeader(int? sheetId)
         {
-            #region Creating CellFormat for alignment
+            #region Creating CellFormat for header
             var centerAlignment = new CellFormat()
             {
                 TextFormat = new TextFormat()
@@ -92,17 +92,6 @@ namespace MZPO.Processors
                     FontSize = 11
                 },
                 HorizontalAlignment = "CENTER",
-                VerticalAlignment = "MIDDLE"
-            };
-
-            var leftAlignment = new CellFormat()
-            {
-                TextFormat = new TextFormat()
-                {
-                    Bold = true,
-                    FontSize = 11
-                },
-                HorizontalAlignment = "LEFT",
                 VerticalAlignment = "MIDDLE"
             };
             #endregion
