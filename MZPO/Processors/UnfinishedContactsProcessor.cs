@@ -248,8 +248,6 @@ namespace MZPO.Processors
 
             var contactIdList = new List<int>();
             var criteria = new StringBuilder("");
-            int i = 0;
-
 
             if ((l._embedded.contacts != null) &&
                 (l._embedded.contacts.Any()))

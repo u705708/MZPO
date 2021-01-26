@@ -73,11 +73,11 @@ namespace MZPO.Processors
             { "B",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###" } } },
             { "C",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###" } } },
             { "D",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###" } } },
-            { "E",  new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
+            { "E",  new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00 руб" } } },
             { "F",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "PERCENT", Pattern = "# ### ###.00 %" } } },
-            { "G",  new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
-            { "H",  new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
-            { "I",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###" } } }
+            { "G",  new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00 руб" } } },
+            { "H",  new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00 дней" } } },
+            { "I",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ### сек" } } }
         };
 
         #region Supplementary methods
@@ -121,7 +121,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Adjusting column width
-            var width = new List<int>() { 168, 120, 84, 72, 96, 96, 120, 108, 144};
+            var width = new List<int>() { 168, 120, 84, 72, 108, 96, 120, 108, 144};
             int i = 0;
 
             foreach (var c in width)
@@ -140,7 +140,7 @@ namespace MZPO.Processors
             #endregion
         }
 
-        private void PrepareSheets()
+        private async void PrepareSheets()
         {
             #region Retrieving spreadsheet
             requestContainer = new List<Request>();
@@ -241,7 +241,7 @@ namespace MZPO.Processors
             var batchRequest = new BatchUpdateSpreadsheetRequest();
             batchRequest.Requests = requestContainer;
 
-            _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+            await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
             #endregion
         }
 
@@ -302,7 +302,7 @@ namespace MZPO.Processors
             return 0;
         }
 
-        private void ProcessManager((int, string) m, (int,int) d)
+        private async void ProcessManager((int, string) m, (int,int) d)
         {
             requestContainer = new List<Request>();
 
@@ -356,14 +356,14 @@ namespace MZPO.Processors
                 var batchRequest = new BatchUpdateSpreadsheetRequest();
                 batchRequest.Requests = requestContainer;
 
-                _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
             }
             #endregion
 
             GC.Collect();
         }
 
-        private void FinalizeManagers()
+        private async void FinalizeManagers()
         {
             requestContainer = new List<Request>();
 
@@ -409,11 +409,18 @@ namespace MZPO.Processors
                 #region Add request
                 requestContainer.Add(new Request()
                 {
-                    AppendCells = new AppendCellsRequest()
+                    UpdateCells = new UpdateCellsRequest()
                     {
                         Fields = '*',
                         Rows = rows,
-                        SheetId = m.Item1
+                        Range = new GridRange()
+                        {
+                            SheetId = m.Item1,
+                            StartRowIndex = dataRanges.Count + 1,
+                            EndRowIndex = dataRanges.Count + 2,
+                            StartColumnIndex = 0,
+                            EndColumnIndex = columns.Count()
+                        }
                     }
                 });
                 #endregion
@@ -443,12 +450,12 @@ namespace MZPO.Processors
                 var batchRequest = new BatchUpdateSpreadsheetRequest();
                 batchRequest.Requests = requestContainer;
 
-                _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
             }
             #endregion
         }
 
-        private void FinalizeTotals()
+        private async void FinalizeTotals()
         {
             requestContainer = new List<Request>();
 
@@ -529,7 +536,7 @@ namespace MZPO.Processors
                 var batchRequest = new BatchUpdateSpreadsheetRequest();
                 batchRequest.Requests = requestContainer;
 
-                _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
             }
             #endregion
         }
