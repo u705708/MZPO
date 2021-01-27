@@ -117,7 +117,7 @@ namespace MZPO.AmoRepo
 
         public IEnumerable<Event> GetEvents(int id)
         {
-            var uri = $"{_apiAddress}events?filter[entity]=lead&filter[entity_id][]={id}";
+            var uri = $"{_apiAddress}events?filter[entity]={_entityLink[0..^1]}&filter[entity_id][]={id}";
 
             return GetList(uri)._embedded.events.ToList();
         }
@@ -127,6 +127,13 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}/{id}/notes";
 
             return GetList(uri)._embedded.notes.ToList();
+        }
+        public Note GetNoteById(int id)
+        {
+            var uri = $"{_apiAddress}{_entityLink}/notes/{id}";
+
+            AmoRequest request = new AmoRequest("GET", uri, _auth);
+            return GetResult<Note>(request, new Note());
         }
 
         public IEnumerable<Note> AddNotes(IEnumerable<Note> payload)

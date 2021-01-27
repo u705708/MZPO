@@ -39,58 +39,105 @@ namespace MZPO.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            //long dateFrom = 1606770000;
-            //long dateTo = 1609448400;
-
-            //CancellationTokenSource cts = new CancellationTokenSource();
-            //CancellationToken token = cts.Token;
-            //Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                      //Создаём экземпляр процессора сделки
-            //                   new CorpReportProcessor(_acc, _processQueue, token, dateFrom, dateTo));
-
-            //Task task = Task.Run(() => corpReportProcessor.Value.Run());                                               //Запускаем его
-            //_processQueue.Add(task, cts, "0", _acc.name, "CorpReport");                                                //И добавляем в очередь
-            //return Ok();
-
-            //var contactRepo = _acc.GetRepo<Contact>();
             //var companyRepo = _acc.GetRepo<Company>();
-            var leadRepo = _acc.GetRepo<Lead>();
+            //var leadRepo = _acc.GetRepo<Lead>();
+            //var contactRepo = _acc.GetRepo<Contact>();
 
-            //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria("filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[created_at][from]=1606770000&filter[created_at][to]=1609448400"), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
-            //return Ok(leadRepo.GetByCriteria("filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[custom_fields_values][118675][from]=1606770000&filter[custom_fields_values][118675][to]=1609448400&filter[responsible_user_id]=2375122"));
             //return Ok(JsonConvert.SerializeObject(leadRepo.GetById(27200619), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
-            //return Ok(companyRepo.GetById(1494207));
-            //return Ok(contactRepo.GetById(46146799));
-            
-            var notes = leadRepo.GetEvents(23459475);
-            var filteredNotes = notes;
-            return Ok(filteredNotes);
 
-            //string crit = @"filter[pipeline_id][0]=3198184&filter[pipeline_id][0]=3566374&filter[pipeline_id][0]=3558964&filter[pipeline_id][0]=3558991&filter[pipeline_id][0]=3558922&filter[created_at][from]=1606770000&filter[created_at][to]=1609448399&filter[responsible_user_id]=2375107";
-            //string crit = @"filter[pipeline_id][0]=3198184&filter[created_at][from]=1606770000&filter[created_at][to]=1609448399&filter[responsible_user_id]=2375107";
+            //var notes = contactRepo.GetEvents(32858435);
+            //var notes = contactRepo.GetNotes(32858435);
+            //var notes = leadRepo.GetEvents(23464575);
+            //var notes = leadRepo.GetNotes(23465041);
 
-            //return Ok(JsonConvert.SerializeObject(leadRepo.GetByCriteria(crit), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
-            //return Ok(leadRepo.GetByCriteria(crit));
-
-
-            //return Ok();
-
-            //var _list = JsonConvert.DeserializeObject<Dictionary<int, string>>(File.ReadAllText(@"todo.json"));
-
-            //var proc = new TestProcessor(leadRepo);
-            //proc.Run();
-
+            return Ok();
         }
 
         // GET api/<Testing>/5
-        //[HttpGet("{input}")]
-        //public FileStreamResult Get(string input)
-        //{
-        //    var stream = new FileStream("report.xls", FileMode.Open);
-        //    return new FileStreamResult(stream, "application/vnd.ms-excel")
-        //    {
-        //        FileDownloadName = "report.xls"
-        //    };
-        //}
+        [HttpGet("{input}")]
+        public ActionResult Get(string input)
+        {
+            if (!Int32.TryParse(input, out int leadId)) return BadRequest("Incorrect lead number");
+
+            var leadRepo = _acc.GetRepo<Lead>();
+            var contactRepo = _acc.GetRepo<Contact>();
+
+            List<int> replyTimestamps = new List<int>();
+            Lead lead = leadRepo.GetById(leadId);
+
+            int timeOfReference = (int)lead.created_at;
+
+            #region Результат звонка
+            if (lead.custom_fields_values != null)
+            {
+                var cf = lead.custom_fields_values.FirstOrDefault(x => x.field_id == 644675);
+                if (cf != null)
+                {
+                    var cfValue = (string)cf.values[0].value;
+                    if (cfValue == "Принят" || cfValue == "Ручная сделка") return Ok("0");
+                }
+            }
+            #endregion
+
+            var leadEvents = leadRepo.GetEvents(leadId);
+
+            #region Смена ответственного
+            if ((leadEvents != null) &&
+                leadEvents.Where((x => x.type == "entity_responsible_changed")).Any(x => x.value_before[0].responsible_user.id == 2576764))
+                timeOfReference = (int)leadEvents.Where((x => x.type == "entity_responsible_changed")).First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
+            #endregion
+
+            #region Исходящие сообщения в чат
+            if (leadEvents != null)
+                foreach (var e in leadEvents)
+                    if (e.type == "outgoing_chat_message")
+                        replyTimestamps.Add((int)e.created_at);
+            #endregion
+
+            #region Исходящее письмо
+            var notes = leadRepo.GetNotes(leadId);
+            if (notes != null)
+                foreach (var n in notes)
+                    if ((n.note_type == "amomail_message") && (n.parameters.income == false))
+                        replyTimestamps.Add((int)n.created_at);
+            #endregion
+
+            #region Исходящий звонок
+            if (lead._embedded.contacts != null)
+                foreach (var c in lead._embedded.contacts)
+                {
+                    var contactEvents = contactRepo.GetEvents(c.id);
+                    if (contactEvents != null)
+                        foreach (var e in contactEvents)
+                        {
+                            if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
+                            {
+                                var callNote = contactRepo.GetNoteById(e.value_after[0].note.id);
+                                int duration = 0;
+
+                                if (callNote.parameters != null && callNote.parameters.duration > 0)
+                                    duration = (int)callNote.parameters.duration;
+
+                                int actualCallTime = (int)e.created_at - duration;
+
+                                if ((e.type == "outgoing_call") && (actualCallTime > lead.created_at))
+                                    replyTimestamps.Add(actualCallTime);
+                                else if ((duration > 0) && (actualCallTime > lead.created_at))
+                                {
+                                    replyTimestamps.Add(actualCallTime);
+                                }
+                            }
+                        }
+                }
+            #endregion
+
+            replyTimestamps.Add(timeOfReference + 86400);
+            int result = replyTimestamps.Select(x => x - timeOfReference).Min();
+
+            return Ok(result);
+            
+            return Ok();
+        }
 
         //POST api/<Testing>
         [HttpPost]

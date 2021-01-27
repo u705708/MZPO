@@ -51,10 +51,11 @@ namespace MZPO.Processors
 
         private readonly List<(int, int)> dataRanges = new List<(int, int)>
         {
-            (1601499600,1604177999),
-            (1604178000,1606769999),
-            (1606770000,1609448399),
+            //(1601499600,1604177999),
+            //(1604178000,1606769999),
+            //(1606770000,1609448399),
             //(1609448400,1612126799)
+            (1610917200,1611522000)
         };
 
         private readonly List<int> pipelines = new List<int>
@@ -245,7 +246,7 @@ namespace MZPO.Processors
             #endregion
         }
 
-        private void PrepareRow(int sheetId, string A, int B, int C, int D, int E, double H, int I)
+        private void PrepareRow(int sheetId, string A, int B, int C, int D, int E, double H, double I)
         {
             #region Prepare data
             var rows = new List<RowData>();
@@ -297,9 +298,93 @@ namespace MZPO.Processors
             #endregion
         }
 
-        private int GetAverageResponseTime(IEnumerable<Lead> leads)
+        private int GetLeadResponseTime(Lead lead)
         {
-            return 0;
+            List<int> replyTimestamps = new List<int>();
+
+            int timeOfReference = (int)lead.created_at;
+
+            #region Результат звонка
+            if (lead.custom_fields_values != null)
+            {
+                var cf = lead.custom_fields_values.FirstOrDefault(x => x.field_id == 644675);
+                if (cf != null)
+                {
+                    var cfValue = (string)cf.values[0].value;
+                    if (cfValue == "Принят" || cfValue == "Ручная сделка") return 0;
+                }
+            }
+            #endregion
+
+            var leadEvents = leadRepo.GetEvents(lead.id);
+
+            #region Смена ответственного
+            if ((leadEvents != null) &&
+                leadEvents.Where((x => x.type == "entity_responsible_changed")).Any(x => x.value_before[0].responsible_user.id == 2576764))
+                timeOfReference = (int)leadEvents.Where((x => x.type == "entity_responsible_changed")).First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
+            #endregion
+
+            #region Исходящие сообщения в чат
+            if (leadEvents != null)
+                foreach (var e in leadEvents)
+                    if (e.type == "outgoing_chat_message")
+                        replyTimestamps.Add((int)e.created_at);
+            #endregion
+
+            #region Исходящее письмо
+            var notes = leadRepo.GetNotes(lead.id);
+            if (notes != null)
+                foreach (var n in notes)
+                    if ((n.note_type == "amomail_message") && (n.parameters.income == false))
+                        replyTimestamps.Add((int)n.created_at);
+            #endregion
+
+            #region Звонки
+            if (lead._embedded.contacts != null)
+                foreach (var c in lead._embedded.contacts)
+                {
+                    var contactEvents = contRepo.GetEvents(c.id);
+                    if (contactEvents != null)
+                        foreach (var e in contactEvents)
+                        {
+                            if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
+                            {
+                                var callNote = contRepo.GetNoteById(e.value_after[0].note.id);
+                                int duration = 0;
+
+                                if (callNote.parameters != null && callNote.parameters.duration > 0)
+                                    duration = (int)callNote.parameters.duration;
+
+                                int actualCallTime = (int)e.created_at - duration;
+
+                                if ((e.type == "outgoing_call") && (actualCallTime > lead.created_at))
+                                    replyTimestamps.Add(actualCallTime);
+                                else if ((duration > 0) && (actualCallTime > lead.created_at))
+                                {
+                                    replyTimestamps.Add(actualCallTime);
+                                }
+                            }
+                        }
+                }
+            #endregion
+
+            replyTimestamps.Add(timeOfReference + 86400);
+            int result = replyTimestamps.Select(x => x - timeOfReference).Min();
+
+            return result;
+        }
+        
+        private double GetAverageResponseTime(IEnumerable<Lead> leads)
+        {
+            List<int> responseTimes = new List<int>();
+            List<(int, int)> check = new List<(int, int)>();
+            foreach (var lead in leads)
+            { var rTime = GetLeadResponseTime(lead);
+                responseTimes.Add(rTime); 
+                check.Add((lead.id, rTime));
+            }
+            
+            return responseTimes.Where(x => (x > 0) && (x < 86400)).Average();
         }
 
         private async void ProcessManager((int, string) m, (int,int) d)
@@ -310,12 +395,12 @@ namespace MZPO.Processors
             List<Lead> newLeads = new List<Lead>();
             foreach (var p in pipelines)
             {
-                var leadsOpened = leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&filter[responsible_user_id]={m.Item1}");
+                var leadsOpened = leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&filter[responsible_user_id]={m.Item1}&with=contacts");
                 if (leadsOpened != null)
                     newLeads.AddRange(leadsOpened);
             }
             int totalNewLeads = newLeads.Count;
-            int responseTime = GetAverageResponseTime(newLeads);
+            double responseTime = GetAverageResponseTime(newLeads);
             #endregion
 
             #region Список закрытых сделок

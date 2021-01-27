@@ -33,20 +33,20 @@ namespace MZPO.AmoRepo
 
         public class Value
         {
-            Task task { get; set; }
-            Helpbot helpbot { get; set; }
-            Transaction transaction { get; set; }
-            Note note { get; set; }
-            NPS nps { get; set; }
-            Message message { get; set; }
-            Tag tag { get; set; }
-            LeadStatus lead_status { get; set; }
-            CustomerStatus customer_status { get; set; }
-            EntityLink link { get; set; }
-            ResponsibleUser responsible_user { get; set; }
-            TaskDeadline task_deadline { get; set; }
-            TaskType task_type { get; set; }
-            CField custom_field_value { get; set; }
+            public Task task { get; set; }
+            public Helpbot helpbot { get; set; }
+            public Transaction transaction { get; set; }
+            public Note note { get; set; }
+            public NPS nps { get; set; }
+            public Message message { get; set; }
+            public Tag tag { get; set; }
+            public LeadStatus lead_status { get; set; }
+            public CustomerStatus customer_status { get; set; }
+            public EntityLink link { get; set; }
+            public ResponsibleUser responsible_user { get; set; }
+            public TaskDeadline task_deadline { get; set; }
+            public TaskType task_type { get; set; }
+            public CField custom_field_value { get; set; }
 
             public class Task
             {
