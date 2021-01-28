@@ -26,14 +26,19 @@ namespace MZPO.AmoRepo
         #region Supplementary methods
         public IEnumerable<T> GetEmbedded(EntityList entity)
         {
-            if (entity._embedded != null)
+            if ((entity != null) && (entity._embedded != null))
                 return (List<T>)entity.GetType().GetNestedType("Embedded").GetField(_entityLink).GetValue(entity._embedded);
             else return null;
         }
 
         private O GetResult<O>(AmoRequest request, O o)
         {
-            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), o); }
+            try 
+            {
+                var response = request.GetResponse();
+                if (response == "") return default(O);
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(response), o); 
+            }
             catch (Exception e) { throw new Exception("Unable to process response : " + e.Message); }
             return o;
         }
@@ -84,14 +89,28 @@ namespace MZPO.AmoRepo
             int i = 0;
             StringBuilder criteria = new StringBuilder("");
             List<T> result = new List<T>();
-            
+
             if (ids.Any())
             {
                 foreach (var id in ids.Distinct())
+                {
                     criteria.Append($"filter[id][{i++}]={id}&");
-                criteria.Append($"with=companies,contacts,leads");
+                    if (i % 10 == 0)
+                    {
+                        criteria.Append($"with=companies,contacts,leads");
 
-                result.AddRange(GetByCriteria(criteria.ToString()));
+                        result.AddRange(GetByCriteria(criteria.ToString()));
+
+                        criteria = new StringBuilder("");
+                    }
+                }
+
+                if (criteria.ToString() != "")
+                {
+                    criteria.Append($"with=companies,contacts,leads");
+
+                    result.AddRange(GetByCriteria(criteria.ToString()));
+                }
             }
             return result;
         }
@@ -122,9 +141,22 @@ namespace MZPO.AmoRepo
             return GetList(uri)._embedded.events.ToList();
         }
 
+        public IEnumerable<Event> GetEventsByCriteria(string criteria)
+        {
+            var uri = $"{_apiAddress}events?{criteria}";
+
+            return GetList(uri)._embedded.events.ToList();
+        }
+
         public IEnumerable<Note> GetNotes(int id)
         {
             var uri = $"{_apiAddress}{_entityLink}/{id}/notes";
+
+            return GetList(uri)._embedded.notes.ToList();
+        }
+        public IEnumerable<Note> GetNotesByCriteria(string criteria)
+        {
+            var uri = $"{_apiAddress}{_entityLink}/notes?{criteria}";
 
             return GetList(uri)._embedded.notes.ToList();
         }
@@ -134,6 +166,30 @@ namespace MZPO.AmoRepo
 
             AmoRequest request = new AmoRequest("GET", uri, _auth);
             return GetResult<Note>(request, new Note());
+        }
+        public IEnumerable<Note> BulkGetNotesById(IEnumerable<int> ids)
+        {
+            int i = 0;
+            StringBuilder criteria = new StringBuilder("");
+            List<Note> result = new List<Note>();
+
+            if (ids.Any())
+            {
+                foreach (var id in ids.Distinct())
+                {
+                    criteria.Append($"filter[id][{i++}]={id}&");
+                    if (i % 10 == 0)
+                    {
+                        result.AddRange(GetNotesByCriteria(criteria.ToString()));
+                        i = 0;
+                        criteria = new StringBuilder("");
+                    }
+                }
+
+                if (criteria.ToString() != "")
+                    result.AddRange(GetNotesByCriteria(criteria.ToString()));
+            }
+            return result;
         }
 
         public IEnumerable<Note> AddNotes(IEnumerable<Note> payload)

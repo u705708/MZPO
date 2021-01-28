@@ -29,6 +29,17 @@ namespace MZPO.Services
             _taskList.Add((task, tokenSource, taskId, accountId, taskName, DateTime.Now));
         }
 
+        public void UpdateTaskName(string id, string taskName)
+        {
+            if (_taskList.Any(x => x.Item3 == id))
+            {
+                var oldTask = _taskList.First(x => x.Item3 == id);
+                var newTask = (oldTask.Item1, oldTask.Item2, oldTask.Item3, oldTask.Item4, taskName, oldTask.Item6);
+                _taskList.Remove(oldTask);
+                _taskList.Add(newTask);
+            }
+        }
+
         public void Remove(string id)
         {
             if (_taskList.Any())

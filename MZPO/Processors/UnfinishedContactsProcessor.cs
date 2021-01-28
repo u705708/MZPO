@@ -302,6 +302,8 @@ namespace MZPO.Processors
                 };
             #endregion
 
+            _processQueue.UpdateTaskName("report_data", $"Unfinished Companies report: {m.Item2}");
+
             foreach (var cr in criteria)
             {
                 var allLeads = leadRepo.GetByCriteria(cr);
@@ -314,6 +316,8 @@ namespace MZPO.Processors
                 {
                     if (_token.IsCancellationRequested) break;
 
+                    if (counter % 10 == 0)
+                        _processQueue.UpdateTaskName("report_data", $"Unfinished Companies report: {m.Item2}, {counter}/{allLeads.Count()}, {cr}");
                     ProcessLead(l, m.Item1);
                     counter++;
                 }
@@ -368,20 +372,18 @@ namespace MZPO.Processors
                 return;
             }
 
-            Log.Add("Start");
+            Log.Add("Started Unfinished Companies report");
 
             PrepareSheets();
 
             foreach (var m in managers)
             {
-                Log.Add($"Start: {m.Item2}");
                 if (_token.IsCancellationRequested) break;
 
                 ProcessManager(m);
-                Log.Add($"Finish: {m.Item2}");
             }
 
-            Log.Add("Finish");
+            Log.Add("Finished Unfinished Companies report");
             _processQueue.Remove("report_data");
         }
         #endregion

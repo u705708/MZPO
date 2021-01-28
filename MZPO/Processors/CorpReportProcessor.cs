@@ -349,7 +349,11 @@ namespace MZPO.Processors
         private Task ProcessManager((int, string) m)
         {
             #region Preparing
+            _processQueue.UpdateTaskName("report_corp", $"CorpReport: {m.Item2}");
+
             var allLeads = leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={m.Item1}");
+
+            if (allLeads == null) return Task.CompletedTask;
 
             var leads = allLeads.Where(x =>
                 (x.custom_fields_values != null) &&
@@ -362,6 +366,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Processing
+            _processQueue.UpdateTaskName("report_corp", $"CorpReport: {m.Item2}, total leads {leads.Count()}");
             foreach (var l in leads)
             {
                 if (_token.IsCancellationRequested) break;
@@ -389,16 +394,20 @@ namespace MZPO.Processors
                 return;
             }
 
+            Log.Add("Started corporate report.");
+
             PrepareSheets();
 
             foreach (var m in managers)
             {
-                if (_token.IsCancellationRequested) return;
+                if (_token.IsCancellationRequested) break;
 
                 await ProcessManager(m);
 
                 GC.Collect();
             }
+
+            Log.Add("Finished corporate report.");
 
             _processQueue.Remove("report_corp");
         }

@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace MZPO.Processors
 {
-    public class RetailKPIProcessor : IProcessor
+    public class WeeklyReportProcessor : IProcessor
     {
         #region Definition
         private readonly TaskList _processQueue;
@@ -23,7 +23,7 @@ namespace MZPO.Processors
         private readonly BaseRepository<Contact> contRepo;
         protected readonly CancellationToken _token;
 
-        public RetailKPIProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
+        public WeeklyReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -55,11 +55,11 @@ namespace MZPO.Processors
 
         private readonly List<(int, int)> dataRanges = new List<(int, int)>
         {
-            (1601499600,1604177999),    //октябрь
-            (1604178000,1606769999),    //ноябрь
-            (1606770000,1609448399),    //декабрь
-            //(1609448400,1612126799)     //январь
-            //(1610917200,1611521999)     //18-24 января
+            //(1601499600,1604177999),
+            //(1604178000,1606769999),
+            //(1606770000,1609448399),
+            //(1609448400,1612126799)
+            (1610917200,1611521999)
         };
 
         private readonly List<int> pipelines = new List<int>
@@ -134,7 +134,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Adjusting column width
-            var width = new List<int>() { 168, 120, 84, 72, 108, 96, 120, 108, 144, 120, 108, 108, 108};
+            var width = new List<int>() { 168, 120, 84, 72, 108, 96, 120, 108, 144, 120, 108, 108, 108 };
             int i = 0;
 
             foreach (var c in width)
@@ -398,25 +398,25 @@ namespace MZPO.Processors
 
             return result;
         }
-        
+
         private double GetAverageResponseTime(IEnumerable<Lead> leads)
         {
             List<int> responseTimes = new List<int>();
             foreach (var lead in leads)
             {
                 if (_token.IsCancellationRequested) break;
-                
+
                 var rTime = GetLeadResponseTime(lead);
-                responseTimes.Add(rTime); 
-                
+                responseTimes.Add(rTime);
+
                 if (rTime > 3600)
                     longAnsweredLeads.Add((lead.responsible_user_id, lead.id, rTime));
             }
-            
+
             return responseTimes.Where(x => (x > 0) && (x < 3600)).Average();
         }
 
-        private async void ProcessManager((int, string) manager, (int,int) dataRange)
+        private async void ProcessManager((int, string) manager, (int, int) dataRange)
         {
             requestContainer = new List<Request>();
 
@@ -426,7 +426,7 @@ namespace MZPO.Processors
 
             #region Список новых сделок в воронках из pipelines
             _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, new leads");
-            
+
             List<Lead> newLeads = new List<Lead>();
             foreach (var p in pipelines)
             {
@@ -434,24 +434,24 @@ namespace MZPO.Processors
                 if (leadsOpened != null)
                     newLeads.AddRange(leadsOpened);
             }
-            
+
             int totalNewLeads = newLeads.Count;
-            
+
             _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, new leads: {totalNewLeads}");
-            
+
             double responseTime = GetAverageResponseTime(newLeads);
             int longLeads = longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
             #endregion
 
             #region Список закрытых сделок
             _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, closed leads");
-            
+
             List<Lead> allLeads = new List<Lead>();
-            
+
             var leadsClosed = leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
-            
+
             if (leadsClosed != null) allLeads.AddRange(leadsClosed);
-            
+
             _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, closed leads: {allLeads}");
             #endregion
 
@@ -464,7 +464,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Количество исходящих вызовов
-            int outCallsCount = outCalls.Count(x=>x.created_by == manager.Item1);
+            int outCallsCount = outCalls.Count(x => x.created_by == manager.Item1);
             #endregion
 
             #region Количество входящих вызовов
@@ -479,7 +479,7 @@ namespace MZPO.Processors
             var callIdList = new List<int>();
 
             if (inCalls != null)
-                foreach (var e in inCalls.Where(x=> x.created_by == manager.Item1))
+                foreach (var e in inCalls.Where(x => x.created_by == manager.Item1))
                     callIdList.Add(e.value_after[0].note.id);
 
             List<Note> callNotes = new List<Note>();
@@ -627,8 +627,8 @@ namespace MZPO.Processors
                         BandedRange = new BandedRange()
                         {
                             Range = new GridRange() { SheetId = m.Item1, StartRowIndex = 1, EndRowIndex = dataRanges.Count + 1 },
-                            RowProperties = new BandingProperties() 
-                            { 
+                            RowProperties = new BandingProperties()
+                            {
                                 FirstBandColor = new Color() { Red = 217f / 255, Green = 234f / 255, Blue = 211f / 255 },
                                 SecondBandColor = new Color() { Red = 182f / 255, Green = 215f / 255, Blue = 168f / 255 },
                             }

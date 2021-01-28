@@ -40,8 +40,8 @@ namespace MZPO.Controllers
         public ActionResult Get()
         {
             //var companyRepo = _acc.GetRepo<Company>();
-            //var leadRepo = _acc.GetRepo<Lead>();
-            //var contactRepo = _acc.GetRepo<Contact>();
+            var leadRepo = _acc.GetRepo<Lead>();
+            var contactRepo = _acc.GetRepo<Contact>();
 
             //return Ok(JsonConvert.SerializeObject(leadRepo.GetById(27200619), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
 
@@ -50,6 +50,9 @@ namespace MZPO.Controllers
             //var notes = leadRepo.GetEvents(23464575);
             //var notes = leadRepo.GetNotes(23465041);
 
+            //string criteria = "filter[type]=incoming_call&filter[created_at][from]=1610917200&filter[created_at][to]=1611522000";
+            //return Ok(contactRepo.GetEventsByCriteria(criteria));
+
             return Ok();
         }
 
@@ -57,84 +60,84 @@ namespace MZPO.Controllers
         [HttpGet("{input}")]
         public ActionResult Get(string input)
         {
-            if (!Int32.TryParse(input, out int leadId)) return BadRequest("Incorrect lead number");
+            //if (!Int32.TryParse(input, out int leadId)) return BadRequest("Incorrect lead number");
 
-            var leadRepo = _acc.GetRepo<Lead>();
-            var contactRepo = _acc.GetRepo<Contact>();
+            //var leadRepo = _acc.GetRepo<Lead>();
+            //var contactRepo = _acc.GetRepo<Contact>();
 
-            List<int> replyTimestamps = new List<int>();
-            Lead lead = leadRepo.GetById(leadId);
+            //List<int> replyTimestamps = new List<int>();
+            //Lead lead = leadRepo.GetById(leadId);
 
-            int timeOfReference = (int)lead.created_at;
+            //int timeOfReference = (int)lead.created_at;
 
-            #region Результат звонка
-            if (lead.custom_fields_values != null)
-            {
-                var cf = lead.custom_fields_values.FirstOrDefault(x => x.field_id == 644675);
-                if (cf != null)
-                {
-                    var cfValue = (string)cf.values[0].value;
-                    if (cfValue == "Принят" || cfValue == "Ручная сделка") return Ok("0");
-                }
-            }
-            #endregion
+            //#region Результат звонка
+            //if (lead.custom_fields_values != null)
+            //{
+            //    var cf = lead.custom_fields_values.FirstOrDefault(x => x.field_id == 644675);
+            //    if (cf != null)
+            //    {
+            //        var cfValue = (string)cf.values[0].value;
+            //        if (cfValue == "Принят" || cfValue == "Ручная сделка") return Ok("0");
+            //    }
+            //}
+            //#endregion
 
-            var leadEvents = leadRepo.GetEvents(leadId);
+            //var leadEvents = leadRepo.GetEvents(leadId);
 
-            #region Смена ответственного
-            if ((leadEvents != null) &&
-                leadEvents.Where((x => x.type == "entity_responsible_changed")).Any(x => x.value_before[0].responsible_user.id == 2576764))
-                timeOfReference = (int)leadEvents.Where((x => x.type == "entity_responsible_changed")).First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
-            #endregion
+            //#region Смена ответственного
+            //if ((leadEvents != null) &&
+            //    leadEvents.Where((x => x.type == "entity_responsible_changed")).Any(x => x.value_before[0].responsible_user.id == 2576764))
+            //    timeOfReference = (int)leadEvents.Where((x => x.type == "entity_responsible_changed")).First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
+            //#endregion
 
-            #region Исходящие сообщения в чат
-            if (leadEvents != null)
-                foreach (var e in leadEvents)
-                    if (e.type == "outgoing_chat_message")
-                        replyTimestamps.Add((int)e.created_at);
-            #endregion
+            //#region Исходящие сообщения в чат
+            //if (leadEvents != null)
+            //    foreach (var e in leadEvents)
+            //        if ((e.type == "outgoing_chat_message") || (e.type == "incoming_chat_message"))
+            //            replyTimestamps.Add((int)e.created_at);
+            //#endregion
 
-            #region Исходящее письмо
-            var notes = leadRepo.GetNotes(leadId);
-            if (notes != null)
-                foreach (var n in notes)
-                    if ((n.note_type == "amomail_message") && (n.parameters.income == false))
-                        replyTimestamps.Add((int)n.created_at);
-            #endregion
+            //#region Исходящее письмо
+            //var notes = leadRepo.GetNotes(leadId);
+            //if (notes != null)
+            //    foreach (var n in notes)
+            //        if ((n.note_type == "amomail_message") && (n.parameters.income == false))
+            //            replyTimestamps.Add((int)n.created_at);
+            //#endregion
 
-            #region Исходящий звонок
-            if (lead._embedded.contacts != null)
-                foreach (var c in lead._embedded.contacts)
-                {
-                    var contactEvents = contactRepo.GetEvents(c.id);
-                    if (contactEvents != null)
-                        foreach (var e in contactEvents)
-                        {
-                            if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
-                            {
-                                var callNote = contactRepo.GetNoteById(e.value_after[0].note.id);
-                                int duration = 0;
+            //#region Звонки
+            //if (lead._embedded.contacts != null)
+            //    foreach (var c in lead._embedded.contacts)
+            //    {
+            //        var contactEvents = contactRepo.GetEvents(c.id);
+            //        if (contactEvents != null)
+            //            foreach (var e in contactEvents)
+            //            {
+            //                if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
+            //                {
+            //                    var callNote = contactRepo.GetNoteById(e.value_after[0].note.id);
+            //                    int duration = 0;
 
-                                if (callNote.parameters != null && callNote.parameters.duration > 0)
-                                    duration = (int)callNote.parameters.duration;
+            //                    if (callNote.parameters != null && callNote.parameters.duration > 0)
+            //                        duration = (int)callNote.parameters.duration;
 
-                                int actualCallTime = (int)e.created_at - duration;
+            //                    int actualCallTime = (int)e.created_at - duration;
 
-                                if ((e.type == "outgoing_call") && (actualCallTime > lead.created_at))
-                                    replyTimestamps.Add(actualCallTime);
-                                else if ((duration > 0) && (actualCallTime > lead.created_at))
-                                {
-                                    replyTimestamps.Add(actualCallTime);
-                                }
-                            }
-                        }
-                }
-            #endregion
+            //                    if ((e.type == "outgoing_call") && (actualCallTime > lead.created_at))
+            //                        replyTimestamps.Add(actualCallTime);
+            //                    else if ((duration > 0) && (actualCallTime > lead.created_at))
+            //                    {
+            //                        replyTimestamps.Add(actualCallTime);
+            //                    }
+            //                }
+            //            }
+            //    }
+            //#endregion
 
-            replyTimestamps.Add(timeOfReference + 86400);
-            int result = replyTimestamps.Select(x => x - timeOfReference).Min();
+            //replyTimestamps.Add(timeOfReference + 86400);
+            //int result = replyTimestamps.Select(x => x - timeOfReference).Where(x => x > -600).Min();
 
-            return Ok(result);
+            //return Ok(result);
             
             return Ok();
         }
