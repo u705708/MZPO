@@ -50,9 +50,6 @@ namespace MZPO.Controllers
             //var notes = leadRepo.GetEvents(23464575);
             //var notes = leadRepo.GetNotes(23465041);
 
-            //string criteria = "filter[type]=incoming_call&filter[created_at][from]=1610917200&filter[created_at][to]=1611522000";
-            //return Ok(contactRepo.GetEventsByCriteria(criteria));
-
             return Ok();
         }
 

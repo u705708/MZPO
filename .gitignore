@@ -341,3 +341,4 @@ healthchecksdb
 /MZPO/report.xlsx
 /MZPO/log.txt
 /MZPO/client_secret.json
+/MZPO/Controllers/Testing.cs
