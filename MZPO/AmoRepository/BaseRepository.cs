@@ -56,9 +56,12 @@ namespace MZPO.AmoRepo
                 var next = entityList._links["next"].href;
                 try { response = request.GetResponse(); }
                 catch(Exception e) { Log.Add($"Bad response: {e}"); }
+                
                 if (response == "") break;
+                
                 try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), entityList); }
                 catch (Exception e) { entityList._links.Remove("next"); Log.Add($"Unexpected end of List in GetList():{e}"); }
+                
                 if (entityList._links.ContainsKey("next") && (next == entityList._links["next"].href)) entityList._links.Remove("next");
             }
 
@@ -138,27 +141,43 @@ namespace MZPO.AmoRepo
         {
             var uri = $"{_apiAddress}events?filter[entity]={_entityLink[0..^1]}&filter[entity_id][]={id}";
 
-            return GetList(uri)._embedded.events.ToList();
+            var result = GetList(uri);
+
+            if (result._embedded != null && result._embedded.events != null)
+                return result._embedded.events.ToList();
+            else return null;
         }
 
         public IEnumerable<Event> GetEventsByCriteria(string criteria)
         {
             var uri = $"{_apiAddress}events?{criteria}";
 
-            return GetList(uri)._embedded.events.ToList();
+            var result = GetList(uri);
+
+            if (result._embedded != null && result._embedded.events != null)
+                return result._embedded.events.ToList();
+            else return null;
         }
 
         public IEnumerable<Note> GetNotes(int id)
         {
             var uri = $"{_apiAddress}{_entityLink}/{id}/notes";
 
-            return GetList(uri)._embedded.notes.ToList();
+            var result = GetList(uri);
+
+            if (result._embedded != null && result._embedded.notes != null)
+                return result._embedded.notes.ToList();
+            else return null;
         }
         public IEnumerable<Note> GetNotesByCriteria(string criteria)
         {
             var uri = $"{_apiAddress}{_entityLink}/notes?{criteria}";
 
-            return GetList(uri)._embedded.notes.ToList();
+            var result = GetList(uri);
+
+            if (result._embedded != null && result._embedded.notes != null)
+                return result._embedded.notes.ToList();
+            else return null;
         }
         public Note GetNoteById(int id)
         {
@@ -208,7 +227,11 @@ namespace MZPO.AmoRepo
         {
             var uri = $"{_apiAddress}{_entityLink}/tags";
 
-            return GetList(uri)._embedded.tags.ToList();
+            var result = GetList(uri);
+
+            if (result._embedded != null && result._embedded.tags != null)
+                return result._embedded.tags.ToList();
+            else return null;
         }
 
 
@@ -228,7 +251,11 @@ namespace MZPO.AmoRepo
         {
             var uri = $"{_apiAddress}{_entityLink}/custom_fields";
 
-            return GetList(uri)._embedded.custom_fields.ToList();
+            var result = GetList(uri);
+
+            if (result._embedded != null && result._embedded.custom_fields != null)
+                return result._embedded.custom_fields.ToList();
+            else return null;
         }
 
         public IEnumerable<CustomField> AddField(IEnumerable<CustomField> payload)

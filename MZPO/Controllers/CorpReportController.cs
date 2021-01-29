@@ -4,20 +4,19 @@ using MZPO.Services;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.IO;
 
 namespace MZPO.Controllers
 {
     [Route("reports/corporate")]
     [ApiController]
-    public class ReportController : ControllerBase
+    public class CorpReportController : ControllerBase
     {
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
         private readonly GSheets _gSheets;
         private readonly string sheetId;
 
-        public ReportController(Amo amo, TaskList processQueue, GSheets gSheets)
+        public CorpReportController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;

@@ -25,8 +25,7 @@ namespace MZPO.Controllers
             //sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk"; //UnfinishedContacts
 
             _acc = amo.GetAccountById(28395871); //retail
-            sheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k"; //Test
-            //sheetId = "1MYEgjR-hG-LyENQhXM0p53BaVioWyPD__5aGFoNqKM8"; //KPI
+            sheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k"; //RetailKPI
         }
 
         // GET: reports/data

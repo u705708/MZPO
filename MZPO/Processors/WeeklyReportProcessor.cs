@@ -21,9 +21,10 @@ namespace MZPO.Processors
         private readonly BaseRepository<Lead> leadRepo;
         private readonly BaseRepository<Company> compRepo;
         private readonly BaseRepository<Contact> contRepo;
+        private readonly long endDate;
         protected readonly CancellationToken _token;
 
-        public WeeklyReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
+        public WeeklyReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token, long dateTo)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -33,12 +34,17 @@ namespace MZPO.Processors
             leadRepo = _acc.GetRepo<Lead>();
             compRepo = _acc.GetRepo<Company>();
             contRepo = _acc.GetRepo<Contact>();
+
+            dataRanges = new List<(int, int)>();
+            endDate = dateTo;
         }
 
         private List<Request> requestContainer;
         private List<(int?, int, int)> longAnsweredLeads;
         private List<Event> inCalls;
         private List<Event> outCalls;
+
+        private readonly List<(int, int)> dataRanges;
 
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
@@ -51,15 +57,6 @@ namespace MZPO.Processors
             (3813670, "Федорова Александра"),
             (6102562, "Валерия Лукьянова"),
             (6410290, "Вероника Бармина")
-        };
-
-        private readonly List<(int, int)> dataRanges = new List<(int, int)>
-        {
-            //(1601499600,1604177999),
-            //(1604178000,1606769999),
-            //(1606770000,1609448399),
-            //(1609448400,1612126799)
-            (1610917200,1611521999)
         };
 
         private readonly List<int> pipelines = new List<int>
@@ -161,65 +158,65 @@ namespace MZPO.Processors
             #endregion
 
             #region Adding temp sheet
-            requestContainer.Add(new Request()
-            {
-                AddSheet = new AddSheetRequest()
-                {
-                    Properties = new SheetProperties()
-                    {
-                        GridProperties = new GridProperties()
-                        {
-                            ColumnCount = columns.Count,
-                            FrozenRowCount = 1
-                        },
-                        Title = "_temp",
-                        SheetId = 31337
-                    }
-                }
-            });
+            //requestContainer.Add(new Request()
+            //{
+            //    AddSheet = new AddSheetRequest()
+            //    {
+            //        Properties = new SheetProperties()
+            //        {
+            //            GridProperties = new GridProperties()
+            //            {
+            //                ColumnCount = columns.Count,
+            //                FrozenRowCount = 1
+            //            },
+            //            Title = "_temp",
+            //            SheetId = 31337
+            //        }
+            //    }
+            //});
             #endregion
 
             #region Deleting existing sheets except temp
             foreach (var s in spreadsheet.Sheets)
             {
-                if (s.Properties.SheetId == 31337) continue;
+                if (s.Properties.SheetId == 0) continue; //== 31337
                 requestContainer.Add(new Request() { DeleteSheet = new DeleteSheetRequest() { SheetId = s.Properties.SheetId } });
             }
             #endregion
 
             #region Prepare First Sheet
-            requestContainer.Add(new Request()
-            {
-                AddSheet = new AddSheetRequest()
-                {
-                    Properties = new SheetProperties()
-                    {
-                        GridProperties = new GridProperties()
-                        {
-                            RowCount = 50,
-                            ColumnCount = columns.Count,
-                            FrozenRowCount = 1
-                        },
-                        Title = "Сводные",
-                        SheetId = 0,
-                        Index = 0
-                    }
-                }
-            });
+            //requestContainer.Add(new Request()
+            //{
+            //    AddSheet = new AddSheetRequest()
+            //    {
+            //        Properties = new SheetProperties()
+            //        {
+            //            GridProperties = new GridProperties()
+            //            {
+            //                RowCount = 50,
+            //                ColumnCount = columns.Count,
+            //                FrozenRowCount = 1
+            //            },
+            //            Title = "Сводные",
+            //            SheetId = 0,
+            //            Index = 0
+            //        }
+            //    }
+            //});
 
-            requestContainer.Add(new Request()
-            {
-                UpdateCells = new UpdateCellsRequest()
-                {
-                    Fields = "*",
-                    Range = new GridRange()
-                    {
-                        SheetId = 0,
-                    }
-                }
-            });
+            //requestContainer.Add(new Request()
+            //{
+            //    UpdateCells = new UpdateCellsRequest()
+            //    {
+            //        Fields = "*",
+            //        Range = new GridRange()
+            //        {
+            //            SheetId = 0,
+            //        }
+            //    }
+            //});
 
-            AddHeader(0);
+            //AddHeader(0);
             #endregion
 
             foreach (var m in managers)
@@ -247,7 +244,7 @@ namespace MZPO.Processors
             }
 
             #region Delete temp sheet
-            requestContainer.Add(new Request() { DeleteSheet = new DeleteSheetRequest() { SheetId = 31337 } });
+            //requestContainer.Add(new Request() { DeleteSheet = new DeleteSheetRequest() { SheetId = 31337 } });
             #endregion
 
             #region Executing request
@@ -413,7 +410,9 @@ namespace MZPO.Processors
                     longAnsweredLeads.Add((lead.responsible_user_id, lead.id, rTime));
             }
 
-            return responseTimes.Where(x => (x > 0) && (x < 3600)).Average();
+            if (responseTimes.Any(x => (x > 0) && (x < 3600)))
+                return responseTimes.Where(x => (x > 0) && (x < 3600)).Average();
+            else return 0;
         }
 
         private async void ProcessManager((int, string) manager, (int, int) dataRange)
@@ -425,7 +424,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Список новых сделок в воронках из pipelines
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, new leads");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {manager.Item2}, {dates}, new leads");
 
             List<Lead> newLeads = new List<Lead>();
             foreach (var p in pipelines)
@@ -437,14 +436,14 @@ namespace MZPO.Processors
 
             int totalNewLeads = newLeads.Count;
 
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, new leads: {totalNewLeads}");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {manager.Item2}, {dates}, new leads: {totalNewLeads}");
 
             double responseTime = GetAverageResponseTime(newLeads);
             int longLeads = longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
             #endregion
 
             #region Список закрытых сделок
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, closed leads");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {manager.Item2}, {dates}, closed leads");
 
             List<Lead> allLeads = new List<Lead>();
 
@@ -452,7 +451,7 @@ namespace MZPO.Processors
 
             if (leadsClosed != null) allLeads.AddRange(leadsClosed);
 
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, closed leads: {allLeads}");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {manager.Item2}, {dates}, closed leads: {allLeads}");
             #endregion
 
             #region Количество закрытых сделок
@@ -472,7 +471,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Количество пропущенных вызовов
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, missed calls");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {manager.Item2}, {dates}, missed calls");
 
             int missedCallsCount = 0;
 
@@ -530,14 +529,14 @@ namespace MZPO.Processors
             #endregion
 
             #region Исходящие вызовы
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {dates}, outgoing calls");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {dates}, outgoing calls");
 
             outCalls = new List<Event>();
             outCalls.AddRange(contRepo.GetEventsByCriteria($"filter[type]=outgoing_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}"));
             #endregion
 
             #region Входящие вызовы
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {dates}, incoming calls");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {dates}, incoming calls");
             inCalls = new List<Event>();
             inCalls.AddRange(contRepo.GetEventsByCriteria($"filter[type]=incoming_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}"));
             #endregion
@@ -551,74 +550,6 @@ namespace MZPO.Processors
 
             foreach (var m in managers)
             {
-                #region Prepare data
-                var rows = new List<RowData>();
-
-                rows.Add(new RowData()
-                {
-                    Values = new List<CellData>(){
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = "Среднее:"},
-                             UserEnteredFormat = columns["A"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(B2:B{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["B"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(C2:C{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["C"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(D2:D{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["D"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(E2:E{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["E"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(F2:F{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["F"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(G2:G{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["G"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(H2:H{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["H"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(I2:I{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["I"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(J2:J{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["J"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(K2:K{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["K"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(L2:L{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["L"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(M2:M{dataRanges.Count + 1})" },
-                             UserEnteredFormat = columns["M"] },
-                }
-                });
-                #endregion
-
-                #region Add request
-                requestContainer.Add(new Request()
-                {
-                    UpdateCells = new UpdateCellsRequest()
-                    {
-                        Fields = '*',
-                        Rows = rows,
-                        Range = new GridRange()
-                        {
-                            SheetId = m.Item1,
-                            StartRowIndex = dataRanges.Count + 1,
-                            EndRowIndex = dataRanges.Count + 2,
-                            StartColumnIndex = 0,
-                            EndColumnIndex = columns.Count()
-                        }
-                    }
-                });
-                #endregion
-
                 #region Add banding
                 requestContainer.Add(new Request()
                 {
@@ -754,15 +685,27 @@ namespace MZPO.Processors
             foreach (var m in managers)
             {
                 #region Prepare Data
-                var leads = longAnsweredLeads.Where(x => x.Item1 == m.Item1);
+                List<(int?, int, int)> leads = new List<(int?, int, int)>();
+                if (longAnsweredLeads.Any(x => x.Item1 == m.Item1))
+                    leads.AddRange(longAnsweredLeads.Where(x => x.Item1 == m.Item1));
                 var rows = new List<RowData>();
+
+                #region Header
+                rows.Add(new RowData()
+                {
+                    Values = new List<CellData>(){
+                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Сделка" } },
+                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Время ответа, сек" } }
+                        }
+                });
+                #endregion
 
                 foreach (var l in leads)
                 {
                     rows.Add(new RowData()
                     {
                         Values = new List<CellData>(){
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item2}" } },
+                         new CellData(){ UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{l.Item2}"", ""{l.Item2}"")" } },
                          new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item3}" } }
                         }
                     });
@@ -779,8 +722,8 @@ namespace MZPO.Processors
                         Range = new GridRange()
                         {
                             SheetId = m.Item1,
-                            StartRowIndex = dataRanges.Count + 3,
-                            EndRowIndex = dataRanges.Count + 3 + leads.Count(),
+                            StartRowIndex = dataRanges.Count + 2,
+                            EndRowIndex = dataRanges.Count + 2 + rows.Count(),
                             StartColumnIndex = 0,
                             EndColumnIndex = 2
                         }
@@ -799,6 +742,24 @@ namespace MZPO.Processors
             }
             #endregion
         }
+
+        private void GetDataRanges()
+        {
+            DateTime dt = DateTimeOffset.FromUnixTimeSeconds(endDate).UtcDateTime;
+
+            var d2_2 = dt;
+            var d2_1 = new DateTime(d2_2.Year, d2_2.Month, 1, 2, 0, 0);
+            var d1_2 = d2_2.AddMonths(-1);
+            var d1_1 = d2_1.AddMonths(-1);
+
+            var dr2_2 = (int)((DateTimeOffset)d2_2).ToUnixTimeSeconds();
+            var dr2_1 = (int)((DateTimeOffset)d2_1).ToUnixTimeSeconds();
+            var dr1_2 = (int)((DateTimeOffset)d1_2).ToUnixTimeSeconds();
+            var dr1_1 = (int)((DateTimeOffset)d1_1).ToUnixTimeSeconds();
+
+            dataRanges.Add((dr1_1, dr1_2));
+            dataRanges.Add((dr2_1, dr2_2));
+        }
         #endregion
 
         #region Realization
@@ -806,11 +767,13 @@ namespace MZPO.Processors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove("report_data");
+                _processQueue.Remove("report_retail");
                 return;
             }
 
             Log.Add("Started KPI report.");
+
+            GetDataRanges();
 
             PrepareSheets();
 
@@ -830,11 +793,12 @@ namespace MZPO.Processors
             }
 
             FinalizeManagers();
-            FinalizeTotals();
+            AddLongLeads();
+            //FinalizeTotals();
 
             Log.Add("Finished KPI report.");
 
-            _processQueue.Remove("report_data");
+            _processQueue.Remove("report_retail");
         }
         #endregion
     }

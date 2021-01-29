@@ -58,7 +58,7 @@ namespace MZPO.Processors
             (1601499600,1604177999),    //октябрь
             (1604178000,1606769999),    //ноябрь
             (1606770000,1609448399),    //декабрь
-            //(1609448400,1612126799)     //январь
+            (1609448400,1612126799)     //январь
             //(1610917200,1611521999)     //18-24 января
         };
 
@@ -812,12 +812,14 @@ namespace MZPO.Processors
 
             Log.Add("Started KPI report.");
 
-            PrepareSheets();
+            //PrepareSheets();
 
             foreach (var d in dataRanges)
             {
                 if (_token.IsCancellationRequested) break;
                 longAnsweredLeads = new List<(int?, int, int)>();
+
+                //if (d == (0, 0)) continue; //-------
 
                 GetCalls(d);
 
