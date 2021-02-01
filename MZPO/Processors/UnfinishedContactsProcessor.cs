@@ -247,14 +247,13 @@ namespace MZPO.Processors
             #region Collecting associated contacts
 
             var contactIdList = new List<int>();
-            var criteria = new StringBuilder("");
 
-            if ((l._embedded.contacts != null) &&
+            if ((l._embedded.contacts is { }) &&
                 (l._embedded.contacts.Any()))
                 foreach (var c in l._embedded.contacts)
                     contactIdList.Add(c.id); 
-            if ((company._embedded != null) &&
-                (company._embedded.contacts != null) &&
+            if ((company._embedded is { }) &&
+                (company._embedded.contacts is { }) &&
                 (company._embedded.contacts.Any()))
                 foreach (var c in company._embedded.contacts)
                     contactIdList.Add(c.id);
@@ -263,18 +262,18 @@ namespace MZPO.Processors
             #endregion
 
             #region Getting contact name if any
-            if ((contacts != null) &&
+            if ((contacts is { }) &&
                 contacts.Any())
                 contactName = contacts.First().name;
             else contactName = "";
             #endregion
 
             #region Checking contacts
-            if ((contacts != null) && 
+            if ((contacts is { }) && 
                 contacts.Any())
                 foreach (var c in contacts)
                 {
-                    if (c.custom_fields_values == null) continue;
+                    if (c.custom_fields_values is null) continue;
                     if (c.custom_fields_values.Any(x => x.field_id == 33575))
                         phoneAdded = true;
                     if (c.custom_fields_values.Any(x => x.field_id == 33577))
@@ -310,7 +309,7 @@ namespace MZPO.Processors
 
                 int counter = 0;
 
-                if (allLeads == null) continue;
+                if (allLeads is null) continue;
 
                 foreach (var l in allLeads)
                 {

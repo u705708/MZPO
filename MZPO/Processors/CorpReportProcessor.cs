@@ -353,10 +353,10 @@ namespace MZPO.Processors
 
             var allLeads = leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={m.Item1}");
 
-            if (allLeads == null) return Task.CompletedTask;
+            if (allLeads is null) return Task.CompletedTask;
 
             var leads = allLeads.Where(x =>
-                (x.custom_fields_values != null) &&
+                (x.custom_fields_values is { }) &&
                 (x.custom_fields_values.Any(y => y.field_id == 118675)) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value >= _dateFrom) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)

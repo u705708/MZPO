@@ -50,7 +50,7 @@ namespace MZPO.Processors
         {
             if (custom_fields_values.Any(x => x.field_id == fieldId))
                 return (string)custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value;
-            else if ((lead.custom_fields_values != null) &&
+            else if ((lead.custom_fields_values is { }) &&
                     lead.custom_fields_values.Any(x => x.field_id == fieldId))
                 return (string)lead.custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value;
             else return null;
@@ -64,7 +64,7 @@ namespace MZPO.Processors
                 custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value = fieldValue;
             else
             {
-                if ((lead.custom_fields_values != null) &&
+                if ((lead.custom_fields_values is { }) &&
                     lead.custom_fields_values.Any(x => x.field_id == fieldId))
                     lead.custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value = fieldValue;
 

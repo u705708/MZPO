@@ -326,10 +326,10 @@ namespace MZPO.Processors
             int timeOfReference = (int)lead.created_at;
 
             #region Результат звонка
-            if (lead.custom_fields_values != null)
+            if (lead.custom_fields_values is { })
             {
                 var cf = lead.custom_fields_values.FirstOrDefault(x => x.field_id == 644675);
-                if (cf != null)
+                if (cf is { })
                 {
                     var cfValue = (string)cf.values[0].value;
                     if (cfValue == "Принят" || cfValue == "Ручная сделка") return 0;
@@ -340,7 +340,7 @@ namespace MZPO.Processors
             var leadEvents = leadRepo.GetEvents(lead.id);
 
             #region Смена ответственного
-            if ((leadEvents != null) &&
+            if ((leadEvents is { }) &&
                 leadEvents.Where((x => x.type == "entity_responsible_changed")).Any(x => x.value_before[0].responsible_user.id == 2576764))
                 timeOfReference = (int)leadEvents
                     .Where((x => x.type == "entity_responsible_changed"))
@@ -349,7 +349,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Cообщения в чат
-            if (leadEvents != null)
+            if (leadEvents is { })
                 foreach (var e in leadEvents)
                     if ((e.type == "outgoing_chat_message") || (e.type == "incoming_chat_message"))
                         replyTimestamps.Add((int)e.created_at);
@@ -357,18 +357,18 @@ namespace MZPO.Processors
 
             #region Исходящее письмо
             var notes = leadRepo.GetNotes(lead.id);
-            if (notes != null)
+            if (notes is { })
                 foreach (var n in notes)
                     if ((n.note_type == "amomail_message") && (n.parameters.income == false))
                         replyTimestamps.Add((int)n.created_at);
             #endregion
 
             #region Звонки
-            if (lead._embedded.contacts != null)
+            if (lead._embedded.contacts is { })
                 foreach (var c in lead._embedded.contacts)
                 {
                     var contactEvents = contRepo.GetEvents(c.id);
-                    if (contactEvents != null)
+                    if (contactEvents is { })
                         foreach (var e in contactEvents)
                         {
                             if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
@@ -376,7 +376,7 @@ namespace MZPO.Processors
                                 var callNote = contRepo.GetNoteById(e.value_after[0].note.id);
                                 int duration = 0;
 
-                                if (callNote != null && callNote.parameters != null && callNote.parameters.duration > 0)
+                                if (callNote is { } && callNote.parameters is { } && callNote.parameters.duration > 0)
                                     duration = (int)callNote.parameters.duration;
 
                                 int actualCallTime = (int)e.created_at - duration;
@@ -430,7 +430,7 @@ namespace MZPO.Processors
             foreach (var p in pipelines)
             {
                 var leadsOpened = leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
-                if (leadsOpened != null)
+                if (leadsOpened is { })
                     newLeads.AddRange(leadsOpened);
             }
 
@@ -449,7 +449,7 @@ namespace MZPO.Processors
 
             var leadsClosed = leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
 
-            if (leadsClosed != null) allLeads.AddRange(leadsClosed);
+            if (leadsClosed is { }) allLeads.AddRange(leadsClosed);
 
             _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {manager.Item2}, {dates}, closed leads: {allLeads}");
             #endregion
@@ -477,7 +477,7 @@ namespace MZPO.Processors
 
             var callIdList = new List<int>();
 
-            if (inCalls != null)
+            if (inCalls is { })
                 foreach (var e in inCalls.Where(x => x.created_by == manager.Item1))
                     callIdList.Add(e.value_after[0].note.id);
 
@@ -485,12 +485,12 @@ namespace MZPO.Processors
             if (callIdList.Any())
                 callNotes.AddRange(contRepo.BulkGetNotesById(callIdList));
 
-            if (callNotes != null && callNotes.Any())
+            if (callNotes is { } && callNotes.Any())
                 foreach (var n in callNotes)
                 {
                     int duration = -1;
 
-                    if (n != null && n.parameters != null)
+                    if (n is { } && n.parameters is { })
                         duration = (int)n.parameters.duration;
 
                     if (duration == 0) missedCallsCount++;

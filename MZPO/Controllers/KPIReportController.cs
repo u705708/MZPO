@@ -7,24 +7,24 @@ using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
-    [Route("reports/retail")]
+    [Route("reports/kpi")]
     [ApiController]
-    public class RetailReportController : ControllerBase
+    public class KPIReportController : ControllerBase
     {
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
         private readonly GSheets _gSheets;
         private readonly string sheetId;
 
-        public RetailReportController(Amo amo, TaskList processQueue, GSheets gSheets)
+        public KPIReportController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _acc = amo.GetAccountById(28395871);
             _processQueue = processQueue;
             _gSheets = gSheets;
-            sheetId = "1Am4JA46Nbaa1GxOgeKbhKRMWXkkzRS2SoZBhVjqqueY";
+            sheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k";
         }
 
-        // GET: reports/retail
+        // GET: reports/kpi
         [HttpGet]
         public ActionResult Get()
         {
@@ -34,14 +34,14 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<IProcessor> reportProcessor = new Lazy<IProcessor>(() =>                         //Создаём экземпляр процессора
-                               new WeeklyReportProcessor(_acc, _gSheets, sheetId, _processQueue, token, dateTo));
+                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, token, dateTo));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_retail", _acc.name, "RetailReport");                                       //И добавляем в очередь
+            _processQueue.Add(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь
             return Ok();
         }
 
-        // GET reports/retail/1612126799
+        // GET reports/kpi/1612126799
         [HttpGet("{to}")]                                                                                        //Запрашиваем отчёт для диапазона дат
         public ActionResult Get(string to)
         {
@@ -50,10 +50,10 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<IProcessor> reportProcessor = new Lazy<IProcessor>(() =>                         //Создаём экземпляр процессора
-                               new WeeklyReportProcessor(_acc, _gSheets, sheetId, _processQueue, token, dateTo));
+                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, token, dateTo));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_retail", _acc.name, "RetailReport");                                       //И добавляем в очередь
+            _processQueue.Add(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь
             return Ok();
         }
     }

@@ -26,7 +26,7 @@ namespace MZPO.AmoRepo
         #region Supplementary methods
         public IEnumerable<T> GetEmbedded(EntityList entity)
         {
-            if ((entity != null) && (entity._embedded != null))
+            if ((entity is { }) && (entity._embedded is { }))
                 return (List<T>)entity.GetType().GetNestedType("Embedded").GetField(_entityLink).GetValue(entity._embedded);
             else return null;
         }
@@ -143,7 +143,7 @@ namespace MZPO.AmoRepo
 
             var result = GetList(uri);
 
-            if (result._embedded != null && result._embedded.events != null)
+            if (result._embedded is { } && result._embedded.events is { })
                 return result._embedded.events.ToList();
             else return null;
         }
@@ -154,7 +154,7 @@ namespace MZPO.AmoRepo
 
             var result = GetList(uri);
 
-            if (result._embedded != null && result._embedded.events != null)
+            if (result._embedded is { } && result._embedded.events is { })
                 return result._embedded.events.ToList();
             else return null;
         }
@@ -165,7 +165,7 @@ namespace MZPO.AmoRepo
 
             var result = GetList(uri);
 
-            if (result._embedded != null && result._embedded.notes != null)
+            if (result._embedded is { } && result._embedded.notes is { })
                 return result._embedded.notes.ToList();
             else return null;
         }
@@ -175,7 +175,7 @@ namespace MZPO.AmoRepo
 
             var result = GetList(uri);
 
-            if (result._embedded != null && result._embedded.notes != null)
+            if (result._embedded is { } && result._embedded.notes is { })
                 return result._embedded.notes.ToList();
             else return null;
         }
@@ -229,7 +229,7 @@ namespace MZPO.AmoRepo
 
             var result = GetList(uri);
 
-            if (result._embedded != null && result._embedded.tags != null)
+            if (result._embedded is { } && result._embedded.tags is { })
                 return result._embedded.tags.ToList();
             else return null;
         }
@@ -253,7 +253,7 @@ namespace MZPO.AmoRepo
 
             var result = GetList(uri);
 
-            if (result._embedded != null && result._embedded.custom_fields != null)
+            if (result._embedded is { } && result._embedded.custom_fields is { })
                 return result._embedded.custom_fields.ToList();
             else return null;
         }

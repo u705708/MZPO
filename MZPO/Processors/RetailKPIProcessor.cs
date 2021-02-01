@@ -21,9 +21,10 @@ namespace MZPO.Processors
         private readonly BaseRepository<Lead> leadRepo;
         private readonly BaseRepository<Company> compRepo;
         private readonly BaseRepository<Contact> contRepo;
+        private readonly long endDate;
         protected readonly CancellationToken _token;
 
-        public RetailKPIProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
+        public RetailKPIProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token, long dateTo)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -33,6 +34,7 @@ namespace MZPO.Processors
             leadRepo = _acc.GetRepo<Lead>();
             compRepo = _acc.GetRepo<Company>();
             contRepo = _acc.GetRepo<Contact>();
+            endDate = dateTo;
         }
 
         private List<Request> requestContainer;
@@ -58,8 +60,8 @@ namespace MZPO.Processors
             (1601499600,1604177999),    //октябрь
             (1604178000,1606769999),    //ноябрь
             (1606770000,1609448399),    //декабрь
-            (1609448400,1612126799)     //январь
-            //(1610917200,1611521999)     //18-24 января
+            (1609448400,1612126799),    //январь
+            (1612126800,1614545999)     //февраль
         };
 
         private readonly List<int> pipelines = new List<int>
@@ -329,10 +331,10 @@ namespace MZPO.Processors
             int timeOfReference = (int)lead.created_at;
 
             #region Результат звонка
-            if (lead.custom_fields_values != null)
+            if (lead.custom_fields_values is { })
             {
                 var cf = lead.custom_fields_values.FirstOrDefault(x => x.field_id == 644675);
-                if (cf != null)
+                if (cf is { })
                 {
                     var cfValue = (string)cf.values[0].value;
                     if (cfValue == "Принят" || cfValue == "Ручная сделка") return 0;
@@ -343,7 +345,7 @@ namespace MZPO.Processors
             var leadEvents = leadRepo.GetEvents(lead.id);
 
             #region Смена ответственного
-            if ((leadEvents != null) &&
+            if ((leadEvents is { }) &&
                 leadEvents.Where((x => x.type == "entity_responsible_changed")).Any(x => x.value_before[0].responsible_user.id == 2576764))
                 timeOfReference = (int)leadEvents
                     .Where((x => x.type == "entity_responsible_changed"))
@@ -352,7 +354,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Cообщения в чат
-            if (leadEvents != null)
+            if (leadEvents is { })
                 foreach (var e in leadEvents)
                     if ((e.type == "outgoing_chat_message") || (e.type == "incoming_chat_message"))
                         replyTimestamps.Add((int)e.created_at);
@@ -360,18 +362,18 @@ namespace MZPO.Processors
 
             #region Исходящее письмо
             var notes = leadRepo.GetNotes(lead.id);
-            if (notes != null)
+            if (notes is { })
                 foreach (var n in notes)
                     if ((n.note_type == "amomail_message") && (n.parameters.income == false))
                         replyTimestamps.Add((int)n.created_at);
             #endregion
 
             #region Звонки
-            if (lead._embedded.contacts != null)
+            if (lead._embedded.contacts is { })
                 foreach (var c in lead._embedded.contacts)
                 {
                     var contactEvents = contRepo.GetEvents(c.id);
-                    if (contactEvents != null)
+                    if (contactEvents is { })
                         foreach (var e in contactEvents)
                         {
                             if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
@@ -379,7 +381,7 @@ namespace MZPO.Processors
                                 var callNote = contRepo.GetNoteById(e.value_after[0].note.id);
                                 int duration = 0;
 
-                                if (callNote != null && callNote.parameters != null && callNote.parameters.duration > 0)
+                                if (callNote is { } && callNote.parameters is { } && callNote.parameters.duration > 0)
                                     duration = (int)callNote.parameters.duration;
 
                                 int actualCallTime = (int)e.created_at - duration;
@@ -425,34 +427,34 @@ namespace MZPO.Processors
             #endregion
 
             #region Список новых сделок в воронках из pipelines
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, new leads");
+            _processQueue.UpdateTaskName("report_kpi", $"KPIReport: {manager.Item2}, {dates}, new leads");
             
             List<Lead> newLeads = new List<Lead>();
             foreach (var p in pipelines)
             {
                 var leadsOpened = leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
-                if (leadsOpened != null)
+                if (leadsOpened is { })
                     newLeads.AddRange(leadsOpened);
             }
             
             int totalNewLeads = newLeads.Count;
             
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, new leads: {totalNewLeads}");
+            _processQueue.UpdateTaskName("report_kpi", $"KPIReport: {manager.Item2}, {dates}, new leads: {totalNewLeads}");
             
             double responseTime = GetAverageResponseTime(newLeads);
             int longLeads = longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
             #endregion
 
             #region Список закрытых сделок
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, closed leads");
+            _processQueue.UpdateTaskName("report_kpi", $"KPIReport: {manager.Item2}, {dates}, closed leads");
             
             List<Lead> allLeads = new List<Lead>();
             
             var leadsClosed = leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
             
-            if (leadsClosed != null) allLeads.AddRange(leadsClosed);
+            if (leadsClosed is { }) allLeads.AddRange(leadsClosed);
             
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, closed leads: {allLeads}");
+            _processQueue.UpdateTaskName("report_kpi", $"KPIReport: {manager.Item2}, {dates}, closed leads: {allLeads}");
             #endregion
 
             #region Количество закрытых сделок
@@ -472,13 +474,13 @@ namespace MZPO.Processors
             #endregion
 
             #region Количество пропущенных вызовов
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {manager.Item2}, {dates}, missed calls");
+            _processQueue.UpdateTaskName("report_kpi", $"KPIReport: {manager.Item2}, {dates}, missed calls");
 
             int missedCallsCount = 0;
 
             var callIdList = new List<int>();
 
-            if (inCalls != null)
+            if (inCalls is { })
                 foreach (var e in inCalls.Where(x=> x.created_by == manager.Item1))
                     callIdList.Add(e.value_after[0].note.id);
 
@@ -486,12 +488,12 @@ namespace MZPO.Processors
             if (callIdList.Any())
                 callNotes.AddRange(contRepo.BulkGetNotesById(callIdList));
 
-            if (callNotes != null && callNotes.Any())
+            if (callNotes is { } && callNotes.Any())
                 foreach (var n in callNotes)
                 {
                     int duration = -1;
 
-                    if (n != null && n.parameters != null)
+                    if (n is { } && n.parameters is { })
                         duration = (int)n.parameters.duration;
 
                     if (duration == 0) missedCallsCount++;
@@ -530,14 +532,14 @@ namespace MZPO.Processors
             #endregion
 
             #region Исходящие вызовы
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {dates}, outgoing calls");
+            _processQueue.UpdateTaskName("report_kpi", $"KPIReport: {dates}, outgoing calls");
 
             outCalls = new List<Event>();
             outCalls.AddRange(contRepo.GetEventsByCriteria($"filter[type]=outgoing_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}"));
             #endregion
 
             #region Входящие вызовы
-            _processQueue.UpdateTaskName("report_data", $"DataReport: {dates}, incoming calls");
+            _processQueue.UpdateTaskName("report_kpi", $"KPIReport: {dates}, incoming calls");
             inCalls = new List<Event>();
             inCalls.AddRange(contRepo.GetEventsByCriteria($"filter[type]=incoming_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}"));
             #endregion
@@ -747,57 +749,22 @@ namespace MZPO.Processors
             #endregion
         }
 
-        private async void AddLongLeads()
+        private void GetDataRanges()
         {
-            requestContainer = new List<Request>();
+            DateTime dt = DateTimeOffset.FromUnixTimeSeconds(endDate).UtcDateTime;
 
-            foreach (var m in managers)
-            {
-                #region Prepare Data
-                var leads = longAnsweredLeads.Where(x => x.Item1 == m.Item1);
-                var rows = new List<RowData>();
+            var d2_2 = dt;
+            var d2_1 = new DateTime(d2_2.Year, d2_2.Month, 1, 2, 0, 0);
+            var d1_2 = d2_2.AddMonths(-1);
+            var d1_1 = d2_1.AddMonths(-1);
 
-                foreach (var l in leads)
-                {
-                    rows.Add(new RowData()
-                    {
-                        Values = new List<CellData>(){
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item2}" } },
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item3}" } }
-                        }
-                    });
-                }
-                #endregion
+            var dr2_2 = (int)((DateTimeOffset)d2_2).ToUnixTimeSeconds();
+            var dr2_1 = (int)((DateTimeOffset)d2_1).ToUnixTimeSeconds();
+            var dr1_2 = (int)((DateTimeOffset)d1_2).ToUnixTimeSeconds();
+            var dr1_1 = (int)((DateTimeOffset)d1_1).ToUnixTimeSeconds();
 
-                #region Add Request
-                requestContainer.Add(new Request()
-                {
-                    UpdateCells = new UpdateCellsRequest()
-                    {
-                        Fields = '*',
-                        Rows = rows,
-                        Range = new GridRange()
-                        {
-                            SheetId = m.Item1,
-                            StartRowIndex = dataRanges.Count + 3,
-                            EndRowIndex = dataRanges.Count + 3 + leads.Count(),
-                            StartColumnIndex = 0,
-                            EndColumnIndex = 2
-                        }
-                    }
-                });
-                #endregion
-            }
-
-            #region Update sheet
-            if (requestContainer.Any())
-            {
-                var batchRequest = new BatchUpdateSpreadsheetRequest();
-                batchRequest.Requests = requestContainer;
-
-                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
-            }
-            #endregion
+            dataRanges.Add((dr1_1, dr1_2));
+            dataRanges.Add((dr2_1, dr2_2));
         }
         #endregion
 
@@ -806,20 +773,18 @@ namespace MZPO.Processors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove("report_data");
+                _processQueue.Remove("report_kpi");
                 return;
             }
 
             Log.Add("Started KPI report.");
 
-            //PrepareSheets();
+            PrepareSheets();
 
             foreach (var d in dataRanges)
             {
                 if (_token.IsCancellationRequested) break;
                 longAnsweredLeads = new List<(int?, int, int)>();
-
-                //if (d == (0, 0)) continue; //-------
 
                 GetCalls(d);
 
@@ -836,7 +801,7 @@ namespace MZPO.Processors
 
             Log.Add("Finished KPI report.");
 
-            _processQueue.Remove("report_data");
+            _processQueue.Remove("report_kpi");
         }
         #endregion
     }

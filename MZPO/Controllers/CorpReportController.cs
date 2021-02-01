@@ -31,7 +31,7 @@ namespace MZPO.Controllers
             return Redirect($"https://docs.google.com/spreadsheets/d/{sheetId}/");
         }
 
-        // GET reports/corporate/1606770000,1609448400
+        // GET reports/corporate/1609448400,1612126800
         [HttpGet("{from},{to}")]                                                                                        //Запрашиваем отчёт для диапазона дат
         public ActionResult Get(string from, string to)
         {

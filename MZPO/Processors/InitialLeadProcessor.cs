@@ -54,7 +54,7 @@ namespace MZPO.Processors
             try
             {
                 string fieldValue = GetFieldValue(644511);
-                if (fieldValue != null)
+                if (fieldValue is { })
                 {
                     switch (fieldValue)
                     {
@@ -76,7 +76,7 @@ namespace MZPO.Processors
             #region Врач-косметолог
             var pageURL = GetFieldValue(639083);
 
-            if (pageURL != null)
+            if (pageURL is { })
             {
                 if (pageURL.Contains("vrach-kosmetolog"))                                                               //Если посадочная страница содержит врач-косметолог
                 {
@@ -90,7 +90,7 @@ namespace MZPO.Processors
             var site = GetFieldValue(639081);
             var applicationType = GetFieldValue(639075);
 
-            if (site != null)                                                                                           //Если поле сайт не пустое
+            if (site is { })                                                                                           //Если поле сайт не пустое
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
                 {
@@ -104,7 +104,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Сайт и тег по типу обращения
-            else if (applicationType != null)                                                                           //Если тип обращения не пустой
+            else if (applicationType is { })                                                                           //Если тип обращения не пустой
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
                 {
@@ -133,7 +133,7 @@ namespace MZPO.Processors
                 try
                 {
                     var city = GetFieldValue(639087);                                                                   //Пытаемся получить поле город
-                    if (city != null)                                                                                   //Если оно не пустое
+                    if (city is { })                                                                                    //Если оно не пустое
                         SetFieldValue(639087, _acc.GetCity(city));                                                      //Подставляем значение из базы городов
                 }
                 catch (Exception e)
@@ -155,7 +155,7 @@ namespace MZPO.Processors
         private void CallResultWaiter()                                                                                 //Метод проверяет, была ли сделка из телефонии, если да, то ждёт полчаса
         {
             var source = GetFieldValue(639085);
-            if (source == null) return;
+            if (source is null) return;
             if (source.Contains("Прямой") || source.Contains("Коллтрекинг") || source.Contains("instagram"))
             {
                 for (int i = 1; i <= 30; i++)
@@ -188,7 +188,7 @@ namespace MZPO.Processors
 
             #region Коллтрекинг
             var source = GetFieldValue(639085);                                                                         //Источник(Маркер)
-            if (source != null)
+            if (source is { })
             {
                 if (tags.Any(x => x.name == "Коллтрекинг") || source.Contains("Коллтрекинг"))                           //Если сделка из коллтрекинга
                 {
@@ -222,13 +222,13 @@ namespace MZPO.Processors
 
             #region Результат звонка
             var applicationType = GetFieldValue(639075);                                                                //Тип обращения
-            if (GetFieldValue(644675) == null)                                                                          //Результат звонка
+            if (GetFieldValue(644675) is null)                                                                          //Результат звонка
             {
-                if ((applicationType != null) && (applicationType.Contains("аявк")))
+                if ((applicationType is { }) && (applicationType.Contains("аявк")))
                 {
                     SetFieldValue(644675, "Заявка с сайта");
                 }
-                else if ((applicationType != null) && (applicationType.Contains("Jivosite")))
+                else if ((applicationType is { }) && (applicationType.Contains("Jivosite")))
                 {
                     SetFieldValue(644675, "Jivosite");
                 }
@@ -336,7 +336,7 @@ namespace MZPO.Processors
             }
             try
             {
-                if (lead == null) throw new Exception("No lead returned from amoCRM");
+                if (lead is null) throw new Exception("No lead returned from amoCRM");
                 if (lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
                 {
                     FormName();
