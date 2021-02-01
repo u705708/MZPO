@@ -21,7 +21,7 @@ namespace MZPO.AmoRepo
         public int? created_at { get; set; }                                    //Дата создания компании, передается в Unix Timestamp
         public int? updated_at { get; set; }                                    //Дата изменения компании, передается в Unix Timestamp
         public int? closest_task_at { get; set; }                               //Дата ближайшей задачи к выполнению, передается в Unix Timestamp
-        public IList<Custom_fields_value> custom_fields_values { get; set; }    //Массив, содержащий информацию по значениям дополнительных полей, заданных для данной компании
+        public List<Custom_fields_value> custom_fields_values { get; set; }    //Массив, содержащий информацию по значениям дополнительных полей, заданных для данной компании
         public int account_id { get; set; }                                     //ID аккаунта, в котором находится компания
         public Links _links { get; set; }
         public Embedded _embedded { get; set; }                                 //Данные вложенных сущностей
@@ -55,9 +55,9 @@ namespace MZPO.AmoRepo
 
         public class Embedded
         {
-            public IList<Contact> contacts { get; set; }                        //Требуется GET параметр with. Данные контактов, привязанных к сделке
-            public IList<Lead> leads { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
-            public IList<CatalogElements> catalog_elements { get; set; }        //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
+            public List<Contact> contacts { get; set; }                        //Требуется GET параметр with. Данные контактов, привязанных к сделке
+            public List<Lead> leads { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
+            public List<CatalogElements> catalog_elements { get; set; }        //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
 
             public class CatalogElements
             {

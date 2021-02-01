@@ -17,8 +17,8 @@ namespace MZPO.Processors
         protected readonly int _leadNumber;
         //protected readonly Dictionary<string, int> _customFields;
         protected Lead lead;
-        protected IList<Tag> tags;
-        protected IList<Lead.Custom_fields_value> custom_fields_values;
+        protected List<Tag> tags;
+        protected List<Lead.Custom_fields_value> custom_fields_values;
 
         public AbstractProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, CancellationToken token)
         {
@@ -29,12 +29,14 @@ namespace MZPO.Processors
             _leadNumber = leadNumber;
             //_customFields = _acc.GetCFList(); 
             custom_fields_values = new List<Lead.Custom_fields_value>();
+            tags = new List<Tag>();
 
             try
             {
                 Thread.Sleep((int)TimeSpan.FromSeconds(5).TotalMilliseconds);
                 lead = _leadRepo.GetById(leadNumber);
-                tags = lead._embedded.tags;
+                if (lead is { } && lead._embedded is { } && lead._embedded.tags is { })
+                    tags = lead._embedded.tags;
             }
             catch (Exception e)
             {

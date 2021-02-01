@@ -29,7 +29,7 @@ namespace MZPO.Controllers
             var acc = _amo.GetAccountById(28395871);
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
-            Lazy<InitialLeadProcessor> initialLeadProcessor = new Lazy<InitialLeadProcessor>(() =>                      //Создаём экземпляр процессора сделки
+            Lazy<IProcessor> initialLeadProcessor = new Lazy<IProcessor>(() =>                      //Создаём экземпляр процессора сделки
                                new InitialLeadProcessor(leadNumber, acc, _processQueue, token));
 
             Task task = Task.Run(() => initialLeadProcessor.Value.Run());                                               //Запускаем его

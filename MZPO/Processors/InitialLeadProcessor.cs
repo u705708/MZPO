@@ -336,34 +336,41 @@ namespace MZPO.Processors
             }
             try
             {
-                if (lead is null) throw new Exception("No lead returned from amoCRM");
+                if (lead is null)
+                {
+                    _processQueue.Remove(_leadNumber.ToString());
+                    Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
+                    return;
+                }
                 if (lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
                 {
                     FormName();
                     PhaseOne();
-                    _leadRepo.AddNotes(lead.id, "Phase 1 finished.");
+                    _leadRepo.AddNotes(_leadNumber, "Phase 1 finished.");
 
                     await Task.Run(() => CallResultWaiter());
 
-                    lead = _leadRepo.GetById(lead.id);                                                                      //Обновляем информацию о сделке, если она изменилась за время ожидания
-                    tags = lead._embedded.tags;
+                    lead = _leadRepo.GetById(_leadNumber);                                                                      //Обновляем информацию о сделке, если она изменилась за время ожидания
+                    tags = new List<Tag>();
+                    if (lead is { } && lead._embedded is { } && lead._embedded.tags is { })
+                        tags = lead._embedded.tags;
                     custom_fields_values = new List<Lead.Custom_fields_value>();
 
                     PhaseTwo();
-                    _leadRepo.AddNotes(lead.id, "Phase 2 finished.");
+                    _leadRepo.AddNotes(_leadNumber, "Phase 2 finished.");
             }
                 else
             {
                 SocialNetworks();
             }
 
-            _processQueue.Remove(lead.id.ToString());
-                Log.Add($"Success: Lead {lead.id}");
+                _processQueue.Remove(lead.id.ToString());
+                Log.Add($"Success: Lead {_leadNumber}");
             }
             catch (Exception e) 
             {
-                _processQueue.Remove(lead.id.ToString());
-                Log.Add($"Error: Unable to process lead {lead.id}: {e.Message}");
+                _processQueue.Remove(_leadNumber.ToString());
+                Log.Add($"Error: Unable to process lead {_leadNumber}: {e.Message}");
             }
         }
         #endregion

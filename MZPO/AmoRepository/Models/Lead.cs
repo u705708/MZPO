@@ -25,7 +25,7 @@ namespace MZPO.AmoRepo
         public int? updated_at { get; set; }                                    //Дата изменения сделки, передается в Unix Timestamp 
         public int? closest_task_at { get; set; }                               //Дата ближайшей задачи к выполнению, передается в Unix Timestamp 
         public bool? is_deleted { get; set; }                                   //Удалена ли сделка
-        public IList<Custom_fields_value> custom_fields_values { get; set; }    //Массив, содержащий информацию по значениям дополнительных полей, заданных для данной сделки
+        public List<Custom_fields_value> custom_fields_values { get; set; }    //Массив, содержащий информацию по значениям дополнительных полей, заданных для данной сделки
         public int? score { get; set; }                                         //Скоринг сделки
         public int? account_id { get; set; }                                    //ID аккаунта, в котором находится сделка
         public bool? is_price_modified_by_robot { get; set; }                   //Требуется GET параметр with. Изменен ли в последний раз бюджет сделки роботом 
@@ -62,10 +62,10 @@ namespace MZPO.AmoRepo
         public class Embedded
         {
             public LossReason loss_reason { get; set; }                         //Требуется GET параметр with. Причина отказа сделки
-            public IList<Tag> tags { get; set; }                                //Данные тегов, привязанных к сделке
-            public IList<Contact> contacts { get; set; }                        //Требуется GET параметр with. Данные контактов, привязанных к сделке
-            public IList<Company> companies { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
-            public IList<CatalogElements> catalog_elements { get; set; }        //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
+            public List<Tag> tags { get; set; }                                //Данные тегов, привязанных к сделке
+            public List<Contact> contacts { get; set; }                        //Требуется GET параметр with. Данные контактов, привязанных к сделке
+            public List<Company> companies { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
+            public List<CatalogElements> catalog_elements { get; set; }        //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
 
             public class LossReason
             {
