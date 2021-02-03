@@ -41,7 +41,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                         //Создаём экземпляр процессора
-                               new CorpReportProcessor(_acc, _processQueue, _gSheets, sheetId, token, dateFrom, dateTo));
+                               new CorpReportProcessor(_acc, _processQueue, _gSheets, sheetId, dateFrom, dateTo, token));
 
             Task task = Task.Run(() => corpReportProcessor.Value.Run());                                                //Запускаем его
             _processQueue.Add(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь

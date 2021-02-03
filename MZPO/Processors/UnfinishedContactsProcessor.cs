@@ -77,17 +77,6 @@ namespace MZPO.Processors
                 HorizontalAlignment = "CENTER",
                 VerticalAlignment = "MIDDLE"
             };
-
-            var leftAlignment = new CellFormat()
-            {
-                TextFormat = new TextFormat()
-                {
-                    Bold = true,
-                    FontSize = 11
-                },
-                HorizontalAlignment = "LEFT",
-                VerticalAlignment = "MIDDLE"
-            };
             #endregion
 
             foreach (var m in managers)
@@ -153,8 +142,10 @@ namespace MZPO.Processors
             }
 
             #region Executing request
-            var batchRequest = new BatchUpdateSpreadsheetRequest();
-            batchRequest.Requests = requestContainer;
+            var batchRequest = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = requestContainer
+            };
 
             _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
             #endregion
@@ -229,16 +220,16 @@ namespace MZPO.Processors
             companyName = company.name;
 
             #region Getting LPR
-            if ((company.custom_fields_values != null) &&
+            if ((company.custom_fields_values is not null) &&
                 company.custom_fields_values.Any(x => x.field_id == 640657))
                 LPR = (string)company.custom_fields_values.FirstOrDefault(x => x.field_id == 640657).values[0].value;
             #endregion
 
             #region Checking company for contacts
-            if ((company.custom_fields_values != null) &&
+            if ((company.custom_fields_values is not null) &&
                 company.custom_fields_values.Any(x => x.field_id == 33575))
                 phoneAdded = true;
-            if ((company.custom_fields_values != null) &&
+            if ((company.custom_fields_values is not null) &&
                 company.custom_fields_values.Any(x => x.field_id == 33577))
                 emailAdded = true;
             #endregion
@@ -248,12 +239,12 @@ namespace MZPO.Processors
 
             var contactIdList = new List<int>();
 
-            if ((l._embedded.contacts is { }) &&
+            if ((l._embedded.contacts is not null) &&
                 (l._embedded.contacts.Any()))
                 foreach (var c in l._embedded.contacts)
                     contactIdList.Add(c.id); 
-            if ((company._embedded is { }) &&
-                (company._embedded.contacts is { }) &&
+            if ((company._embedded is not null) &&
+                (company._embedded.contacts is not null) &&
                 (company._embedded.contacts.Any()))
                 foreach (var c in company._embedded.contacts)
                     contactIdList.Add(c.id);
@@ -262,14 +253,14 @@ namespace MZPO.Processors
             #endregion
 
             #region Getting contact name if any
-            if ((contacts is { }) &&
+            if ((contacts is not null) &&
                 contacts.Any())
                 contactName = contacts.First().name;
             else contactName = "";
             #endregion
 
             #region Checking contacts
-            if ((contacts is { }) && 
+            if ((contacts is not null) && 
                 contacts.Any())
                 foreach (var c in contacts)
                 {
@@ -353,8 +344,10 @@ namespace MZPO.Processors
             #region Updating sheet
             if (requestContainer.Any())
             {
-                var batchRequest = new BatchUpdateSpreadsheetRequest();
-                batchRequest.Requests = requestContainer;
+                var batchRequest = new BatchUpdateSpreadsheetRequest
+                {
+                    Requests = requestContainer
+                };
 
                 _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
             }

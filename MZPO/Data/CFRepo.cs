@@ -6,7 +6,7 @@ namespace MZPO.Data
 {
     public class CFRepo : ICFRepo
     {
-        private MySQLContext db;
+        private readonly MySQLContext db;
 
         public CFRepo(MySQLContext context)
         {

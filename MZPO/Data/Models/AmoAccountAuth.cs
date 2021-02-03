@@ -8,6 +8,7 @@ namespace MZPO.Data
 {
     public class AmoAccountAuth
     {
+#pragma warning disable IDE1006 // Naming Styles
         public int id { get; set; }
         public string name { get; set; }
         public string subdomain { get; set; }
@@ -18,5 +19,6 @@ namespace MZPO.Data
         public string authToken { get; set; }
         public string refrToken { get; set; }
         public DateTime validity { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

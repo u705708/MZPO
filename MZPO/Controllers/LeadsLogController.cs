@@ -12,12 +12,10 @@ namespace MZPO.Controllers
     [ApiController]
     public class LeadsLogController : ControllerBase
     {
-        private readonly Amo _amo;
         private readonly AmoAccount _acc;
 
         public LeadsLogController(Amo amo)
         {
-            _amo = amo;
             _acc = amo.GetAccountById(28395871);
         }
         

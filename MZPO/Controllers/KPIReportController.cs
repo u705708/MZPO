@@ -34,7 +34,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<IProcessor> reportProcessor = new Lazy<IProcessor>(() =>                         //Создаём экземпляр процессора
-                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, token, dateTo));
+                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, dateTo, token));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
             _processQueue.Add(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь
@@ -50,7 +50,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
             Lazy<IProcessor> reportProcessor = new Lazy<IProcessor>(() =>                         //Создаём экземпляр процессора
-                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, token, dateTo));
+                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, dateTo, token));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
             _processQueue.Add(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь

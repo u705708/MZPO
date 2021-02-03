@@ -40,7 +40,7 @@ namespace MZPO.AmoRepo
                 using HttpRequestMessage request = new HttpRequestMessage(_httpMethod, _uri);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _auth.GetToken());
                 request.Headers.TryAddWithoutValidation("User-Agent", "mzpo2amo-client/1.1");
-                if (_content is { })
+                if (_content is not null)
                 {
                     request.Content = _content;
                     request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");

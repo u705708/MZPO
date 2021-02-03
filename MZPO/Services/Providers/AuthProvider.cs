@@ -38,11 +38,11 @@ namespace MZPO.Services
             {
                 var content = JsonConvert.SerializeObject(new
                         {
-                            client_id = _amoAccountAuth.client_id,
-                            client_secret = _amoAccountAuth.client_secret,
+                            _amoAccountAuth.client_id,
+                            _amoAccountAuth.client_secret,
                             grant_type = "refresh_token",
                             refresh_token = _refrToken,
-                            redirect_uri = _amoAccountAuth.redirect_uri
+                            _amoAccountAuth.redirect_uri
                         },
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
@@ -63,11 +63,11 @@ namespace MZPO.Services
             {
                 var content = JsonConvert.SerializeObject(new
                         {
-                            client_id = _amoAccountAuth.client_id,
-                            client_secret = _amoAccountAuth.client_secret,
+                            _amoAccountAuth.client_id,
+                            _amoAccountAuth.client_secret,
                             grant_type = "authorization_code",
-                            code = _amoAccountAuth.code,
-                            redirect_uri = _amoAccountAuth.redirect_uri
+                            _amoAccountAuth.code,
+                            _amoAccountAuth.redirect_uri
                         },
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 

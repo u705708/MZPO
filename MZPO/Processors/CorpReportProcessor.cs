@@ -23,7 +23,7 @@ namespace MZPO.Processors
         private readonly BaseRepository<Company> compRepo;
         protected readonly CancellationToken _token;
 
-        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, CancellationToken token, long dateFrom, long dateTo)
+        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, CancellationToken token)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -159,8 +159,10 @@ namespace MZPO.Processors
             }
 
             #region Executing request
-            var batchRequest = new BatchUpdateSpreadsheetRequest();
-            batchRequest.Requests = requestContainer;
+            var batchRequest = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = requestContainer
+            };
 
             _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
             #endregion
@@ -169,10 +171,11 @@ namespace MZPO.Processors
         private void PrepareRow(int sheetId, string A, string B, int C, string D, int E, string F, string G, string H, int I, int J, string K)
         {
             #region Prepare data
-            var rows = new List<RowData>();
-            rows.Add(new RowData()
+            var rows = new List<RowData>
             {
-                Values = new List<CellData>(){
+                new RowData()
+                {
+                    Values = new List<CellData>(){
                          new CellData(){
                              UserEnteredValue = new ExtendedValue(){ StringValue = A},
                              UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
@@ -206,8 +209,9 @@ namespace MZPO.Processors
                          new CellData(){
                              UserEnteredValue = new ExtendedValue() { FormulaValue = K},
                              UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } }
+                    }
                 }
-            });
+            };
             #endregion
 
             #region Add request
@@ -226,10 +230,11 @@ namespace MZPO.Processors
         private void LastRow(int sheetId)
         {
             #region Prepare data
-            var rows = new List<RowData>();
-            rows.Add(new RowData()
+            var rows = new List<RowData>
             {
-                Values = new List<CellData>(){
+                new RowData()
+                {
+                    Values = new List<CellData>(){
                          new CellData(){
                              UserEnteredValue = new ExtendedValue(){ StringValue = "Итого:"},
                              UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "RIGHT", TextFormat = new TextFormat(){ Bold = true } } },
@@ -248,7 +253,8 @@ namespace MZPO.Processors
                              UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=SUM(K2:K{requestContainer.Count + 1})"},
                              UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } }
                 }
-            });
+                }
+            };
             #endregion
 
             #region Add request
@@ -291,11 +297,9 @@ namespace MZPO.Processors
             #endregion
 
             #region Кол-во человек
-            int students;
+            int students = 1;
             if (l.custom_fields_values.Any(x => x.field_id == 611005))
-                Int32.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 611005).values[0].value, out students);
-            else
-                students = 1;
+                if (!int.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 611005).values[0].value, out students)) students = 1;
             C = students;
             #endregion
 
@@ -331,11 +335,9 @@ namespace MZPO.Processors
             #endregion
 
             #region % сделки
-            int percent;
+            int percent = 0;
             if (l.custom_fields_values.Any(x => x.field_id == 613663))
-                Int32.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 613663).values[0].value, out percent);
-            else
-                percent = 0;
+                if (!int.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 613663).values[0].value, out percent)) percent = 0;
             J = percent;
             #endregion
 
@@ -356,7 +358,7 @@ namespace MZPO.Processors
             if (allLeads is null) return Task.CompletedTask;
 
             var leads = allLeads.Where(x =>
-                (x.custom_fields_values is { }) &&
+                (x.custom_fields_values is not null) &&
                 (x.custom_fields_values.Any(y => y.field_id == 118675)) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value >= _dateFrom) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)
@@ -377,8 +379,10 @@ namespace MZPO.Processors
             #region Finalization
             LastRow(m.Item1);
 
-            var batchRequest = new BatchUpdateSpreadsheetRequest();
-            batchRequest.Requests = requestContainer;
+            var batchRequest = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = requestContainer
+            };
 
             return _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
             #endregion

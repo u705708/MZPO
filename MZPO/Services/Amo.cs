@@ -55,7 +55,7 @@ namespace MZPO.Services
         public void AddAmoAccount(int id, string name, string subdomain, string client_id, string client_secret, string redirect_uri, string code)
         {
             var acc = amoProvider.GetAmoAccount(id);
-            if (acc != null)
+            if (acc is not null)
             {
                 acc.name = name;
                 acc.subdomain = subdomain;
@@ -100,7 +100,7 @@ namespace MZPO.Services
         public void AddAmoAccount(int id, string name, string subdomain, string client_id, string client_secret, string redirect_uri, string code, string authToken, string refrToken, DateTime validity)
         {
             var acc = amoProvider.GetAmoAccount(id);
-            if (acc != null)
+            if (acc is not null)
             {
                 acc.name = name;
                 acc.subdomain = subdomain;
@@ -152,7 +152,7 @@ namespace MZPO.Services
         public void RemoveAmoAccount(int id)
         {
             var acc = amoProvider.GetAmoAccount(id);
-            if (acc != null)
+            if (acc is not null)
             {
                 amoProvider.RemoveAccount(acc);
             }

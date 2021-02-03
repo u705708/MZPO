@@ -35,7 +35,7 @@ namespace MZPO.Processors
             {
                 Thread.Sleep((int)TimeSpan.FromSeconds(5).TotalMilliseconds);
                 lead = _leadRepo.GetById(leadNumber);
-                if (lead is { } && lead._embedded is { } && lead._embedded.tags is { })
+                if (lead is not null && lead._embedded is not null && lead._embedded.tags is not null)
                     tags = lead._embedded.tags;
             }
             catch (Exception e)
@@ -52,13 +52,12 @@ namespace MZPO.Processors
         {
             if (custom_fields_values.Any(x => x.field_id == fieldId))
                 return (string)custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value;
-            else if ((lead.custom_fields_values is { }) &&
+            else if ((lead.custom_fields_values is not null) &&
                     lead.custom_fields_values.Any(x => x.field_id == fieldId))
                 return (string)lead.custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value;
             else return null;
         }
         //protected string GetFieldValue(string fieldName) => GetFieldValue(_customFields[fieldName]);
-
 
         protected string SetFieldValue(int fieldId, string fieldValue)
         {
@@ -66,7 +65,7 @@ namespace MZPO.Processors
                 custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value = fieldValue;
             else
             {
-                if ((lead.custom_fields_values is { }) &&
+                if ((lead.custom_fields_values is not null) &&
                     lead.custom_fields_values.Any(x => x.field_id == fieldId))
                     lead.custom_fields_values.Where(x => x.field_id == fieldId).FirstOrDefault().values[0].value = fieldValue;
 

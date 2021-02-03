@@ -75,7 +75,7 @@ namespace MZPO.Controllers
             else return Ok();
             #endregion
 
-            Lazy<InitialLeadProcessor> initialLeadProcessor = new Lazy<InitialLeadProcessor>( () =>                     //Создаём экземпляр процессора сделки
+            Lazy<IProcessor> initialLeadProcessor = new Lazy<IProcessor>( () =>                     //Создаём экземпляр процессора сделки
                                 new InitialLeadProcessor(leadNumber, acc, _processQueue, token));
             
             task = Task.Run(() => initialLeadProcessor.Value.Run());                                                    //Запускаем его

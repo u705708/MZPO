@@ -6,7 +6,7 @@ namespace MZPO.Data
 {
     public class TagRepo : ITagRepo
     {
-        private MySQLContext db;
+        private readonly MySQLContext db;
 
         public TagRepo(MySQLContext context)
         {

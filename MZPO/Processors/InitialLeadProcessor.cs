@@ -54,7 +54,7 @@ namespace MZPO.Processors
             try
             {
                 string fieldValue = GetFieldValue(644511);
-                if (fieldValue is { })
+                if (fieldValue is not null)
                 {
                     switch (fieldValue)
                     {
@@ -76,7 +76,7 @@ namespace MZPO.Processors
             #region Врач-косметолог
             var pageURL = GetFieldValue(639083);
 
-            if (pageURL is { })
+            if (pageURL is not null)
             {
                 if (pageURL.Contains("vrach-kosmetolog"))                                                               //Если посадочная страница содержит врач-косметолог
                 {
@@ -90,7 +90,7 @@ namespace MZPO.Processors
             var site = GetFieldValue(639081);
             var applicationType = GetFieldValue(639075);
 
-            if (site is { })                                                                                           //Если поле сайт не пустое
+            if (site is not null)                                                                                           //Если поле сайт не пустое
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
                 {
@@ -104,7 +104,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Сайт и тег по типу обращения
-            else if (applicationType is { })                                                                           //Если тип обращения не пустой
+            else if (applicationType is not null)                                                                           //Если тип обращения не пустой
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
                 {
@@ -133,7 +133,7 @@ namespace MZPO.Processors
                 try
                 {
                     var city = GetFieldValue(639087);                                                                   //Пытаемся получить поле город
-                    if (city is { })                                                                                    //Если оно не пустое
+                    if (city is not null)                                                                                    //Если оно не пустое
                         SetFieldValue(639087, _acc.GetCity(city));                                                      //Подставляем значение из базы городов
                 }
                 catch (Exception e)
@@ -161,7 +161,9 @@ namespace MZPO.Processors
                 for (int i = 1; i <= 30; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
-                    Thread.Sleep((int)TimeSpan.FromMinutes(1).TotalMilliseconds);
+                    lead = _leadRepo.GetById(_leadNumber);                                                              //Загружаем сделку
+                    if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
+                    Thread.Sleep((int)TimeSpan.FromMinutes(1).TotalMilliseconds);                                       //Ждём минуту
                 }
             }
             return;
@@ -188,7 +190,7 @@ namespace MZPO.Processors
 
             #region Коллтрекинг
             var source = GetFieldValue(639085);                                                                         //Источник(Маркер)
-            if (source is { })
+            if (source is not null)
             {
                 if (tags.Any(x => x.name == "Коллтрекинг") || source.Contains("Коллтрекинг"))                           //Если сделка из коллтрекинга
                 {
@@ -213,7 +215,7 @@ namespace MZPO.Processors
             #endregion
 
             #region Ручная сделка
-            if (tags.Count() == 0)                                                                                      //Если тегов нет
+            if (tags.Count == 0)                                                                                        //Если тегов нет
             {
                 SetTag("Ручная");
                 SetFieldValue(639081, "Сделка созданная вручную");                                                      //Сайт
@@ -224,11 +226,11 @@ namespace MZPO.Processors
             var applicationType = GetFieldValue(639075);                                                                //Тип обращения
             if (GetFieldValue(644675) is null)                                                                          //Результат звонка
             {
-                if ((applicationType is { }) && (applicationType.Contains("аявк")))
+                if ((applicationType is not null) && (applicationType.Contains("аявк")))
                 {
                     SetFieldValue(644675, "Заявка с сайта");
                 }
-                else if ((applicationType is { }) && (applicationType.Contains("Jivosite")))
+                else if ((applicationType is not null) && (applicationType.Contains("Jivosite")))
                 {
                     SetFieldValue(644675, "Jivosite");
                 }
@@ -279,7 +281,7 @@ namespace MZPO.Processors
             var pipelines = new List<(int, List<string>, string, string, string, int)>(){
                     (3326584, new List<string>(){"mzpo-s.ru", "insta"}, "mzpo-s.ru", "mzpo-s.ru_instagram", "instagram", 2576764),
                     (3223441, new List<string>(){"skillbank.su", "insta"}, "skillbank.su", "skillbank.su-instagram", "instagram", 2576764),
-                    (3308590, new List<string>(){"mirk.msk.ru", "insta"}, "mirk.msk.ru", "mirk.msk.ru-instagram", "instagram", 6158035),
+                    (3308590, new List<string>(){"mirk.msk.ru", "insta"}, "mirk.msk.ru", "mirk.msk.ru-instagram", "instagram", 2576764),
                     (3308629, new List<string>(){"mzpokurs.com", "insta"}, "mzpokurs.com", "mzpokurs.com-instagram", "instagram", 2576764),
                     (3467149, new List<string>(){"mzpo-s.ru", "vkontakte"}, "mzpo-s.ru", "mzpo-s.ru-vk", "vk", 2576764),
                     (3467545, new List<string>(){"mzpo-s.ru", "vkontakte"}, "mzpo-s.ru", "chempionat-vk", "vk", 2576764),
@@ -351,10 +353,18 @@ namespace MZPO.Processors
                     await Task.Run(() => CallResultWaiter());
 
                     lead = _leadRepo.GetById(_leadNumber);                                                                      //Обновляем информацию о сделке, если она изменилась за время ожидания
-                    tags = new List<Tag>();
-                    if (lead is { } && lead._embedded is { } && lead._embedded.tags is { })
-                        tags = lead._embedded.tags;
+
+                    if (lead is null)
+                    {
+                        _processQueue.Remove(_leadNumber.ToString());
+                        Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
+                        return;
+                    }
+
                     custom_fields_values = new List<Lead.Custom_fields_value>();
+                    tags = new List<Tag>();
+                    if (lead._embedded is not null && lead._embedded.tags is not null)
+                        tags = lead._embedded.tags;
 
                     PhaseTwo();
                     _leadRepo.AddNotes(_leadNumber, "Phase 2 finished.");

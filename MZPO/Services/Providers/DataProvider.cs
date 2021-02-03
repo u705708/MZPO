@@ -41,8 +41,12 @@ namespace MZPO.Services
             {
                 var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
                 var cityPair = db.GetCityByEngName(engName).Result;
-                if (cityPair == null) throw new Exception($"Не задано значение для города {engName}");
-                result = cityPair.RusName;
+                if (cityPair is null) 
+                {
+                    result = engName;
+                    Log.Add($"Не задано значение для города {engName}");
+                }
+                else result = cityPair.RusName;
             }
             return result;
         }
@@ -60,19 +64,17 @@ namespace MZPO.Services
 
         public async void AddNewCity(string engCity, string rusCity)
         {
-            using (var scope = scopeFactory.CreateScope())
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
+            var city = db.GetCityByEngName(engCity).Result;
+            if (city is null)
             {
-                var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
-                var city = db.GetCityByEngName(engCity).Result;
-                if (city == null)
-                {
-                    await db.AddCity(new City() { EngName = engCity, RusName = rusCity });
-                }
-                else
-                {
-                    city.RusName = rusCity;
-                    await db.UpdateCity(city);
-                }
+                await db.AddCity(new City() { EngName = engCity, RusName = rusCity });
+            }
+            else
+            {
+                city.RusName = rusCity;
+                await db.UpdateCity(city);
             }
         }
 
@@ -118,7 +120,7 @@ namespace MZPO.Services
             {
                 var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
                 var tag = db.GetTagByName(tagName, account.id).Result;
-                if (tag != null) result = tag.Id;
+                if (tag is not null) result = tag.Id;
                 else result = AddNewTag(tagName, account).Result;
             }
             return result;
@@ -131,7 +133,7 @@ namespace MZPO.Services
             {
                 var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
                 var tag = db.GetTagByName(tagName, account.id).Result;
-                if (tag != null) result = tag.Id;
+                if (tag is not null) result = tag.Id;
                 else
                 {
                     try
@@ -202,7 +204,7 @@ namespace MZPO.Services
             {
                 var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
                 var cf = db.GetCFByName(fieldName, acc.id);
-                if (cf != null) result = cf.Id;
+                if (cf is not null) result = cf.Id;
                 else result = AddNewCF(fieldName, acc).Result;
             }
             return result;
@@ -216,7 +218,7 @@ namespace MZPO.Services
             {
                 var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
                 var cf = db.GetCFByName(fieldName, acc.id).Result;
-                if (cf != null) result = cf.Id;
+                if (cf is not null) result = cf.Id;
                 else
                 {
                     try

@@ -6,7 +6,7 @@ namespace MZPO.Data
 {
     public class AccountRepo : IAccountRepo
     {
-        private MySQLContext db;
+        private readonly MySQLContext db;
 
         public AccountRepo(MySQLContext context)
         {

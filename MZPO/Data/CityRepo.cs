@@ -6,7 +6,7 @@ namespace MZPO.Data
 {
     public class CityRepo : ICityRepo
     {
-        private MySQLContext db;
+        private readonly MySQLContext db;
 
         public CityRepo(MySQLContext context)
         {
