@@ -2,7 +2,7 @@
 
 namespace MZPO.AmoRepo
 {
-    public abstract class AbstractRepository
+    public abstract class AbstractAmoRepository
     {
         public class EntityList
         {

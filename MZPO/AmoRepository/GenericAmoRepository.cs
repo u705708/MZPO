@@ -1,5 +1,4 @@
-﻿using MZPO.Services;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,14 +7,22 @@ using System.Text;
 
 namespace MZPO.AmoRepo
 {
-    public class BaseRepository<T> : AbstractRepository, IBaseRepo<T> where T : IModel, new()
+    /// <summary>
+    /// Generic amoCRM repository, provides access to all main entities.
+    /// </summary>
+    /// <typeparam name="T">Entity in amoCRM, must implement <see cref="IEntity"/></typeparam>
+    public class GenericAmoRepository<T> : AbstractAmoRepository, IAmoRepo<T> where T : IEntity, new()
     {
         #region Definition
-        private readonly AuthProvider _auth;
+        private readonly IAmoAuthProvider _auth;
         private readonly string _entityLink;
         private readonly string _apiAddress;
 
-        public BaseRepository(AmoAccount acc)
+        /// <summary>
+        /// Generic amoCRM repository constructor.
+        /// </summary>
+        ///<param name = "acc" ><see cref="AmoAccount"/> object, must implement <see cref="IAmoAccount"/>.</param>
+        public GenericAmoRepository(IAmoAccount acc)
         {
             _auth = acc.auth;
             _entityLink = (string)typeof(T).GetProperty("entityLink").GetValue(null, null);   //IModel.entityLink;
@@ -28,7 +35,7 @@ namespace MZPO.AmoRepo
         {
             if ((entity is not null) && (entity._embedded is not null))
                 return (List<T>)entity.GetType().GetNestedType("Embedded").GetField(_entityLink).GetValue(entity._embedded);
-            else return null;
+            else return new List<T>();
         }
 
         private static O GetResult<O>(AmoRequest request, O o)
@@ -36,7 +43,7 @@ namespace MZPO.AmoRepo
             try 
             {
                 var response = request.GetResponse();
-                if (response == "") return default;
+                if (response == "") return o;
                 JsonConvert.PopulateObject(WebUtility.UrlDecode(response), o); 
             }
             catch (Exception e) { throw new Exception("Unable to process response : " + e.Message); }
@@ -60,7 +67,7 @@ namespace MZPO.AmoRepo
                 if (response == "") break;
                 
                 try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), entityList); }
-                catch (Exception e) { entityList._links.Remove("next"); Log.Add($"Unexpected end of List in GetList():{e}"); }
+                catch (Exception e) { entityList._links.Remove("next"); throw new Exception($"Unexpected end of List in GetList():{e}"); }
                 
                 if (entityList._links.ContainsKey("next") && (next == entityList._links["next"].href)) entityList._links.Remove("next");
             }
@@ -79,14 +86,13 @@ namespace MZPO.AmoRepo
             EntityList result = new EntityList();
             return GetEmbedded(GetResult(request, result));
         }
-
+        public IEnumerable<T> AddNew(T payload) => AddNew(new List<T>() { payload });
         public IEnumerable<T> GetByCriteria(string criteria)
         {
             var uri = $"{_apiAddress}{_entityLink}?{criteria}";
 
             return GetEmbedded(GetList(uri));
         }
-
         public IEnumerable<T> BulkGetById(IEnumerable<int> ids)
         {
             int i = 0;
@@ -117,7 +123,6 @@ namespace MZPO.AmoRepo
             }
             return result;
         }
-
         public T GetById(int id)
         {
             var uri = $"{_apiAddress}{_entityLink}/{id}?with=leads,contacts,companies";                                                               //?with = contacts,leads,catalog_elements,customers
@@ -125,7 +130,6 @@ namespace MZPO.AmoRepo
             AmoRequest request = new AmoRequest("GET", uri, _auth);
             return GetResult(request, new T());
         }
-
         public IEnumerable<T> Save(IEnumerable<T> payload)
         {
             var uri = $"{_apiAddress}{_entityLink}";
@@ -136,8 +140,7 @@ namespace MZPO.AmoRepo
             return GetEmbedded(GetResult(request, result));
         }
         public IEnumerable<T> Save(T payload) => Save(new List<T>() { payload });
-
-        public IEnumerable<Event> GetEvents(int id)
+        public IEnumerable<Event> GetEntityEvents(int id)
         {
             var uri = $"{_apiAddress}events?filter[entity]={_entityLink[0..^1]}&filter[entity_id][]={id}";
 
@@ -145,9 +148,8 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.events is not null)
                 return result._embedded.events.ToList();
-            else return null;
+            else return new List<Event>();
         }
-
         public IEnumerable<Event> GetEventsByCriteria(string criteria)
         {
             var uri = $"{_apiAddress}events?{criteria}";
@@ -156,10 +158,9 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.events is not null)
                 return result._embedded.events.ToList();
-            else return null;
+            else return new List<Event>();
         }
-
-        public IEnumerable<Note> GetNotes(int id)
+        public IEnumerable<Note> GetEntityNotes(int id)
         {
             var uri = $"{_apiAddress}{_entityLink}/{id}/notes";
 
@@ -167,7 +168,7 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.notes is not null)
                 return result._embedded.notes.ToList();
-            else return null;
+            else return new List<Note>();
         }
         public IEnumerable<Note> GetNotesByCriteria(string criteria)
         {
@@ -177,7 +178,7 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.notes is not null)
                 return result._embedded.notes.ToList();
-            else return null;
+            else return new List<Note>();
         }
         public Note GetNoteById(int id)
         {
@@ -210,19 +211,20 @@ namespace MZPO.AmoRepo
             }
             return result;
         }
-
         public IEnumerable<Note> AddNotes(IEnumerable<Note> payload)
         {
             var uri = $"{_apiAddress}{_entityLink}/notes";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             AmoRequest request = new AmoRequest("POST", uri, content, _auth);
-            EntityList result = new EntityList();
-            return GetResult(request, result)._embedded.notes.ToList();
+            EntityList list = new EntityList();
+            var result = GetResult(request, list);
+            if (result._embedded is not null && result._embedded.notes is not null)
+                return result._embedded.notes.ToList();
+            else return new List<Note>();
         }
         public IEnumerable<Note> AddNotes(Note note) => AddNotes(new List<Note>() { note });
         public IEnumerable<Note> AddNotes(int id, string comment) => AddNotes(new Note() { entity_id = id, note_type = "service_message", parameters = new Note.Params() { service = "mzpo2amo", text = comment } });
-
         public IEnumerable<Tag> GetTags()
         {
             var uri = $"{_apiAddress}{_entityLink}/tags";
@@ -231,22 +233,22 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.tags is not null)
                 return result._embedded.tags.ToList();
-            else return null;
+            else return new List<Tag>();
         }
-
-
         public IEnumerable<Tag> AddTag(IEnumerable<Tag> payload)
         {
             var uri = $"{_apiAddress}{_entityLink}/tags";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             AmoRequest request = new AmoRequest("POST", uri, content, _auth);
-            EntityList result = new EntityList();
-            return GetResult(request, result)._embedded.tags.ToList();
+            EntityList list = new EntityList();
+            var result = GetResult(request, list);
+            if (result._embedded is not null && result._embedded.tags is not null)
+                return result._embedded.tags.ToList();
+            else return new List<Tag>();
         }
         public IEnumerable<Tag> AddTag(Tag newTag) => AddTag(new List<Tag>() { newTag });
         public IEnumerable<Tag> AddTag(string tagName) => AddTag(new Tag() { name = tagName });
-
         public IEnumerable<CustomField> GetFields()
         {
             var uri = $"{_apiAddress}{_entityLink}/custom_fields";
@@ -255,21 +257,22 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.custom_fields is not null)
                 return result._embedded.custom_fields.ToList();
-            else return null;
+            else return new List<CustomField>();
         }
-
         public IEnumerable<CustomField> AddField(IEnumerable<CustomField> payload)
         {
             var uri = $"{_apiAddress}{_entityLink}/custom_fields";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             AmoRequest request = new AmoRequest("POST", uri, content, _auth);
-            EntityList result = new EntityList();
-            return GetResult(request, result)._embedded.custom_fields.ToList();
+            EntityList list = new EntityList();
+            var result = GetResult(request, list);
+            if (result._embedded is not null && result._embedded.custom_fields is not null)
+                return result._embedded.custom_fields.ToList();
+            else return new List<CustomField>();
         }
         public IEnumerable<CustomField> AddField(CustomField customField) => AddField(new List<CustomField>() { customField });
         public IEnumerable<CustomField> AddField(string fieldName) => AddField(new CustomField() { name = fieldName, type = "text" });
-        
         public void AcceptUnsorted(string uid)
         {
             var uri = $"{_apiAddress}leads/unsorted/{uid}/accept";

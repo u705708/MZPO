@@ -1,20 +1,19 @@
-﻿using MZPO.Services;
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 
 namespace MZPO.AmoRepo
 {
-    public class AmoRequest
+    internal class AmoRequest
     {
         #region Definition
-        private readonly AuthProvider _auth;
+        private readonly IAmoAuthProvider _auth;
         private readonly Uri _uri;
         private readonly HttpMethod _httpMethod;
         private readonly HttpContent _content;
         private readonly string content;
 
-        public AmoRequest(string httpMethod, string uri, string content, AuthProvider auth)
+        internal AmoRequest(string httpMethod, string uri, string content, IAmoAuthProvider auth)
         {
             _httpMethod = new HttpMethod(httpMethod);
             _uri = new Uri(uri);
@@ -23,7 +22,7 @@ namespace MZPO.AmoRepo
             this.content = content;
         }
 
-        public AmoRequest(string httpMethod, string uri, AuthProvider auth)
+        internal AmoRequest(string httpMethod, string uri, IAmoAuthProvider auth)
         {
             _httpMethod = new HttpMethod(httpMethod);
             _uri = new Uri(uri);
@@ -32,7 +31,7 @@ namespace MZPO.AmoRepo
         #endregion
 
         #region Realization
-        public string GetResponse()
+        internal string GetResponse()
         {
             HttpResponseMessage response;
             using (var httpClient = new HttpClient())

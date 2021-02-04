@@ -7,9 +7,9 @@ namespace MZPO.Services
 {
     public static class AmoAccountExtensions
     {
-        public static BaseRepository<T> GetRepo<T>(this AmoAccount acc) where T : IModel, new()
+        public static GenericAmoRepository<T> GetRepo<T>(this IAmoAccount acc) where T : IEntity, new()
         {
-            return new BaseRepository<T>(acc);
+            return new GenericAmoRepository<T>(acc);
         }
 
         #region City

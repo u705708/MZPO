@@ -19,8 +19,8 @@ namespace MZPO.Processors
         private readonly string SpreadsheetId;
         private readonly long _dateFrom;
         private readonly long _dateTo;
-        private readonly BaseRepository<Lead> leadRepo;
-        private readonly BaseRepository<Company> compRepo;
+        private readonly IAmoRepo<Lead> leadRepo;
+        private readonly IAmoRepo<Company> compRepo;
         protected readonly CancellationToken _token;
 
         public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, CancellationToken token)
@@ -44,7 +44,8 @@ namespace MZPO.Processors
             (2375131, "Алферова Лилия"),
             (2884132, "Ирина Сорокина"),
             (6028753, "Алена Федосова"),
-            (6630727, "Елена Зубатых")//,
+            (6630727, "Елена Зубатых"),
+            (6697522, "Наталья Филатова"),
             //(3770773, "Шталева Лидия"),
             //(6200629, "Харшиладзе Леван"),
             //(6346882, "Мусихина Юлия")

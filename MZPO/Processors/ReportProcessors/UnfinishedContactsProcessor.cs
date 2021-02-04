@@ -4,9 +4,7 @@ using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace MZPO.Processors
@@ -18,9 +16,9 @@ namespace MZPO.Processors
         private readonly AmoAccount _acc;
         private readonly SheetsService _service;
         private readonly string SpreadsheetId;
-        private readonly BaseRepository<Lead> leadRepo;
-        private readonly BaseRepository<Company> compRepo;
-        private readonly BaseRepository<Contact> contRepo;
+        private readonly IAmoRepo<Lead> leadRepo;
+        private readonly IAmoRepo<Company> compRepo;
+        private readonly IAmoRepo<Contact> contRepo;
         protected readonly CancellationToken _token;
 
         public UnfinishedContactsProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
@@ -44,6 +42,7 @@ namespace MZPO.Processors
             (6630727, "Елена Зубатых"),
             (6028753, "Алена Федосова"),
             (2884132, "Ирина Сорокина"),
+            (6697522, "Наталья Филатова"),
             (3770773, "Шталева Лидия"),
             (6200629, "Харшиладзе Леван"),
             (6346882, "Мусихина Юлия")

@@ -8,7 +8,7 @@ namespace MZPO.Processors
     public class UnsortedProcessor : IProcessor
     {
         #region Definition
-        protected readonly IBaseRepo<Lead> _leadRepo;
+        protected readonly IAmoRepo<Lead> _leadRepo;
         protected readonly AmoAccount _acc;
         protected readonly TaskList _processQueue;
         protected readonly CancellationToken _token; 

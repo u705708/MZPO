@@ -1,4 +1,5 @@
-﻿using MZPO.Data;
+﻿using MZPO.AmoRepo;
+using MZPO.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -7,7 +8,7 @@ using System.Net.Http.Headers;
 
 namespace MZPO.Services
 {
-    public class AuthProvider
+    public class AuthProvider : IAmoAuthProvider
     {
         #region Definition
         private readonly AmoProvider _amoProvider;

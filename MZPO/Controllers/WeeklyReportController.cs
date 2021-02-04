@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
-    [Route("reports/retail")]
+    [Route("reports/weekly")]
     [ApiController]
-    public class RetailReportController : ControllerBase
+    public class WeeklyReportController : ControllerBase
     {
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
         private readonly GSheets _gSheets;
         private readonly string sheetId;
 
-        public RetailReportController(Amo amo, TaskList processQueue, GSheets gSheets)
+        public WeeklyReportController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _acc = amo.GetAccountById(28395871);
             _processQueue = processQueue;
@@ -24,7 +24,7 @@ namespace MZPO.Controllers
             sheetId = "1Am4JA46Nbaa1GxOgeKbhKRMWXkkzRS2SoZBhVjqqueY";
         }
 
-        // GET: reports/retail
+        // GET: reports/weekly
         [HttpGet]
         public ActionResult Get()
         {
@@ -41,7 +41,7 @@ namespace MZPO.Controllers
             return Ok();
         }
 
-        // GET reports/retail/1612126799
+        // GET reports/weekly/1612126799
         [HttpGet("{to}")]                                                                                        //Запрашиваем отчёт для диапазона дат
         public ActionResult Get(string to)
         {

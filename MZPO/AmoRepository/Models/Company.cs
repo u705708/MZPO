@@ -1,41 +1,98 @@
 ﻿using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MZPO.AmoRepo
 {
-    public class Company : IModel
+    /// <summary>
+    /// Company is an entity in amoCRM.
+    /// </summary>
+    public class Company : IEntity
     {
         [JsonIgnore]
 #pragma warning disable IDE1006 // Naming Styles
-        public static string entityLink { get => "companies"; }                 //Возвращается название ссылки на сущность, не сериализуется в JSON
+        public static string entityLink { get => "companies"; }
 
-        public int id { get; set; }                                             //ID компании
-        public string name { get; set; }                                        //Название компании
-        public int? responsible_user_id { get; set; }                           //ID пользователя, ответственного за компанию
-        public int? group_id { get; set; }                                      //ID группы, в которой состоит ответственны пользователь за компанию
-        public int? created_by { get; set; }                                    //ID пользователя, создавший компанию
-        public int? updated_by { get; set; }                                    //ID пользователя, изменивший компанию
-        public int? created_at { get; set; }                                    //Дата создания компании, передается в Unix Timestamp
-        public int? updated_at { get; set; }                                    //Дата изменения компании, передается в Unix Timestamp
-        public int? closest_task_at { get; set; }                               //Дата ближайшей задачи к выполнению, передается в Unix Timestamp
-        public List<Custom_fields_value> custom_fields_values { get; set; }    //Массив, содержащий информацию по значениям дополнительных полей, заданных для данной компании
-        public int account_id { get; set; }                                     //ID аккаунта, в котором находится компания
+        /// <summary>
+        /// ID компании.
+        /// </summary>
+        public int id { get; set; }
+        /// <summary>
+        /// Название компании.
+        /// </summary>
+        public string name { get; set; }
+        /// <summary>
+        /// ID пользователя, ответственного за компанию.
+        /// </summary>
+        public int? responsible_user_id { get; set; }
+        /// <summary>
+        /// ID группы, в которой состоит ответственны пользователь за компанию.
+        /// </summary>
+        public int? group_id { get; set; }
+        /// <summary>
+        /// ID пользователя, создавший компанию.
+        /// </summary>
+        public int? created_by { get; set; }
+        /// <summary>
+        /// ID пользователя, изменивший компанию.
+        /// </summary>
+        public int? updated_by { get; set; }
+        /// <summary>
+        /// Дата создания компании, передается в Unix Timestamp.
+        /// </summary>
+        public int? created_at { get; set; }
+        /// <summary>
+        /// Дата изменения компании, передается в Unix Timestamp.
+        /// </summary>
+        public int? updated_at { get; set; }
+        /// <summary>
+        /// Дата ближайшей задачи к выполнению, передается в Unix Timestamp.
+        /// </summary>
+        public int? closest_task_at { get; set; }
+        /// <summary>
+        /// Список, содержащий информацию по значениям дополнительных полей, заданных для данной компании.
+        /// </summary>
+        public List<Custom_fields_value> custom_fields_values { get; set; }
+        /// <summary>
+        /// ID аккаунта, в котором находится компания.
+        /// </summary>
+        public int account_id { get; set; }
+        /// <summary>
+        /// Ссылки компании.
+        /// </summary>
         public Links _links { get; set; }
-        public Embedded _embedded { get; set; }                                 //Данные вложенных сущностей
+        /// <summary>
+        /// Данные вложенных сущностей.
+        /// </summary>
+        public Embedded _embedded { get; set; }
 
         public class Custom_fields_value
         {
+            /// <summary>
+            /// ID поля.
+            /// </summary>
             public int field_id { get; set; }
+            /// <summary>
+            /// Название поля.
+            /// </summary>
             public string field_name { get; set; }
+            /// <summary>
+            /// Код поля
+            /// </summary>
             public string field_code { get; set; }
+            /// <summary>
+            /// Тип поля.
+            /// </summary>
             public string field_type { get; set; }
+            /// <summary>
+            /// Массив значений поля.
+            /// </summary>
             public Values[] values { get; set; }
 
             public class Values
             {
+                /// <summary>
+                /// Значение поля.
+                /// </summary>
                 [JsonProperty(NullValueHandling = NullValueHandling.Include)]
                 public object value { get; set; }
                 public int? enum_id { get; set; }
@@ -55,16 +112,37 @@ namespace MZPO.AmoRepo
 
         public class Embedded
         {
-            public List<Contact> contacts { get; set; }                        //Требуется GET параметр with. Данные контактов, привязанных к сделке
-            public List<Lead> leads { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
-            public List<CatalogElements> catalog_elements { get; set; }        //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
+            /// <summary>
+            /// Данные контактов, привязанных к компании.
+            /// </summary>
+            public List<Contact> contacts { get; set; }
+            /// <summary>
+            /// Данные сделок, привязанных к компании.
+            /// </summary>
+            public List<Lead> leads { get; set; }
+            /// <summary>
+            /// Данные элементов списков, привязанных к компании.
+            /// </summary>
+            public List<CatalogElements> catalog_elements { get; set; }
 
             public class CatalogElements
             {
-                public int id { get; set; }                                     //ID элемента, привязанного к сделке
-                public object metadata { get; set; }                            //Мета-данные элемента
-                public int quantity { get; set; }                               //Количество элементов у сделки
-                public int catalog_id { get; set; }                             //ID списка, в котором находится элемент 
+                /// <summary>
+                /// ID элемента, привязанного к компании.
+                /// </summary>
+                public int id { get; set; }
+                /// <summary>
+                /// Мета-данные элемента.
+                /// </summary>
+                public object metadata { get; set; }
+                /// <summary>
+                /// Количество элементов у компании.
+                /// </summary>
+                public int quantity { get; set; }
+                /// <summary>
+                /// ID списка, в котором находится элемент.
+                /// </summary>
+                public int catalog_id { get; set; }
             }
         }
 #pragma warning restore IDE1006 // Naming Styles

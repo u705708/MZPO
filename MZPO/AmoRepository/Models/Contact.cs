@@ -3,38 +3,104 @@ using System.Collections.Generic;
 
 namespace MZPO.AmoRepo
 {
-    public class Contact : IModel
+    /// <summary>
+    /// Contact is an entity in amoCRM.
+    /// </summary>
+    public class Contact : IEntity
     {
-        [JsonIgnore]
 #pragma warning disable IDE1006 // Naming Styles
-        public static string entityLink { get => "contacts"; }                      //Возвращается название ссылки на сущность, не сериализуется в JSON
+        [JsonIgnore]
+        public static string entityLink { get => "contacts"; }
 
-        public int id { get; set; }                                                 //ID контакта
-        public string name { get; set; }                                            //Название контакта
-        public string first_name { get; set; }                                      //Имя контакта
-        public string last_name { get; set; }                                       //Фамилия контакта
-        public int? responsible_user_id { get; set; }                               //ID пользователя, ответственного за контакт
-        public int? group_id { get; set; }                                          //ID группы, в которой состоит ответственны пользователь за контакт
-        public int? created_by { get; set; }                                        //ID пользователя, создавший контакт
-        public int? updated_by { get; set; }                                        //ID пользователя, изменивший контакт
-        public int? created_at { get; set; }                                        //Дата создания контакта, передается в Unix Timestamp
-        public int? updated_at { get; set; }                                        //Дата изменения контакта, передается в Unix Timestamp
-        public int? closest_task_at { get; set; }                                   //Дата ближайшей задачи к выполнению, передается в Unix Timestamp
-        public List<Custom_fields_value> custom_fields_values { get; set; }        //Массив, содержащий информацию по значениям дополнительных полей, заданных для данного контакта
-        public int? account_id { get; set; }                                        //ID аккаунта, в котором находится контакт
+        /// <summary>
+        /// ID контакта.
+        /// </summary>
+        public int id { get; set; }
+        /// <summary>
+        /// Название контакта.
+        /// </summary>
+        public string name { get; set; }
+        /// <summary>
+        /// Имя контакта.
+        /// </summary>
+        public string first_name { get; set; }
+        /// <summary>
+        /// Фамилия контакта.
+        /// </summary>
+        public string last_name { get; set; }
+        /// <summary>
+        /// ID пользователя, ответственного за контакт.
+        /// </summary>
+        public int? responsible_user_id { get; set; }
+        /// <summary>
+        /// ID группы, в которой состоит ответственны пользователь за контакт.
+        /// </summary>
+        public int? group_id { get; set; }
+        /// <summary>
+        /// ID пользователя, создавший контакт.
+        /// </summary>
+        public int? created_by { get; set; }
+        /// <summary>
+        /// ID пользователя, изменивший контакт.
+        /// </summary>
+        public int? updated_by { get; set; }
+        /// <summary>
+        /// Дата создания контакта, передается в Unix Timestamp.
+        /// </summary>
+        public int? created_at { get; set; }
+        /// <summary>
+        /// Дата изменения контакта, передается в Unix Timestamp.
+        /// </summary>
+        public int? updated_at { get; set; }
+        /// <summary>
+        /// Дата ближайшей задачи к выполнению, передается в Unix Timestamp.
+        /// </summary>
+        public int? closest_task_at { get; set; }
+        /// <summary>
+        /// Список, содержащий информацию по значениям дополнительных полей, заданных для данного контакта.
+        /// </summary>
+        public List<Custom_fields_value> custom_fields_values { get; set; }
+        /// <summary>
+        /// ID аккаунта, в котором находится контакт.
+        /// </summary>
+        public int? account_id { get; set; }
+        /// <summary>
+        /// Ссылки контакта.
+        /// </summary>
         public Links _links { get; set; }
-        public Embedded _embedded { get; set; } 	 	                            //Данные вложенных сущностей
+        /// <summary>
+        /// Данные вложенных сущностей.
+        /// </summary>
+        public Embedded _embedded { get; set; }
 
         public class Custom_fields_value
         {
+            /// <summary>
+            /// ID поля.
+            /// </summary>
             public int field_id { get; set; }
+            /// <summary>
+            /// Название поля.
+            /// </summary>
             public string field_name { get; set; }
+            /// <summary>
+            /// Код поля.
+            /// </summary>
             public string field_code { get; set; }
+            /// <summary>
+            /// Тип поля.
+            /// </summary>
             public string field_type { get; set; }
+            /// <summary>
+            /// Массив значений поля
+            /// </summary>
             public Values[] values { get; set; }
 
             public class Values
             {
+                /// <summary>
+                /// Значения поля.
+                /// </summary>
                 [JsonProperty(NullValueHandling = NullValueHandling.Include)]
                 public object value { get; set; }
                 public int? enum_id { get; set; }
@@ -54,28 +120,53 @@ namespace MZPO.AmoRepo
 
         public class Embedded
         {
-            public List<Tag> tags { get; set; }                                    //Данные тегов, привязанных к сделке
-            public List<Companies> companies { get; set; }                         //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
-            public List<Customers> customers { get; set; }                         //Требуется GET параметр with. Данные контактов, привязанных к сделке
-            public List<Lead> leads { get; set; }                                  //Требуется GET параметр with. Данные сделок, привязанных к контакту
-            public List<CatalogElements> catalog_elements { get; set; }            //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
+            /// <summary>
+            /// Данные тегов, привязанных к сделке.
+            /// </summary>
+            public List<Tag> tags { get; set; }
+            /// <summary>
+            /// Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания.
+            /// </summary>
+            public List<Company> companies { get; set; }
+            /// <summary>
+            /// Данные контактов, привязанных к сделке.
+            /// </summary>
+            public List<Customers> customers { get; set; }
+            /// <summary>
+            /// Данные сделок, привязанных к контакту.
+            /// </summary>
+            public List<Lead> leads { get; set; }
+            /// <summary>
+            /// Данные элементов списков, привязанных к сделке.
+            /// </summary>
+            public List<CatalogElements> catalog_elements { get; set; }
 
-            public class Companies                                                  //Данные компании, привязанной к контакту. В массиве всегда 1 объект
+            public class Customers
             {
-                public int id { get; set; }                                         //ID компании, привязанной к контакту
+                /// <summary>
+                /// ID покупателя.
+                /// </summary>
+                public int id { get; set; }
             }
 
-            public class Customers                                                  //Требуется GET параметр with. Данные покупателей, привязанных к контакту 
+            public class CatalogElements
             {
-                public int id { get; set; }                                         //ID покупателя
-            }
-
-            public class CatalogElements                                            //Требуется GET параметр with. Данные элементов списков, привязанных к контакту
-            {
-                public int id { get; set; }                                         //ID элемента, привязанного к контакту
-                public object metadata { get; set; }                                //Мета-данные элемента
-                public int quantity { get; set; }                                   //Количество элементов у контакта
-                public int catalog_id { get; set; }                                 //ID списка, в котором находится элемент 
+                /// <summary>
+                /// ID элемента, привязанного к контакту.
+                /// </summary>
+                public int id { get; set; }
+                /// <summary>
+                /// Мета-данные элемента.
+                /// </summary>
+                public object metadata { get; set; }
+                /// <summary>
+                /// Количество элементов у контакта.
+                /// </summary>
+                public int quantity { get; set; }
+                /// <summary>
+                /// ID списка, в котором находится элемент.
+                /// </summary>
+                public int catalog_id { get; set; }
             }
         }
 #pragma warning restore IDE1006 // Naming Styles

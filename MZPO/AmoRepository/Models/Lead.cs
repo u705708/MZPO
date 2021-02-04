@@ -3,45 +3,132 @@ using Newtonsoft.Json;
 
 namespace MZPO.AmoRepo
 {
-    public class Lead : IModel
+    /// <summary>
+    /// Lead is an entity in amoCRM.
+    /// </summary>
+    public class Lead : IEntity
     {
         [JsonIgnore]
 #pragma warning disable IDE1006 // Naming Styles
-        public static string entityLink { get => "leads"; }                     //Возвращается название ссылки на сущность, не сериализуется в JSON
+        public static string entityLink { get => "leads"; }
 
-        public int id { get; set; }                                             //ID сделки
-        public string name { get; set; }                                        //Название сделки
-        public int? price { get; set; }                                         //Бюджет сделки
-        public int? responsible_user_id { get; set; }                           //ID пользователя, ответственного за сделку 
-        public int? group_id { get; set; }                                      //ID группы, в которой состоит ответственный пользователь за сделку 
-        public int? status_id { get; set; }                                     //ID статуса, в который добавляется сделка, по-умолчанию – первый этап главной воронки
-        public int? pipeline_id { get; set; }                                   //ID воронки, в которую добавляется сделка
-        public int? loss_reason_id { get; set; }                                //ID причины отказа
-        public int? source_id { get; set; }                                     //Требуется GET параметр with. ID источника сделки
-        public int? created_by { get; set; }                                    //ID пользователя, создающий сделку
-        public int? updated_by { get; set; }                                    //ID пользователя, изменяющий сделку
-        public int? closed_at { get; set; }                                     //Дата закрытия сделки, передается в Unix Timestamp 
-        public int? created_at { get; set; }                                    //Дата создания сделки, передается в Unix Timestamp 
-        public int? updated_at { get; set; }                                    //Дата изменения сделки, передается в Unix Timestamp 
-        public int? closest_task_at { get; set; }                               //Дата ближайшей задачи к выполнению, передается в Unix Timestamp 
-        public bool? is_deleted { get; set; }                                   //Удалена ли сделка
-        public List<Custom_fields_value> custom_fields_values { get; set; }    //Массив, содержащий информацию по значениям дополнительных полей, заданных для данной сделки
-        public int? score { get; set; }                                         //Скоринг сделки
-        public int? account_id { get; set; }                                    //ID аккаунта, в котором находится сделка
-        public bool? is_price_modified_by_robot { get; set; }                   //Требуется GET параметр with. Изменен ли в последний раз бюджет сделки роботом 
+        /// <summary>
+        /// ID сделки.
+        /// </summary>
+        public int id { get; set; }
+        /// <summary>
+        /// Название сделки.
+        /// </summary>
+        public string name { get; set; }
+        /// <summary>
+        /// Бюджет сделки.
+        /// </summary>
+        public int? price { get; set; }
+        /// <summary>
+        /// ID пользователя, ответственного за сделку.
+        /// </summary>
+        public int? responsible_user_id { get; set; }
+        /// <summary>
+        /// ID группы, в которой состоит ответственный пользователь за сделку.
+        /// </summary>
+        public int? group_id { get; set; }
+        /// <summary>
+        /// ID статуса, в который добавляется сделка, по-умолчанию – первый этап главной воронки.
+        /// </summary>
+        public int? status_id { get; set; }
+        /// <summary>
+        /// ID воронки, в которую добавляется сделка.
+        /// </summary>
+        public int? pipeline_id { get; set; }
+        /// <summary>
+        /// ID причины отказа.
+        /// </summary>
+        public int? loss_reason_id { get; set; }
+        /// <summary>
+        /// ID источника сделки.
+        /// </summary>
+        public int? source_id { get; set; }
+        /// <summary>
+        /// ID пользователя, создающий сделку.
+        /// </summary>
+        public int? created_by { get; set; }
+        /// <summary>
+        /// ID пользователя, изменяющий сделку.
+        /// </summary>
+        public int? updated_by { get; set; }
+        /// <summary>
+        /// Дата закрытия сделки, передается в Unix Timestamp.
+        /// </summary>
+        public int? closed_at { get; set; }
+        /// <summary>
+        /// Дата создания сделки, передается в Unix Timestamp.
+        /// </summary>
+        public int? created_at { get; set; }
+        /// <summary>
+        /// Дата изменения сделки, передается в Unix Timestamp.
+        /// </summary>
+        public int? updated_at { get; set; }
+        /// <summary>
+        /// Дата ближайшей задачи к выполнению, передается в Unix Timestamp.
+        /// </summary>
+        public int? closest_task_at { get; set; }
+        /// <summary>
+        /// Удалена ли сделка.
+        /// </summary>
+        public bool? is_deleted { get; set; }
+        /// <summary>
+        /// Список, содержащий информацию по значениям дополнительных полей, заданных для данной сделки.
+        /// </summary>
+        public List<Custom_fields_value> custom_fields_values { get; set; }
+        /// <summary>
+        /// Скоринг сделки.
+        /// </summary>
+        public int? score { get; set; }
+        /// <summary>
+        /// ID аккаунта, в котором находится сделка.
+        /// </summary>
+        public int? account_id { get; set; }
+        /// <summary>
+        /// Изменен ли в последний раз бюджет сделки роботом.
+        /// </summary>
+        public bool? is_price_modified_by_robot { get; set; }
+        /// <summary>
+        /// Ссылки сделки.
+        /// </summary>
         public Links _links { get; set; }
-        public Embedded _embedded { get; set; }                                 //Данные вложенных сущностей
+        /// <summary>
+        /// Данные вложенных сущностей.
+        /// </summary>
+        public Embedded _embedded { get; set; }
 
         public class Custom_fields_value
         {
+            /// <summary>
+            /// ID поля.
+            /// </summary>
             public int field_id { get; set; }
+            /// <summary>
+            /// Название поля.
+            /// </summary>
             public string field_name { get; set; }
+            /// <summary>
+            /// Код поля.
+            /// </summary>
             public string field_code { get; set; }
+            /// <summary>
+            /// Тип поля.
+            /// </summary>
             public string field_type { get; set; }
+            /// <summary>
+            /// Массив значений поля.
+            /// </summary>
             public Values[] values { get; set; }
 
             public class Values
             {
+                /// <summary>
+                /// Значение поля.
+                /// </summary>
                 [JsonProperty(NullValueHandling = NullValueHandling.Include)]
                 public object value { get; set; }
                 public int? enum_id { get; set; }
@@ -61,24 +148,57 @@ namespace MZPO.AmoRepo
 
         public class Embedded
         {
-            public LossReason loss_reason { get; set; }                         //Требуется GET параметр with. Причина отказа сделки
-            public List<Tag> tags { get; set; }                                //Данные тегов, привязанных к сделке
-            public List<Contact> contacts { get; set; }                        //Требуется GET параметр with. Данные контактов, привязанных к сделке
-            public List<Company> companies { get; set; }                     //Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания
-            public List<CatalogElements> catalog_elements { get; set; }        //Требуется GET параметр with. Данные элементов списков, привязанных к сделке
+            /// <summary>
+            /// Причина отказа сделки.
+            /// </summary>
+            public LossReason loss_reason { get; set; }
+            /// <summary>
+            /// Данные тегов, привязанных к сделке.
+            /// </summary>
+            public List<Tag> tags { get; set; }
+            /// <summary>
+            /// Данные контактов, привязанных к сделке.
+            /// </summary>
+            public List<Contact> contacts { get; set; }
+            /// <summary>
+            /// Данные компании, привязанной к сделке, в данном массиве всегда 1 элемент, так как у сделки может быть только 1 компания.
+            /// </summary>
+            public List<Company> companies { get; set; }
+            /// <summary>
+            /// Данные элементов списков, привязанных к сделке.
+            /// </summary>
+            public List<CatalogElements> catalog_elements { get; set; }
 
             public class LossReason
             {
-                public int id { get; set; }                                     //ID причины отказа
-                public string name { get; set; }                                //Название причины отказа
+                /// <summary>
+                /// ID причины отказа.
+                /// </summary>
+                public int id { get; set; }
+                /// <summary>
+                /// Название причины отказа.
+                /// </summary>
+                public string name { get; set; }
             }
 
             public class CatalogElements
             {
-                public int id { get; set; }                                     //ID элемента, привязанного к сделке
-                public object metadata { get; set; }                            //Мета-данные элемента
-                public int quantity { get; set; }                               //Количество элементов у сделки
-                public int catalog_id { get; set; }                             //ID списка, в котором находится элемент 
+                /// <summary>
+                /// ID элемента, привязанного к сделке.
+                /// </summary>
+                public int id { get; set; }
+                /// <summary>
+                /// Мета-данные элемента.
+                /// </summary>
+                public object metadata { get; set; }
+                /// <summary>
+                /// Количество элементов у сделки.
+                /// </summary>
+                public int quantity { get; set; }
+                /// <summary>
+                /// ID списка, в котором находится элемент.
+                /// </summary>
+                public int catalog_id { get; set; }
             }
         }
 #pragma warning restore IDE1006 // Naming Styles

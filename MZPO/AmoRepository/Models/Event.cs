@@ -6,20 +6,56 @@ using System.Threading.Tasks;
 
 namespace MZPO.AmoRepo
 {
+    /// <summary>
+    /// Event in amoCRM describes any activity within account, related to entities or not.
+    /// </summary>
     public class Event
     {
 #pragma warning disable IDE1006 // Naming Styles
-        public string id { get; set; }                         //ID примечания
+        /// <summary>
+        /// ID события .
+        /// </summary>
+        public string id { get; set; }
+        /// <summary>
+        /// Тип события.
+        /// </summary>
         public string type { get; set; }
-        public int? entity_id { get; set; }                 //ID родительской сущности примечания
+        /// <summary>
+        /// ID сущности события.
+        /// </summary>
+        public int? entity_id { get; set; }
+        /// <summary>
+        /// Сущность события.
+        /// </summary>
         public string entity_type { get; set; }
-        public int? created_by { get; set; }                //ID пользователя, создавший примечание
-        public int? created_at { get; set; }                //Дата создания примечания, передается в Unix Timestamp
+        /// <summary>
+        /// ID пользователя, создавший событие.
+        /// </summary>
+        public int? created_by { get; set; }
+        /// <summary>
+        /// Дата создания события, передается в Unix Timestamp.
+        /// </summary>
+        public int? created_at { get; set; }
+        /// <summary>
+        /// Список с изменениями по событию.
+        /// </summary>
         public List<Value> value_after { get; set; }
+        /// <summary>
+        /// Список с изменениями по событию.
+        /// </summary>
         public List<Value> value_before { get; set; }
+        /// <summary>
+        /// ID аккаунта, в котором находится событие.
+        /// </summary>
         public int? account_id { get; set; }
+        /// <summary>
+        /// Ссылки события.
+        /// </summary>
         public Links _links { get; set; }
-        public Embedded _embedded { get; set; }                                 //Данные вложенных сущностей
+        /// <summary>
+        /// Вложенные сущности.
+        /// </summary>
+        public Embedded _embedded { get; set; }
 
         public class Links
         {
