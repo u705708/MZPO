@@ -58,11 +58,11 @@ namespace MZPO.AmoRepo
             while (entityList._links.ContainsKey("next"))
             {
                 AmoRequest request = new AmoRequest("GET", entityList._links["next"].href, _auth);
-                string response = "";
+                string response;
 
                 var next = entityList._links["next"].href;
                 try { response = request.GetResponse(); }
-                catch(Exception e) { Log.Add($"Bad response: {e}"); }
+                catch(Exception e) { throw new Exception($"Bad response: {e}"); }
                 
                 if (response == "") break;
                 

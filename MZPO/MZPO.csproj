@@ -32,6 +32,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AmoRepository\AmoRepository.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="accounts.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
