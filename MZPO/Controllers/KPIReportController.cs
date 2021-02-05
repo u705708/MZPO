@@ -37,7 +37,7 @@ namespace MZPO.Controllers
                                new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, dateTo, token));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь
             return Ok();
         }
 
@@ -53,7 +53,7 @@ namespace MZPO.Controllers
                                new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, dateTo, token));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(task, cts, "report_kpi", _acc.name, "KPIReport");                                       //И добавляем в очередь
             return Ok();
         }
     }

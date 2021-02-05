@@ -37,7 +37,7 @@ namespace MZPO.Controllers
                                new WeeklyReportProcessor(_acc, _gSheets, sheetId, _processQueue, dateTo, token));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_retail", _acc.name, "RetailReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(task, cts, "report_retail", _acc.name, "RetailReport");                                       //И добавляем в очередь
             return Ok();
         }
 
@@ -53,7 +53,7 @@ namespace MZPO.Controllers
                                new WeeklyReportProcessor(_acc, _gSheets, sheetId, _processQueue, dateTo, token));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_retail", _acc.name, "RetailReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(task, cts, "report_retail", _acc.name, "RetailReport");                                       //И добавляем в очередь
             return Ok();
         }
     }

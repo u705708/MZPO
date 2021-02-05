@@ -62,14 +62,14 @@ namespace MZPO.AmoRepo
 
                 var next = entityList._links["next"].href;
                 try { response = request.GetResponse(); }
-                catch(Exception e) { throw new Exception($"Bad response: {e}"); }
+                catch { response = ""; }
                 
                 if (response == "") break;
                 
                 try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), entityList); }
-                catch (Exception e) { entityList._links.Remove("next"); throw new Exception($"Unexpected end of List in GetList():{e}"); }
+                catch { break; }
                 
-                if (entityList._links.ContainsKey("next") && (next == entityList._links["next"].href)) entityList._links.Remove("next");
+                if (entityList._links.ContainsKey("next") && (next == entityList._links["next"].href)) break;
             }
 
             return entityList;

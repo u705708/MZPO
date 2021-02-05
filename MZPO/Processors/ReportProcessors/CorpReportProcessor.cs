@@ -36,7 +36,6 @@ namespace MZPO.Processors
             compRepo = _acc.GetRepo<Company>();
         }
 
-        private List<Request> requestContainer;
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
             (2375116, "Киреева Светлана"),
@@ -56,7 +55,7 @@ namespace MZPO.Processors
         private void PrepareSheets()
         {
             #region Retrieving spreadsheet
-            requestContainer = new List<Request>();
+            List<Request> requestContainer = new();
             var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
             #endregion
 
@@ -160,16 +159,11 @@ namespace MZPO.Processors
             }
 
             #region Executing request
-            var batchRequest = new BatchUpdateSpreadsheetRequest
-            {
-                Requests = requestContainer
-            };
-
-            _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+            UpdateSheetsAsync(requestContainer);
             #endregion
         }
 
-        private void PrepareRow(int sheetId, string A, string B, int C, string D, int E, string F, string G, string H, int I, int J, string K)
+        private Request GetRowRequest(int sheetId, string A, string B, int C, string D, int E, string F, string G, string H, int I, int J, string K)
         {
             #region Prepare data
             var rows = new List<RowData>
@@ -215,8 +209,7 @@ namespace MZPO.Processors
             };
             #endregion
 
-            #region Add request
-            requestContainer.Add(new Request()
+            return new Request()
             {
                 AppendCells = new AppendCellsRequest()
                 {
@@ -224,11 +217,10 @@ namespace MZPO.Processors
                     Rows = rows,
                     SheetId = sheetId
                 }
-            });
-            #endregion
+            };
         }
 
-        private void LastRow(int sheetId)
+        private Request GetLastRowRequest(int sheetId)
         {
             #region Prepare data
             var rows = new List<RowData>
@@ -243,7 +235,7 @@ namespace MZPO.Processors
                          new CellData(),
                          new CellData(),
                          new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=SUM(E2:E{requestContainer.Count + 1})"},
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=SUM(E2:INDIRECT(""R[-1]C[0]"", FALSE))"},
                              UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
                          new CellData(),
                          new CellData(),
@@ -251,15 +243,14 @@ namespace MZPO.Processors
                          new CellData(),
                          new CellData(),
                          new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=SUM(K2:K{requestContainer.Count + 1})"},
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=SUM(K2:INDIRECT(""R[-1]C[0]"", FALSE))"},
                              UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } }
                 }
                 }
             };
             #endregion
 
-            #region Add request
-            requestContainer.Add(new Request()
+            return new Request()
             {
                 AppendCells = new AppendCellsRequest()
                 {
@@ -267,11 +258,10 @@ namespace MZPO.Processors
                     Rows = rows,
                     SheetId = sheetId
                 }
-            });
-            #endregion
+            };
         }
 
-        private void ProcessLead(Lead l, int sheetId)
+        private Request GetProcessedLeadRequest(Lead lead, int sheetId)
         {
             #region Field init
             string A = "";
@@ -288,75 +278,75 @@ namespace MZPO.Processors
             #endregion
 
             #region Оганизация
-            if (l._embedded.companies.Any())
-                A = compRepo.GetById(l._embedded.companies.FirstOrDefault().id).name;
+            if (lead._embedded.companies.Any())
+                A = compRepo.GetById(lead._embedded.companies.FirstOrDefault().id).name;
             #endregion
 
             #region Назначение платежа
-            if (l.custom_fields_values.Any(x => x.field_id == 118509))
-                B = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118509).values[0].value;
+            if (lead.custom_fields_values.Any(x => x.field_id == 118509))
+                B = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 118509).values[0].value;
             #endregion
 
             #region Кол-во человек
             int students = 1;
-            if (l.custom_fields_values.Any(x => x.field_id == 611005))
-                if (!int.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 611005).values[0].value, out students)) students = 1;
+            if (lead.custom_fields_values.Any(x => x.field_id == 611005))
+                if (!int.TryParse((string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 611005).values[0].value, out students)) students = 1;
             C = students;
             #endregion
 
             #region Сумма
-            E = (int)l.price;
+            E = (int)lead.price;
             #endregion
 
             #region Стоимость
-            D = $"=E{requestContainer.Count + 2}/C{requestContainer.Count + 2}";
+            D = @"=INDIRECT(""R[0]C[1]"", FALSE)/INDIRECT(""R[0]C[-1]"", FALSE)";
             #endregion
 
             #region Дата прихода
             long payment_date_unix;
-            if (l.custom_fields_values.Any(x => x.field_id == 118675))
-                payment_date_unix = (long)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118675).values[0].value;
+            if (lead.custom_fields_values.Any(x => x.field_id == 118675))
+                payment_date_unix = (long)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 118675).values[0].value;
             else
                 payment_date_unix = 0;
             F = DateTimeOffset.FromUnixTimeSeconds(payment_date_unix).UtcDateTime.AddHours(3).ToShortDateString();
             #endregion
 
             #region Расчет
-            if (l.custom_fields_values.Any(x => x.field_id == 118545))
-                G = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 118545).values[0].value;
+            if (lead.custom_fields_values.Any(x => x.field_id == 118545))
+                G = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 118545).values[0].value;
             #endregion
 
             #region Испольнитель
-            if (l.custom_fields_values.Any(x => x.field_id == 162301))
-                H = (string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 162301).values[0].value;
+            if (lead.custom_fields_values.Any(x => x.field_id == 162301))
+                H = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 162301).values[0].value;
             #endregion
 
             #region Номер сделки
-            I = l.id;
+            I = lead.id;
             #endregion
 
             #region % сделки
             int percent = 0;
-            if (l.custom_fields_values.Any(x => x.field_id == 613663))
-                if (!int.TryParse((string)l.custom_fields_values.FirstOrDefault(x => x.field_id == 613663).values[0].value, out percent)) percent = 0;
+            if (lead.custom_fields_values.Any(x => x.field_id == 613663))
+                if (!int.TryParse((string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 613663).values[0].value, out percent)) percent = 0;
             J = percent;
             #endregion
 
             #region Вознаграждение
-            K = $"=E{requestContainer.Count + 2}*J{requestContainer.Count + 2}/100";
+            K = @"=INDIRECT(""R[0]C[-6]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
             #endregion
 
-            PrepareRow(sheetId, A, B, C, D, E, F, G, H, I, J, K);
+            return GetRowRequest(sheetId, A, B, C, D, E, F, G, H, I, J, K);
         }
 
-        private Task ProcessManager((int, string) m)
+        private void ProcessManager((int, string) manager)
         {
             #region Preparing
-            _processQueue.UpdateTaskName("report_corp", $"CorpReport: {m.Item2}");
+            _processQueue.AddSubTask("report_corp", $"report_corp_{manager.Item2}", $"CorpReport: new leads");
 
-            var allLeads = leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={m.Item1}");
+            var allLeads = leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={manager.Item1}");
 
-            if (allLeads is null) return Task.CompletedTask;
+            if (allLeads is null) return;
 
             var leads = allLeads.Where(x =>
                 (x.custom_fields_values is not null) &&
@@ -365,33 +355,43 @@ namespace MZPO.Processors
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)
                 );
 
-            requestContainer = new List<Request>();
+            List<Request> requestContainer = new();
             #endregion
 
             #region Processing
-            _processQueue.UpdateTaskName("report_corp", $"CorpReport: {m.Item2}, total leads {leads.Count()}");
+            _processQueue.UpdateTaskName($"report_corp_{manager.Item2}", $"CorpReport: total leads {leads.Count()}");
             foreach (var l in leads)
             {
                 if (_token.IsCancellationRequested) break;
-                ProcessLead(l, m.Item1);
+                requestContainer.Add(GetProcessedLeadRequest(l, manager.Item1));
             }
             #endregion
 
             #region Finalization
-            LastRow(m.Item1);
+            requestContainer.Add(GetLastRowRequest(manager.Item1));
 
-            var batchRequest = new BatchUpdateSpreadsheetRequest
-            {
-                Requests = requestContainer
-            };
+            UpdateSheetsAsync(requestContainer);
 
-            return _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
+            _processQueue.Remove($"report_corp_{manager.Item2}");
             #endregion
+        }
+
+        private async void UpdateSheetsAsync(List<Request> requestContainer)
+        {
+            if (requestContainer.Any())
+            {
+                var batchRequest = new BatchUpdateSpreadsheetRequest
+                {
+                    Requests = requestContainer
+                };
+
+                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
+            }
         }
         #endregion
 
         #region Realization
-        public async void Run()
+        public void Run()
         {
             if (_token.IsCancellationRequested)
             {
@@ -403,14 +403,17 @@ namespace MZPO.Processors
 
             PrepareSheets();
 
-            foreach (var m in managers)
+            List<Task> tasks = new();
+
+            foreach (var manager in managers)
             {
                 if (_token.IsCancellationRequested) break;
 
-                await ProcessManager(m);
-
-                GC.Collect();
+                var m = manager;
+                tasks.Add(Task.Run(() => ProcessManager(m)));
             }
+
+            Task.WhenAll(tasks).Wait();
 
             Log.Add("Finished corporate report.");
 

@@ -33,7 +33,7 @@ namespace MZPO.Controllers
                                new InitialLeadProcessor(leadNumber, acc, _processQueue, token));
 
             Task task = Task.Run(() => initialLeadProcessor.Value.Run());                                               //Запускаем его
-            _processQueue.Add(task, cts, id, acc.name, "LeadProcessor");                                                //И добавляем в очередь
+            _processQueue.AddTask(task, cts, id, acc.name, "LeadProcessor");                                                //И добавляем в очередь
             return Ok();
         }
 
@@ -69,7 +69,7 @@ namespace MZPO.Controllers
                 Lazy<UnsortedProcessor> unsortedProcessor = new Lazy<UnsortedProcessor>(() =>
                                    new UnsortedProcessor(col["unsorted[add][0][uid]"], acc, _processQueue, token));
                 task = Task.Run(() => unsortedProcessor.Value.Run());
-                _processQueue.Add(task, cts, col["unsorted[add][0][uid]"], acc.name, "UnsortedProcessor");
+                _processQueue.AddTask(task, cts, col["unsorted[add][0][uid]"], acc.name, "UnsortedProcessor");
                 return Ok();
             }
             else return Ok();
@@ -79,7 +79,7 @@ namespace MZPO.Controllers
                                 new InitialLeadProcessor(leadNumber, acc, _processQueue, token));
             
             task = Task.Run(() => initialLeadProcessor.Value.Run());                                                    //Запускаем его
-            _processQueue.Add(task, cts, leadNumber.ToString(), acc.name, "LeadProcessor");                             //И добавляем в очередь
+            _processQueue.AddTask(task, cts, leadNumber.ToString(), acc.name, "LeadProcessor");                             //И добавляем в очередь
             return Ok();
         }
     }

@@ -21,11 +21,8 @@ namespace MZPO.Controllers
             _processQueue = processQueue;
             _gSheets = gSheets;
 
-            ////_acc = amo.GetAccountById(19453687); //corp
-            ////sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk"; //UnfinishedContacts
-
-            _acc = amo.GetAccountById(28395871); //retail
-            sheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k"; //RetailKPI
+            _acc = amo.GetAccountById(19453687); //corp
+            sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk"; //UnfinishedContacts
         }
 
         // GET: reports/data
@@ -38,7 +35,7 @@ namespace MZPO.Controllers
                                new UnfinishedContactsProcessor(_acc, _gSheets, sheetId, _processQueue, token));
 
             Task task = Task.Run(() => dataReportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_data", _acc.name, "DataReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(task, cts, "report_data", _acc.name, "DataReport");                                       //И добавляем в очередь
 
             return Ok();
         }

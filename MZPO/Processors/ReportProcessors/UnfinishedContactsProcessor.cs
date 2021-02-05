@@ -200,14 +200,13 @@ namespace MZPO.Processors
         {
             #region Preparing fields
             int leadNumber = l.id;
-            string contactName;
+            string contactName = "";
             string companyName;
             bool phoneAdded = false;
             bool emailAdded = false;
             string LPR = "";
 
             Company company;
-            List<Contact> contacts = new List<Contact>();
             #endregion
 
             #region Processing associated company
@@ -248,27 +247,23 @@ namespace MZPO.Processors
                 foreach (var c in company._embedded.contacts)
                     contactIdList.Add(c.id);
 
-            contacts.AddRange(contRepo.BulkGetById(contactIdList));
+            var contacts = contRepo.BulkGetById(contactIdList);
             #endregion
 
             #region Getting contact name if any
-            if ((contacts is not null) &&
-                contacts.Any())
+            if (contacts.Any())
                 contactName = contacts.First().name;
-            else contactName = "";
             #endregion
 
             #region Checking contacts
-            if ((contacts is not null) && 
-                contacts.Any())
-                foreach (var c in contacts)
-                {
-                    if (c.custom_fields_values is null) continue;
-                    if (c.custom_fields_values.Any(x => x.field_id == 33575))
-                        phoneAdded = true;
-                    if (c.custom_fields_values.Any(x => x.field_id == 33577))
-                        emailAdded = true;
-                }
+            foreach (var c in contacts)
+            {
+                if (c.custom_fields_values is null) continue;
+                if (c.custom_fields_values.Any(x => x.field_id == 33575))
+                    phoneAdded = true;
+                if (c.custom_fields_values.Any(x => x.field_id == 33577))
+                    emailAdded = true;
+            }
             #endregion
 
             #region Preparing row if needed
@@ -295,11 +290,11 @@ namespace MZPO.Processors
 
             foreach (var cr in criteria)
             {
+                GC.Collect();
+
                 var allLeads = leadRepo.GetByCriteria(cr);
 
                 int counter = 0;
-
-                if (allLeads is null) continue;
 
                 foreach (var l in allLeads)
                 {
@@ -310,7 +305,6 @@ namespace MZPO.Processors
                     ProcessLead(l, m.Item1);
                     counter++;
                 }
-                GC.Collect();
             }
 
             #region Remove duplicates

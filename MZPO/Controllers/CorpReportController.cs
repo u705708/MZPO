@@ -21,7 +21,7 @@ namespace MZPO.Controllers
             _acc = amo.GetAccountById(19453687);
             _processQueue = processQueue;
             _gSheets = gSheets;
-            sheetId = "1OTrCdmjYRCKKdr64wLY46Rx_yAffx7li4jSxzz2C4mc";
+            sheetId = "1jzqcptdlCpSPXcyLpumSGCaHtSVi28bg8Ga2aEFXCoQ";
         }
 
         // GET: reports/corporate
@@ -44,7 +44,7 @@ namespace MZPO.Controllers
                                new CorpReportProcessor(_acc, _processQueue, _gSheets, sheetId, dateFrom, dateTo, token));
 
             Task task = Task.Run(() => corpReportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.Add(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь
             return Ok();
         }
     }
