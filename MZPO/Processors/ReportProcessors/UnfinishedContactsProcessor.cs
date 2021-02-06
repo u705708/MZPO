@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MZPO.Processors
 {
@@ -33,7 +34,6 @@ namespace MZPO.Processors
             contRepo = _acc.GetRepo<Contact>();
         }
 
-        private List<Request> requestContainer;
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
             (2375122, "Васина Елена"),
@@ -50,10 +50,10 @@ namespace MZPO.Processors
         #endregion
 
         #region Supplementary methods
-        private void PrepareSheets()
+        private async Task PrepareSheets()
         {
             #region Retrieving spreadsheet
-            requestContainer = new List<Request>();
+            List<Request> requestContainer = new();
             var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
             #endregion
 
@@ -140,17 +140,10 @@ namespace MZPO.Processors
                 #endregion
             }
 
-            #region Executing request
-            var batchRequest = new BatchUpdateSpreadsheetRequest
-            {
-                Requests = requestContainer
-            };
-
-            _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
-            #endregion
+            await UpdateSheetsAsync(requestContainer);
         }
 
-        private void PrepareRow(int sheetId, int A, string B, string C, bool D, bool E, string F)
+        private Request PrepareRow(int sheetId, int A, string B, string C, bool D, bool E, string F)
         {
             #region Prepare data
             var rows = new List<RowData>();
@@ -183,8 +176,7 @@ namespace MZPO.Processors
             });
             #endregion
 
-            #region Add request
-            requestContainer.Add(new Request()
+            return new Request()
             {
                 AppendCells = new AppendCellsRequest()
                 {
@@ -192,11 +184,10 @@ namespace MZPO.Processors
                     Rows = rows,
                     SheetId = sheetId
                 }
-            });
-            #endregion
+            };
         }
 
-        private void ProcessLead(Lead l, int sheetId)
+        private Request ProcessLead(Lead l, int sheetId)
         {
             #region Preparing fields
             int leadNumber = l.id;
@@ -268,13 +259,14 @@ namespace MZPO.Processors
 
             #region Preparing row if needed
             if (!phoneAdded || !emailAdded)
-                PrepareRow(sheetId, leadNumber, contactName, companyName, phoneAdded, emailAdded, LPR);
+                return PrepareRow(sheetId, leadNumber, contactName, companyName, phoneAdded, emailAdded, LPR);
+            else return null;
             #endregion
         }
 
-        private void ProcessManager((int, string) m)
+        private async Task ProcessManager((int, string) m)
         {
-            requestContainer = new List<Request>();
+            List<Request> requestContainer = new();
 
             #region Preparing criteria for amo requests
             List<string> criteria = new List<string>()
@@ -286,25 +278,32 @@ namespace MZPO.Processors
                 };
             #endregion
 
-            _processQueue.UpdateTaskName("report_data", $"Unfinished Companies report: {m.Item2}");
+            _processQueue.AddSubTask("report_data", $"report_data_{m.Item2}", $"Unfinished Companies report");
 
-            foreach (var cr in criteria)
-            {
-                GC.Collect();
+            List<Lead> allLeads = new();
 
-                var allLeads = leadRepo.GetByCriteria(cr);
-
-                int counter = 0;
-
-                foreach (var l in allLeads)
+            Parallel.ForEach(criteria, cr => { 
+                var range = leadRepo.GetByCriteria(cr);
+                lock (allLeads)
                 {
-                    if (_token.IsCancellationRequested) break;
-
-                    if (counter % 10 == 0)
-                        _processQueue.UpdateTaskName("report_data", $"Unfinished Companies report: {m.Item2}, {counter}/{allLeads.Count()}, {cr}");
-                    ProcessLead(l, m.Item1);
-                    counter++;
+                    allLeads.AddRange(range);
                 }
+            });
+
+            _processQueue.UpdateTaskName($"report_data_{m.Item2}", $"Unfinished Companies report: total {allLeads.Count()} leads to check.");
+
+            int counter = 0;
+
+            foreach (var l in allLeads)
+            {
+                if (_token.IsCancellationRequested) break;
+
+                if (counter % 10 == 0)
+                    _processQueue.UpdateTaskName($"report_data_{m.Item2}", $"Unfinished Companies report: Processed {counter} of {allLeads.Count()} leads.");
+                var result = ProcessLead(l, m.Item1);
+                if (result is not null)
+                    requestContainer.Add(result);
+                counter++;
             }
 
             #region Remove duplicates
@@ -334,7 +333,13 @@ namespace MZPO.Processors
             }
             #endregion
 
-            #region Updating sheet
+            await UpdateSheetsAsync(requestContainer);
+
+            _processQueue.Remove($"report_data_{m.Item2}");
+        }
+
+        private async Task UpdateSheetsAsync(List<Request> requestContainer)
+        {
             if (requestContainer.Any())
             {
                 var batchRequest = new BatchUpdateSpreadsheetRequest
@@ -342,14 +347,13 @@ namespace MZPO.Processors
                     Requests = requestContainer
                 };
 
-                _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).Execute();
+                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
             }
-            #endregion
         }
         #endregion
 
         #region Realization
-        public void Run()
+        public async Task Run()
         {
             if (_token.IsCancellationRequested)
             {
@@ -359,14 +363,18 @@ namespace MZPO.Processors
 
             Log.Add("Started Unfinished Companies report");
 
-            PrepareSheets();
+            await PrepareSheets();
 
-            foreach (var m in managers)
+            List<Task> tasks = new();
+
+            foreach (var manager in managers)
             {
                 if (_token.IsCancellationRequested) break;
-
-                ProcessManager(m);
+                var m = manager;
+                tasks.Add(Task.Run(() => ProcessManager(m), _token));
             }
+
+            await Task.WhenAll(tasks);
 
             Log.Add("Finished Unfinished Companies report");
             _processQueue.Remove("report_data");

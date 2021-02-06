@@ -52,7 +52,7 @@ namespace MZPO.Processors
         #endregion
 
         #region Supplementary methods
-        private void PrepareSheets()
+        private async Task PrepareSheets()
         {
             #region Retrieving spreadsheet
             List<Request> requestContainer = new();
@@ -159,7 +159,7 @@ namespace MZPO.Processors
             }
 
             #region Executing request
-            UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer);
             #endregion
         }
 
@@ -339,7 +339,7 @@ namespace MZPO.Processors
             return GetRowRequest(sheetId, A, B, C, D, E, F, G, H, I, J, K);
         }
 
-        private void ProcessManager((int, string) manager)
+        private async Task ProcessManager((int, string) manager)
         {
             #region Preparing
             _processQueue.AddSubTask("report_corp", $"report_corp_{manager.Item2}", $"CorpReport: new leads");
@@ -360,23 +360,23 @@ namespace MZPO.Processors
 
             #region Processing
             _processQueue.UpdateTaskName($"report_corp_{manager.Item2}", $"CorpReport: total leads {leads.Count()}");
-            foreach (var l in leads)
-            {
-                if (_token.IsCancellationRequested) break;
+
+            Parallel.ForEach(leads, l => {
                 requestContainer.Add(GetProcessedLeadRequest(l, manager.Item1));
-            }
+            });
+
             #endregion
 
             #region Finalization
             requestContainer.Add(GetLastRowRequest(manager.Item1));
 
-            UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer);
 
             _processQueue.Remove($"report_corp_{manager.Item2}");
             #endregion
         }
 
-        private async void UpdateSheetsAsync(List<Request> requestContainer)
+        private async Task UpdateSheetsAsync(List<Request> requestContainer)
         {
             if (requestContainer.Any())
             {
@@ -391,7 +391,7 @@ namespace MZPO.Processors
         #endregion
 
         #region Realization
-        public void Run()
+        public async Task Run()
         {
             if (_token.IsCancellationRequested)
             {
@@ -401,7 +401,7 @@ namespace MZPO.Processors
 
             Log.Add("Started corporate report.");
 
-            PrepareSheets();
+            await PrepareSheets();
 
             List<Task> tasks = new();
 
@@ -410,10 +410,10 @@ namespace MZPO.Processors
                 if (_token.IsCancellationRequested) break;
 
                 var m = manager;
-                tasks.Add(Task.Run(() => ProcessManager(m)));
+                tasks.Add(Task.Run(() => ProcessManager(m), _token));
             }
 
-            Task.WhenAll(tasks).Wait();
+            await Task.WhenAll(tasks);
 
             Log.Add("Finished corporate report.");
 

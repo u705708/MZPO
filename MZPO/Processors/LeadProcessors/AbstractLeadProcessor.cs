@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MZPO.Processors
 {
@@ -83,6 +84,6 @@ namespace MZPO.Processors
         }
         #endregion
 
-        public abstract void Run();
+        public abstract Task Run();
     }
 }

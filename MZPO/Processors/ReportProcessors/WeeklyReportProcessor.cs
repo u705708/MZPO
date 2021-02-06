@@ -232,7 +232,7 @@ namespace MZPO.Processors
             dataRanges.Add((dr2_1, dr2_2));
         }
 
-        private void PrepareSheets()
+        private async Task PrepareSheets()
         {
             List<Request> requestContainer = new();
 
@@ -272,29 +272,27 @@ namespace MZPO.Processors
                 requestContainer.AddRange(GetHeaderRequests(m.Item1));
             }
 
-            UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer);
         }
 
-        private void PopulateCalls((int, int) dataRange)
+        private async Task PopulateCalls((int, int) dataRange)
         {
             #region Даты
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
             #endregion
 
-            #region Исходящие вызовы
-            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {dates}, outgoing calls");
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {dates}, collecting calls");
+            List<Task> tasks = new();
 
-            outCalls = contRepo.GetEventsByCriteria($"filter[type]=outgoing_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}");
-            #endregion
+            tasks.Add(Task.Run(() => outCalls = contRepo.GetEventsByCriteria($"filter[type]=outgoing_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}")));
+            tasks.Add(Task.Run(() => inCalls = contRepo.GetEventsByCriteria($"filter[type]=incoming_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}")));
 
-            #region Входящие вызовы
-            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {dates}, incoming calls");
+            await Task.WhenAll(tasks);
 
-            inCalls = contRepo.GetEventsByCriteria($"filter[type]=incoming_call&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}");
-            #endregion
+            _processQueue.UpdateTaskName("report_retail", $"WeeklyReport: {dates}, processing managers");
         }
 
-        private void FinalizeManagers()
+        private async Task FinalizeManagers()
         {
             List<Request> requestContainer = new();
 
@@ -366,7 +364,7 @@ namespace MZPO.Processors
                 #endregion
             }
 
-            UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer);
         }
 
         private int GetLeadResponseTime(Lead lead)
@@ -446,26 +444,24 @@ namespace MZPO.Processors
         private double GetAverageResponseTime(IEnumerable<Lead> leads)
         {
             List<int> responseTimes = new List<int>();
-            foreach (var lead in leads)
-            {
-                if (_token.IsCancellationRequested) break;
-
-                var rTime = GetLeadResponseTime(lead);
+            
+            Parallel.ForEach(leads, x => {
+                var rTime = GetLeadResponseTime(x);
                 responseTimes.Add(rTime);
 
                 if (rTime > 3600)
                     lock (longAnsweredLeads)
                     {
-                        longAnsweredLeads.Add((lead.responsible_user_id, lead.id, rTime));
+                        longAnsweredLeads.Add((x.responsible_user_id, x.id, rTime));
                     }
-            }
+            });
 
-            if (responseTimes.Any(x => (x > 0) && (x < 3600)))
-                return responseTimes.Where(x => (x > 0) && (x < 3600)).Average();
+            if (responseTimes.AsParallel().Any(x => (x > 0) && (x < 3600)))
+                return responseTimes.AsParallel().Where(x => (x > 0) && (x < 3600)).Average();
             else return 0;
         }
 
-        private void ProcessManager((int, string) manager, (int, int) dataRange)
+        private async Task ProcessManager((int, string) manager, (int, int) dataRange)
         {
             #region Даты
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
@@ -475,8 +471,14 @@ namespace MZPO.Processors
             _processQueue.AddSubTask("report_retail", $"report_retail_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
 
             List<Lead> newLeads = new List<Lead>();
-            foreach (var p in pipelines)
-                newLeads.AddRange(leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts"));
+
+            Parallel.ForEach(pipelines, p => {
+                var range = leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
+                lock (newLeads)
+                {
+                    newLeads.AddRange(range);
+                }
+            });
 
             int totalNewLeads = newLeads.Count;
 
@@ -545,12 +547,12 @@ namespace MZPO.Processors
 
             requestContainer.Add(GetRowRequest(manager.Item1, dates, totalNewLeads, finishedLeads, successLeads, totalSales, averageTime, responseTime, longLeads, inCallsCount, outCallsCount, missedCallsCount));
 
-            UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer);
 
             _processQueue.Remove($"report_retail_{manager.Item2}");
         }
 
-        private async void UpdateSheetsAsync(List<Request> requestContainer)
+        private async Task UpdateSheetsAsync(List<Request> requestContainer)
         {
             if (requestContainer.Any())
             {
@@ -565,7 +567,7 @@ namespace MZPO.Processors
         #endregion
 
         #region Realization
-        public void Run()
+        public async Task Run()
         {
             if (_token.IsCancellationRequested)
             {
@@ -577,7 +579,7 @@ namespace MZPO.Processors
 
             CalculateDataRanges();
 
-            PrepareSheets();
+            await PrepareSheets();
 
             foreach (var d in dataRanges)
             {
@@ -585,19 +587,19 @@ namespace MZPO.Processors
                 longAnsweredLeads = new();
                 List<Task> tasks = new();
 
-                PopulateCalls(d);
+                await PopulateCalls(d);
 
                 foreach (var manager in managers)
                 {
                     if (_token.IsCancellationRequested) break;
                     var m = manager;
-                    tasks.Add(Task.Run(() => ProcessManager(m, d)));
+                    tasks.Add(Task.Run(() => ProcessManager(m, d), _token));
                 }
 
-                Task.WhenAll(tasks).Wait();
+                await Task.WhenAll(tasks);
             }
 
-            FinalizeManagers();
+            await FinalizeManagers();
 
             Log.Add("Finished weekly report.");
 

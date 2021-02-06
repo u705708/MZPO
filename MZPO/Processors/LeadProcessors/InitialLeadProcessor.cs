@@ -329,7 +329,7 @@ namespace MZPO.Processors
         #endregion
 
         #region Processor
-        public override async void Run()
+        public override async Task Run()
         {
             if (_token.IsCancellationRequested)
             {

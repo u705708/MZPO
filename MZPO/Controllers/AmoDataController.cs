@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
-    [Route("reports/data")]
+    [Route("reports/produce")]
     [ApiController]
     public class AmoDataController : ControllerBase
     {
@@ -25,7 +25,7 @@ namespace MZPO.Controllers
             sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk"; //UnfinishedContacts
         }
 
-        // GET: reports/data
+        // GET: reports/produce
         [HttpGet]
         public ActionResult Get()
         {

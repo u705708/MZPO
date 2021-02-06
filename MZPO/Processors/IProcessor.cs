@@ -7,6 +7,6 @@ namespace MZPO.Processors
 {
     interface IProcessor
     {
-        public void Run();
+        public Task Run();
     }
 }
