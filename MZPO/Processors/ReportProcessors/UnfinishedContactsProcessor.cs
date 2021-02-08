@@ -155,7 +155,7 @@ namespace MZPO.Processors
             {
                 Values = new List<CellData>(){
                          new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ NumberValue = A},
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{A}"", ""{A}"")" },
                              UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
                          new CellData(){
                              UserEnteredValue = new ExtendedValue(){ StringValue = B},

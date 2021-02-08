@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
-    [Route("reports/kpi")]
+    [Route("preparereports/kpi")]
     [ApiController]
     public class KPIReportController : ControllerBase
     {
@@ -24,7 +24,7 @@ namespace MZPO.Controllers
             sheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k";
         }
 
-        // GET: reports/kpi
+        // GET: preparereports/kpi
         [HttpGet]
         public ActionResult Get()
         {

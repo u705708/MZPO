@@ -701,7 +701,7 @@ namespace MZPO.Processors
             #region Время сделки
             double averageTime = 0;
             if (finishedLeads > 0)
-                averageTime = allLeads
+                averageTime = allLeads.AsParallel()
                     .Where(x => (x.status_id == 142) || (x.status_id == 143))
                     .Select(x => (int)x.closed_at - (int)x.created_at).Average() / 86400;
             #endregion

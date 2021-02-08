@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
-    [Route("reports/produce")]
+    [Route("preparereports/unfinished")]
     [ApiController]
-    public class AmoDataController : ControllerBase
+    public class UnfinishedCompaniesController : ControllerBase
     {
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
         private readonly GSheets _gSheets;
         private readonly string sheetId;
 
-        public AmoDataController(Amo amo, TaskList processQueue, GSheets gSheets)
+        public UnfinishedCompaniesController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _processQueue = processQueue;
             _gSheets = gSheets;
@@ -25,7 +25,7 @@ namespace MZPO.Controllers
             sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk"; //UnfinishedContacts
         }
 
-        // GET: reports/produce
+        // GET: preparereports/unfinished
         [HttpGet]
         public ActionResult Get()
         {

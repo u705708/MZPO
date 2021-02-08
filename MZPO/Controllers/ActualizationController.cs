@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace MZPO.Controllers
 {
-    [Route("api/act")]
+    [Route("preparereports/act")]
     [ApiController]
     public class ActualizationController : ControllerBase
     {
@@ -22,7 +22,7 @@ namespace MZPO.Controllers
             sheetId = "1oYMRm8yrkjLgehx77Ez3K4-YothSq-9_ClZ5-HeNSKA";
         }
 
-        // GET: api/act
+        // GET: preparereports/act
         [HttpGet]
         public ActionResult Get()
         {

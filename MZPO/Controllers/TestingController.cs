@@ -31,21 +31,23 @@ namespace MZPO.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            var leadRepo = _acc.GetRepo<Lead>();
+            //var leadRepo = _acc.GetRepo<Lead>();
 
-            var d2 = DateTime.Today.AddSeconds(-1);
-            var d1 = DateTime.Today.AddDays(-1);
-            var du2 = (int)((DateTimeOffset)d2).ToUnixTimeSeconds();
-            var du1 = (int)((DateTimeOffset)d1).ToUnixTimeSeconds();
+            //var d2 = DateTime.Today.AddSeconds(-1);
+            //var d1 = DateTime.Today.AddDays(-1);
+            //var du2 = (int)((DateTimeOffset)d2).ToUnixTimeSeconds();
+            //var du1 = (int)((DateTimeOffset)d1).ToUnixTimeSeconds();
 
-            var criteria = $"filter[created_at][from]={du1}&filter[created_at][to]={du2}&filter[created_by][]=6158035&filter[entity][]=lead&filter[type][]=lead_status_changed&filter[value_before][leads_statuses][0][pipeline_id]=3558922&filter[value_before][leads_statuses][0][status_id]=35002129";
-            var list = new List<Event>();
-            var result = leadRepo.GetEventsByCriteria(criteria);
+            //var criteria = $"filter[created_at][from]={du1}&filter[created_at][to]={du2}&filter[created_by][]=6158035&filter[entity][]=lead&filter[type][]=lead_status_changed&filter[value_before][leads_statuses][0][pipeline_id]=3558922&filter[value_before][leads_statuses][0][status_id]=35002129";
+            //var list = new List<Event>();
+            //var result = leadRepo.GetEventsByCriteria(criteria);
 
-            if (result is not null)
-                list.AddRange(result);
+            //if (result is not null)
+            //    list.AddRange(result);
 
-            return Ok(list.Count);
+            //return Ok(list.Count);
+
+            return Ok();
         }
     }
 }
