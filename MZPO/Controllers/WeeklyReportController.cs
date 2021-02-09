@@ -24,7 +24,7 @@ namespace MZPO.Controllers
             sheetId = "1Am4JA46Nbaa1GxOgeKbhKRMWXkkzRS2SoZBhVjqqueY";
         }
 
-        // GET: preparereports/weekly
+        // GET: preparereports/weekly/1612731599
         [HttpGet]
         public ActionResult Get()
         {
@@ -41,7 +41,7 @@ namespace MZPO.Controllers
             return Ok();
         }
 
-        // GET reports/weekly/1612126799
+        // GET preparereports/weekly/1612126799
         [HttpGet("{to}")]                                                                                        //Запрашиваем отчёт для диапазона дат
         public ActionResult Get(string to)
         {

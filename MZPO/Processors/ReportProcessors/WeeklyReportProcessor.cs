@@ -385,60 +385,99 @@ namespace MZPO.Processors
             }
             #endregion
 
-            var leadEvents = leadRepo.GetEntityEvents(lead.id);
+            #region Время суток
+            var dt = DateTimeOffset.FromUnixTimeSeconds(timeOfReference).UtcDateTime;
+            if (dt.Hour > 17)
+                timeOfReference = (int)((DateTimeOffset)new DateTime(dt.Year, dt.Month, dt.Day, 11, 0, 0).AddDays(1)).ToUnixTimeSeconds();
+            else if (dt.Hour < 6)
+                timeOfReference = (int)((DateTimeOffset)new DateTime(dt.Year, dt.Month, dt.Day, 11, 0, 0)).ToUnixTimeSeconds();
+            #endregion
+
+            var allEvents = new List<Event>();
+            var allNotes = new List<Note>();
+
+            allEvents.AddRange(leadRepo.GetEntityEvents(lead.id));
+            allNotes.AddRange(leadRepo.GetEntityNotes(lead.id));
 
             #region Смена ответственного
-            if (leadEvents
+            if (allEvents
                     .Where(x => x.type == "entity_responsible_changed")
+                    .Any(x => x.value_before[0].responsible_user.id == 2576764 &&                                   //Если меняли ответственного с Администартора на текущего
+                        x.value_after[0].responsible_user.id == lead.responsible_user_id))
+                timeOfReference = (int)allEvents
+                    .Where((x => x.type == "entity_responsible_changed"))
+                    .First(x => x.value_before[0].responsible_user.id == 2576764)
+                    .created_at;
+            else if (allEvents
+                    .Where(x => x.type == "entity_responsible_changed")                                             //Если меняли на текущего
+                    .Any(x => x.value_after[0].responsible_user.id == lead.responsible_user_id) &&
+                    allEvents
+                    .Where(x => x.type == "entity_responsible_changed")                                             //И с Администратора
                     .Any(x => x.value_before[0].responsible_user.id == 2576764))
-                timeOfReference = (int)leadEvents
+                timeOfReference = (int)allEvents
                     .Where((x => x.type == "entity_responsible_changed"))
                     .First(x => x.value_before[0].responsible_user.id == 2576764)
                     .created_at;
             #endregion
 
+            #region Собираем данные из контактов
+            if (lead._embedded.contacts is not null)
+                Parallel.ForEach(lead._embedded.contacts, contact =>
+                {
+                    var events = contRepo.GetEntityEvents(contact.id);
+                    lock (allEvents)
+                    {
+                        allEvents.AddRange(events);
+                    }
+                    var notes = contRepo.GetEntityNotes(contact.id);
+                    lock (allNotes)
+                    {
+                        allNotes.AddRange(notes);
+                    }
+                });
+            #endregion
+
             #region Cообщения в чат
-            foreach (var e in leadEvents)
+            foreach (var e in allEvents)
                 if ((e.type == "outgoing_chat_message") || (e.type == "incoming_chat_message"))
                     replyTimestamps.Add((int)e.created_at);
             #endregion
 
             #region Исходящее письмо
-            var notes = leadRepo.GetEntityNotes(lead.id);
-            foreach (var n in notes)
+            foreach (var n in allNotes)
                 if ((n.note_type == "amomail_message") && (n.parameters.income == false))
                     replyTimestamps.Add((int)n.created_at);
             #endregion
 
             #region Звонки
-            if (lead._embedded.contacts is not null)
-                foreach (var c in lead._embedded.contacts)
+            foreach (var e in allEvents)
+            {
+                if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
                 {
-                    foreach (var e in contRepo.GetEntityEvents(c.id))
-                    {
-                        if ((e.type == "outgoing_call") || (e.type == "incoming_call"))
-                        {
-                            var callNote = contRepo.GetNoteById(e.value_after[0].note.id);
-                            int duration = 0;
+                    Note callNote;
 
-                            if (callNote.parameters is not null && callNote.parameters.duration > 0)
-                                duration = (int)callNote.parameters.duration;
+                    if (allNotes.Any(x => x.id == e.value_after[0].note.id))
+                        callNote = allNotes.First(x => x.id == e.value_after[0].note.id);
+                    else callNote = contRepo.GetNoteById(e.value_after[0].note.id);
 
-                            int actualCallTime = (int)e.created_at - duration;
+                    int duration = 0;
 
-                            if ((e.type == "outgoing_call") && (actualCallTime > lead.created_at))
-                                replyTimestamps.Add(actualCallTime);
-                            else if ((duration > 0) && (actualCallTime > lead.created_at))
-                                replyTimestamps.Add(actualCallTime);
-                        }
-                    }
+                    if (callNote.parameters is not null && callNote.parameters.duration > 0)
+                        duration = (int)callNote.parameters.duration;
+
+                    int actualCallTime = (int)e.created_at - duration;
+
+                    if ((e.type == "outgoing_call") && (actualCallTime > lead.created_at))
+                        replyTimestamps.Add(actualCallTime);
+                    else if ((duration > 0) && (actualCallTime > lead.created_at))
+                        replyTimestamps.Add(actualCallTime);
                 }
+            }
             #endregion
 
             replyTimestamps.Add(timeOfReference + 86400);
-            int result = replyTimestamps.Select(x => x - timeOfReference).Where(x => x > -600).Min();
 
-            return result;
+            return replyTimestamps.AsParallel().Select(x => x - timeOfReference).Where(x => x > -600).Min();
         }
 
         private double GetAverageResponseTime(IEnumerable<Lead> leads)
