@@ -53,7 +53,8 @@ namespace MZPO.Processors
             (3813670, "Федорова Александра"),
             (6102562, "Валерия Лукьянова"),
             (6410290, "Вероника Бармина"),
-            (6699043, "Татьяна Ганоу")
+            (6699043, "Татьяна Ганоу"),
+            (6729241, "Серик Айбасов")
         };
 
         private readonly List<int> pipelines = new List<int>
@@ -228,8 +229,10 @@ namespace MZPO.Processors
             var dr1_2 = (int)((DateTimeOffset)d1_2).ToUnixTimeSeconds();
             var dr1_1 = (int)((DateTimeOffset)d1_1).ToUnixTimeSeconds();
 
-            dataRanges.Add((dr1_1, dr1_2));
-            dataRanges.Add((dr2_1, dr2_2));
+            //dataRanges.Add((dr1_1, dr1_2));
+            //dataRanges.Add((dr2_1, dr2_2));
+
+            dataRanges.Add((1610294400, 1612886399));
         }
 
         private async Task PrepareSheets()
