@@ -3,6 +3,7 @@ using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -140,6 +141,29 @@ namespace MZPO.Processors
                 {
                     Log.Add($"Warning message: {e.Message}; Сделка: {lead.id}");
                 }
+            }
+            #endregion
+
+            #region Акции
+            if (applicationType is not null &&
+                applicationType.Contains("Акция"))
+            {
+                string[] words = applicationType.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                StringBuilder sb = new StringBuilder(applicationType.Length - 5);
+
+                foreach (var word in words)
+                {
+                    if (word == "Акция") continue;
+                    if (word == "Записаться") sb.Append(word.ToLower());
+                    else sb.Append(word);
+                    sb.Append(" ");
+                }
+
+                sb.Remove(sb.Length - 1, 1);
+
+                SetFieldValue(639075, sb.ToString());
+                SetTag("Акция");
             }
             #endregion
 

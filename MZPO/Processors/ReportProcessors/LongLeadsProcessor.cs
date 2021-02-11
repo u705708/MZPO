@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.Processors
 {
-    public class WeeklyReportProcessor : IProcessor
+    public class LongLeadsProcessor : IProcessor
     {
         #region Definition
         private readonly TaskList _processQueue;
@@ -22,7 +22,7 @@ namespace MZPO.Processors
         private readonly long endDate;
         protected readonly CancellationToken _token;
 
-        public WeeklyReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, long dateTo, CancellationToken token)
+        public LongLeadsProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, long dateTo, CancellationToken token)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -36,7 +36,7 @@ namespace MZPO.Processors
             endDate = dateTo;
         }
 
-        private List<(int?, int, int)> longAnsweredLeads;
+        private List<(int?, int, int, int?)> longAnsweredLeads;
         private IEnumerable<Event> inCalls;
         private IEnumerable<Event> outCalls;
 
@@ -64,6 +64,56 @@ namespace MZPO.Processors
             3558964,
             3558991,
             3558922
+        };
+
+        private readonly Dictionary<int, string> statuses = new()
+        {
+            { 32532877, "Неразобранное" },
+            { 32532880, "Получен новый лид" },
+            { 36592555, "Не дозвонились" },
+            { 32532883, "Взято в работу" },
+            { 32532886, "Отправлено КП" },
+            { 32533195, "Назначена встреча" },
+            { 32533198, "Проведена встреча" },
+            { 33625285, "документы получены" },
+            { 33817816, "Выставлен счёт" },
+            { 32533201, "Получена предоплата" },
+            { 32533204, "Получена полная оплата" },
+            { 142, "Успешно реализовано" },
+            { 143, "Закрыто и не реализовано" },
+            { 35051836, "6 месяцев (Отложенные)" },
+            { 35051839, "5 месяцев (Отложенные)" },
+            { 35051842, "4 месяца (Отложенные)" },
+            { 35051815, "3 месяца (Отложенные)" },
+            { 35051845, "2 месяца (Отложенные)" },
+            { 35051818, "1 месяц (Отложенные)" },
+            { 35301991, "3 недели (Отложенные)" },
+            { 35051821, "2 недели (Отложенные)" },
+            { 35301931, "1 неделя (Отложенные)" },
+            { 35002570, "Новая сделка (Вызревание)" },
+            { 35002573, "1 месяц (Вызревание)" },
+            { 35002576, "2 месяца (Вызревание)" },
+            { 35002579, "3 месяца (Вызревание)" },
+            { 35002582, "4 месяца (Вызревание)" },
+            { 35002585, "5 месяцев (Вызревание)" },
+            { 35002588, "6 месяцев (Вызревание)" },
+            { 35002591, "8 месяцев (Вызревание)" },
+            { 35002594, "10 месяцев (Вызревание)" },
+            { 35002597, "12 месяцев (Вызревание)" },
+            { 33496813, "Первичный контакт (Обучение)" },
+            { 31100218, "НОВЫЙ ЛИД (Корпоративный отдел)" },
+            { 31100221, "Переговоры (Корпоративный отдел)" },
+            { 31100224, "Принимают решение (Корпоративный отдел)" },
+            { 35942104, "Перенос в Корпоративный Отдел" },
+            { 35075311, "Чемпионат" },
+            { 35075338, "ДОД" },
+            { 32866090, "Модели" },
+            { 32544562, "Вебинары" },
+            { 34278559, "подписка на рассылку банки/IT/бухгалтерия" },
+            { 31653277, "ПОДПИСКА НА РАССЫЛКУ МЕДИЦИНА" },
+            { 34278556, "подписка на рассылку парикмахеры/визажисты/маникюристы" },
+            { 35093539, "Партнеры" },
+            { 35093542, "СПАМ" }
         };
 
         private readonly Dictionary<string, CellFormat> columns = new Dictionary<string, CellFormat>()
@@ -233,6 +283,7 @@ namespace MZPO.Processors
             //dataRanges.Add((dr2_1, dr2_2));
 
             dataRanges.Add((1610294400, 1612886399));
+            //dataRanges.Add((1612294400, 1612886399));
         }
 
         private async Task PrepareSheets()
@@ -302,7 +353,7 @@ namespace MZPO.Processors
             foreach (var m in managers)
             {
                 #region Prepare Data
-                List<(int?, int, int)> leads = new();
+                List<(int?, int, int, int?)> leads = new();
                 if (longAnsweredLeads.Any(x => x.Item1 == m.Item1))
                     leads.AddRange(longAnsweredLeads.Where(x => x.Item1 == m.Item1));
                 var rows = new List<RowData>();
@@ -312,18 +363,25 @@ namespace MZPO.Processors
                 {
                     Values = new List<CellData>(){
                          new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Сделка" } },
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Время ответа, сек" } }
-                        }
+                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Время ответа, сек" } },
+                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Время ответа" } },
+                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Примечания" } },
+                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Статус сделки" } },
+                    }
                 });
                 #endregion
 
                 foreach (var l in leads)
                 {
+                    string status = GetStatus((int)l.Item4);
                     rows.Add(new RowData()
                     {
                         Values = new List<CellData>(){
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{l.Item2}"", ""{l.Item2}"")" } },
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item3}" } }
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{l.Item2}"", ""{l.Item2}"")" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item3}" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=TEXTJOIN("" "", TRUE, TO_TEXT(QUOTIENT(INDIRECT(""R[0]C[-1]"", FALSE),3600)), ""ч."", TO_TEXT(QUOTIENT(MOD(INDIRECT(""R[0]C[-1]"", FALSE),3600), 60)), ""мин."")" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{status}" } }
                         }
                     });
                 }
@@ -342,25 +400,7 @@ namespace MZPO.Processors
                             StartRowIndex = dataRanges.Count + 2,
                             EndRowIndex = dataRanges.Count + 2 + rows.Count,
                             StartColumnIndex = 0,
-                            EndColumnIndex = 2
-                        }
-                    }
-                });
-                #endregion
-
-                #region Add banding
-                requestContainer.Add(new Request()
-                {
-                    AddBanding = new AddBandingRequest()
-                    {
-                        BandedRange = new BandedRange()
-                        {
-                            Range = new GridRange() { SheetId = m.Item1, StartRowIndex = 1, EndRowIndex = dataRanges.Count + 1 },
-                            RowProperties = new BandingProperties()
-                            {
-                                FirstBandColor = new Color() { Red = 217f / 255, Green = 234f / 255, Blue = 211f / 255 },
-                                SecondBandColor = new Color() { Red = 182f / 255, Green = 215f / 255, Blue = 168f / 255 },
-                            }
+                            EndColumnIndex = 5
                         }
                     }
                 });
@@ -370,6 +410,12 @@ namespace MZPO.Processors
             await UpdateSheetsAsync(requestContainer);
         }
 
+        private string GetStatus(int id)
+        {
+            if (!statuses.ContainsKey(id)) return id.ToString();
+            return statuses[id];
+        }
+        
         private int GetLeadResponseTime(Lead lead)
         {
             List<int> replyTimestamps = new List<int>();
@@ -494,7 +540,7 @@ namespace MZPO.Processors
                 if (rTime > 3600)
                     lock (longAnsweredLeads)
                     {
-                        longAnsweredLeads.Add((x.responsible_user_id, x.id, rTime));
+                        longAnsweredLeads.Add((x.responsible_user_id, x.id, rTime, x.status_id));
                     }
             });
 

@@ -35,7 +35,7 @@ namespace MZPO.AmoRepo
         {
             if ((entity is not null) && (entity._embedded is not null))
                 return (List<T>)entity.GetType().GetNestedType("Embedded").GetField(_entityLink).GetValue(entity._embedded);
-            else return new List<T>();
+            return new List<T>();
         }
 
         private static O GetResult<O>(AmoRequest request, O o)
@@ -52,12 +52,12 @@ namespace MZPO.AmoRepo
 
         private EntityList GetList(string uri)
         {
-            EntityList entityList = new EntityList() { _links = new Dictionary<string, EntityList.Links>() };
+            EntityList entityList = new() { _links = new Dictionary<string, EntityList.Links>() };
             entityList._links.Add("next", new EntityList.Links() { href = uri });
 
             while (entityList._links.ContainsKey("next"))
             {
-                AmoRequest request = new AmoRequest("GET", entityList._links["next"].href, _auth);
+                AmoRequest request = new("GET", entityList._links["next"].href, _auth);
                 string response;
 
                 var next = entityList._links["next"].href;
@@ -69,7 +69,7 @@ namespace MZPO.AmoRepo
                 try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), entityList); }
                 catch { break; }
                 
-                if (entityList._links.ContainsKey("next") && (next == entityList._links["next"].href)) break;
+                if (entityList._links.ContainsKey("next") && next == entityList._links["next"].href) break;
             }
 
             return entityList;
@@ -82,8 +82,8 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
-            EntityList result = new EntityList();
+            AmoRequest request = new("POST", uri, content, _auth);
+            EntityList result = new();
             return GetEmbedded(GetResult(request, result));
         }
         public IEnumerable<T> AddNew(T payload) => AddNew(new List<T>() { payload });
@@ -95,39 +95,38 @@ namespace MZPO.AmoRepo
         }
         public IEnumerable<T> BulkGetById(IEnumerable<int> ids)
         {
+            List<T> result = new();
+
+            if (!ids.Any()) return result;
+            
             int i = 0;
-            StringBuilder criteria = new StringBuilder("");
-            List<T> result = new List<T>();
+            StringBuilder criteria = new("");
 
-            if (ids.Any())
+            foreach (var id in ids.Distinct())
             {
-                foreach (var id in ids.Distinct())
-                {
-                    criteria.Append($"filter[id][{i++}]={id}&");
-                    if (i % 10 == 0)
-                    {
-                        criteria.Append($"with=companies,contacts,leads");
-
-                        result.AddRange(GetByCriteria(criteria.ToString()));
-
-                        criteria = new StringBuilder("");
-                    }
-                }
-
-                if (criteria.ToString() != "")
+                criteria.Append($"filter[id][{i++}]={id}&");
+                if (i % 10 == 0)
                 {
                     criteria.Append($"with=companies,contacts,leads");
-
                     result.AddRange(GetByCriteria(criteria.ToString()));
+                    criteria = new("");
+                    i = 0;
                 }
             }
+
+            if (criteria.ToString() != "")
+            {
+                criteria.Append($"with=companies,contacts,leads");
+                result.AddRange(GetByCriteria(criteria.ToString()));
+            }
+
             return result;
         }
         public T GetById(int id)
         {
             var uri = $"{_apiAddress}{_entityLink}/{id}?with=leads,contacts,companies";                                                               //?with = contacts,leads,catalog_elements,customers
 
-            AmoRequest request = new AmoRequest("GET", uri, _auth);
+            AmoRequest request = new("GET", uri, _auth);
             return GetResult(request, new T());
         }
         public IEnumerable<T> Save(IEnumerable<T> payload)
@@ -135,8 +134,8 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            AmoRequest request = new AmoRequest("PATCH", uri, content, _auth);
-            EntityList result = new EntityList();
+            AmoRequest request = new("PATCH", uri, content, _auth);
+            EntityList result = new();
             return GetEmbedded(GetResult(request, result));
         }
         public IEnumerable<T> Save(T payload) => Save(new List<T>() { payload });
@@ -148,7 +147,7 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.events is not null)
                 return result._embedded.events.ToList();
-            else return new List<Event>();
+            return new List<Event>();
         }
         public IEnumerable<Event> GetEventsByCriteria(string criteria)
         {
@@ -158,7 +157,7 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.events is not null)
                 return result._embedded.events.ToList();
-            else return new List<Event>();
+            return new List<Event>();
         }
         public IEnumerable<Note> GetEntityNotes(int id)
         {
@@ -168,7 +167,7 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.notes is not null)
                 return result._embedded.notes.ToList();
-            else return new List<Note>();
+            return new List<Note>();
         }
         public IEnumerable<Note> GetNotesByCriteria(string criteria)
         {
@@ -178,37 +177,38 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.notes is not null)
                 return result._embedded.notes.ToList();
-            else return new List<Note>();
+            return new List<Note>();
         }
         public Note GetNoteById(int id)
         {
             var uri = $"{_apiAddress}{_entityLink}/notes/{id}";
 
-            AmoRequest request = new AmoRequest("GET", uri, _auth);
+            AmoRequest request = new("GET", uri, _auth);
             return GetResult(request, new Note());
         }
         public IEnumerable<Note> BulkGetNotesById(IEnumerable<int> ids)
         {
+            List<Note> result = new();
+
+            if (!ids.Any()) return result;
+
             int i = 0;
-            StringBuilder criteria = new StringBuilder("");
-            List<Note> result = new List<Note>();
+            StringBuilder criteria = new("");
 
-            if (ids.Any())
+            foreach (var id in ids.Distinct())
             {
-                foreach (var id in ids.Distinct())
+                criteria.Append($"filter[id][{i++}]={id}&");
+                if (i % 10 == 0)
                 {
-                    criteria.Append($"filter[id][{i++}]={id}&");
-                    if (i % 10 == 0)
-                    {
-                        result.AddRange(GetNotesByCriteria(criteria.ToString()));
-                        i = 0;
-                        criteria = new StringBuilder("");
-                    }
-                }
-
-                if (criteria.ToString() != "")
                     result.AddRange(GetNotesByCriteria(criteria.ToString()));
+                    criteria = new("");
+                    i = 0;
+                }
             }
+
+            if (criteria.ToString() != "")
+                result.AddRange(GetNotesByCriteria(criteria.ToString()));
+
             return result;
         }
         public IEnumerable<Note> AddNotes(IEnumerable<Note> payload)
@@ -216,15 +216,22 @@ namespace MZPO.AmoRepo
             var uri = $"{_apiAddress}{_entityLink}/notes";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
-            EntityList list = new EntityList();
+            AmoRequest request = new("POST", uri, content, _auth);
+            EntityList list = new();
             var result = GetResult(request, list);
             if (result._embedded is not null && result._embedded.notes is not null)
                 return result._embedded.notes.ToList();
-            else return new List<Note>();
+            return new List<Note>();
         }
         public IEnumerable<Note> AddNotes(Note note) => AddNotes(new List<Note>() { note });
-        public IEnumerable<Note> AddNotes(int id, string comment) => AddNotes(new Note() { entity_id = id, note_type = "service_message", parameters = new Note.Params() { service = "mzpo2amo", text = comment } });
+        public IEnumerable<Note> AddNotes(int id, string comment) => AddNotes(new Note() { 
+            entity_id = id, 
+            note_type = "service_message", 
+            parameters = new Note.Params() 
+            { 
+                service = "mzpo2amo", 
+                text = comment 
+            }});
         public IEnumerable<Tag> GetTags()
         {
             var uri = $"{_apiAddress}{_entityLink}/tags";
@@ -233,19 +240,19 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.tags is not null)
                 return result._embedded.tags.ToList();
-            else return new List<Tag>();
+            return new List<Tag>();
         }
         public IEnumerable<Tag> AddTag(IEnumerable<Tag> payload)
         {
             var uri = $"{_apiAddress}{_entityLink}/tags";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
-            EntityList list = new EntityList();
+            AmoRequest request = new("POST", uri, content, _auth);
+            EntityList list = new();
             var result = GetResult(request, list);
             if (result._embedded is not null && result._embedded.tags is not null)
                 return result._embedded.tags.ToList();
-            else return new List<Tag>();
+            return new List<Tag>();
         }
         public IEnumerable<Tag> AddTag(Tag newTag) => AddTag(new List<Tag>() { newTag });
         public IEnumerable<Tag> AddTag(string tagName) => AddTag(new Tag() { name = tagName });
@@ -257,30 +264,34 @@ namespace MZPO.AmoRepo
 
             if (result._embedded is not null && result._embedded.custom_fields is not null)
                 return result._embedded.custom_fields.ToList();
-            else return new List<CustomField>();
+            return new List<CustomField>();
         }
         public IEnumerable<CustomField> AddField(IEnumerable<CustomField> payload)
         {
             var uri = $"{_apiAddress}{_entityLink}/custom_fields";
 
             var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            AmoRequest request = new AmoRequest("POST", uri, content, _auth);
-            EntityList list = new EntityList();
+            AmoRequest request = new("POST", uri, content, _auth);
+            EntityList list = new();
             var result = GetResult(request, list);
             if (result._embedded is not null && result._embedded.custom_fields is not null)
                 return result._embedded.custom_fields.ToList();
-            else return new List<CustomField>();
+            return new List<CustomField>();
         }
         public IEnumerable<CustomField> AddField(CustomField customField) => AddField(new List<CustomField>() { customField });
         public IEnumerable<CustomField> AddField(string fieldName) => AddField(new CustomField() { name = fieldName, type = "text" });
         public void AcceptUnsorted(string uid)
         {
             var uri = $"{_apiAddress}leads/unsorted/{uid}/accept";
-
-            AmoRequest request = new AmoRequest("POST", uri, _auth);
-
-            try { request.GetResponse(); }
-            catch (Exception e) { throw new Exception($"Unable to accept unsorted: {e.Message}"); }
+            AmoRequest request = new("POST", uri, _auth);
+            try 
+            { 
+                request.GetResponse(); 
+            }
+            catch (Exception e) 
+            { 
+                throw new Exception($"Unable to accept unsorted: {e.Message}"); 
+            }
         }
         #endregion
     }

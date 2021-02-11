@@ -32,7 +32,7 @@ namespace MZPO.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            return Ok();
+            return Ok("𓅮 𓃟 ne tovarisch");
         }
 
         [HttpGet("{input}")]
