@@ -139,7 +139,7 @@ namespace MZPO.LeadProcessors
                 }
                 catch (Exception e)
                 {
-                    Log.Add($"Warning message: {e.Message}; Сделка: {lead.id}");
+                    //Log.Add($"Warning message: {e.Message}; Сделка: {lead.id}");
                 }
             }
             #endregion
@@ -365,7 +365,7 @@ namespace MZPO.LeadProcessors
                 if (lead is null)
                 {
                     _processQueue.Remove(_leadNumber.ToString());
-                    Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
+                    //Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                     return;
                 }
                 if (lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
@@ -381,7 +381,7 @@ namespace MZPO.LeadProcessors
                     if (lead is null)
                     {
                         _processQueue.Remove(_leadNumber.ToString());
-                        Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
+                        //Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                         return;
                     }
 
@@ -399,12 +399,12 @@ namespace MZPO.LeadProcessors
             }
 
                 _processQueue.Remove(lead.id.ToString());
-                Log.Add($"Success: Lead {_leadNumber}");
+                //Log.Add($"Success: Lead {_leadNumber}");
             }
             catch (Exception e) 
             {
                 _processQueue.Remove(_leadNumber.ToString());
-                Log.Add($"Error: Unable to process lead {_leadNumber}: {e.Message}");
+                //Log.Add($"Error: Unable to process lead {_leadNumber}: {e.Message}");
             }
         }
         #endregion

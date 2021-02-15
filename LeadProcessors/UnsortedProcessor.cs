@@ -37,13 +37,13 @@ namespace MZPO.LeadProcessors
             {
                 _leadRepo.AcceptUnsorted(_uid);                                                                         //принимаем из Неразобранного по uid
                 _processQueue.Remove(_uid);
-                Log.Add($"Unsorted accepted: {_uid}");
+                //Log.Add($"Unsorted accepted: {_uid}");
                 return Task.CompletedTask;
             }
             catch (Exception e) 
             {
                 _processQueue.Remove(_uid);
-                Log.Add($"Error: Unable to accept unsorted: {_uid}:{e.Message}");
+                //Log.Add($"Error: Unable to accept unsorted: {_uid}:{e.Message}");
                 return Task.FromException(e);
             }
         }

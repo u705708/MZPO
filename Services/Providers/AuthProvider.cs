@@ -51,9 +51,8 @@ namespace MZPO.Services
 
                 _amoProvider.UpdateAccount(_amoAccountAuth);
             }
-            catch (Exception e)
+            catch
             {
-                Log.Add($"Warning: {e.Message}");
                 GetNew();
             }
         }

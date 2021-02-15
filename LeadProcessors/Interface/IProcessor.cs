@@ -2,7 +2,7 @@
 
 namespace MZPO.LeadProcessors
 {
-    interface IProcessor
+    public interface IProcessor
     {
         public Task Run();
     }

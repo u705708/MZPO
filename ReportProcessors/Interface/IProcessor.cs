@@ -2,7 +2,7 @@
 
 namespace MZPO.ReportProcessors
 {
-    interface IProcessor
+    public interface IProcessor
     {
         public Task Run();
     }

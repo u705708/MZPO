@@ -27,7 +27,7 @@ namespace MZPO.Controllers
             taskName = "report_retail";
         }
 
-        // GET: preparereports/weekly/1612731599
+        // GET: preparereports/weekly/
         [HttpGet]
         public ActionResult Get()
         {

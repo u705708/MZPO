@@ -41,7 +41,7 @@ namespace MZPO.LeadProcessors
             {
                 _processQueue.Stop(leadNumber.ToString());
                 _processQueue.Remove(leadNumber.ToString());
-                Log.Add($"Error: Unable to create leadProcessor {leadNumber}: {e.Message}");
+                //Log.Add($"Error: Unable to create leadProcessor {leadNumber}: {e.Message}");
             }
         }
         #endregion

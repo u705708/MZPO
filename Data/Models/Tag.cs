@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace MZPO.Data
+﻿namespace MZPO.Data
 {
     public class Tag
     {

@@ -44,7 +44,6 @@ namespace MZPO.Services
                 if (cityPair is null) 
                 {
                     result = engName;
-                    Log.Add($"Не задано значение для города {engName}");
                 }
                 else result = cityPair.RusName;
             }
