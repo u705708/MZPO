@@ -452,7 +452,7 @@ namespace MZPO.Processors
             if (allEvents
                     .Where(x => x.type == "entity_responsible_changed")
                     .Any(x => x.value_before[0].responsible_user.id == 2576764 &&                                   //Если меняли ответственного с Администартора на текущего
-                        x.value_after[0].responsible_user.id == lead.responsible_user_id))
+                    x.value_after[0].responsible_user.id == lead.responsible_user_id))
                 timeOfReference = (int)allEvents
                     .Where((x => x.type == "entity_responsible_changed"))
                     .First(x => x.value_before[0].responsible_user.id == 2576764)
