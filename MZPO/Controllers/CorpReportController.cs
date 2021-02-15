@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MZPO.Processors;
+using MZPO.ReportProcessors;
 using MZPO.Services;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
@@ -15,6 +14,8 @@ namespace MZPO.Controllers
         private readonly AmoAccount _acc;
         private readonly GSheets _gSheets;
         private readonly string sheetId;
+        private readonly string reportName;
+        private readonly string taskName;
 
         public CorpReportController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
@@ -22,6 +23,8 @@ namespace MZPO.Controllers
             _processQueue = processQueue;
             _gSheets = gSheets;
             sheetId = "1jzqcptdlCpSPXcyLpumSGCaHtSVi28bg8Ga2aEFXCoQ";
+            reportName = "CorpReport";
+            taskName = "report_corp";
         }
 
         // GET: preparereports/corporate
@@ -31,8 +34,8 @@ namespace MZPO.Controllers
             return Redirect($"https://docs.google.com/spreadsheets/d/{sheetId}/");
         }
 
-        // GET reports/corporate/1609448400,1612126800
-        [HttpGet("{from},{to}")]                                                                                        //Запрашиваем отчёт для диапазона дат
+        // GET preparereports/corporate/1609448400,1612126800
+        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public ActionResult Get(string from, string to)
         {
             if (!long.TryParse(from, out long dateFrom) &
@@ -40,11 +43,10 @@ namespace MZPO.Controllers
 
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
-            Lazy<CorpReportProcessor> corpReportProcessor = new Lazy<CorpReportProcessor>(() =>                         //Создаём экземпляр процессора
-                               new CorpReportProcessor(_acc, _processQueue, _gSheets, sheetId, dateFrom, dateTo, token));
+            Lazy<CorpReportProcessor> reportProcessor = new Lazy<CorpReportProcessor>(() =>                                                     //Создаём экземпляр процессора
+                               new CorpReportProcessor(_acc, _processQueue, _gSheets, sheetId, dateFrom, dateTo, taskName, token));
 
-            Task task = Task.Run(() => corpReportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.AddTask(task, cts, "report_corp", _acc.name, "CorpReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(reportProcessor.Value.Run(), cts, taskName, _acc.name, reportName);                                           //Запускаем его и добавляем в очередь
             return Ok();
         }
     }

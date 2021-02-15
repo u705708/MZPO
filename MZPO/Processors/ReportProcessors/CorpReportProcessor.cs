@@ -1,5 +1,4 @@
-﻿using Google.Apis.Sheets.v4;
-using Google.Apis.Sheets.v4.Data;
+﻿using Google.Apis.Sheets.v4.Data;
 using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
@@ -8,32 +7,22 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MZPO.Processors
+namespace MZPO.ReportProcessors
 {
-    public class CorpReportProcessor : IProcessor
+    public class CorpReportProcessor : AbstractReportProcessor, IProcessor
     {
         #region Definition
-        private readonly TaskList _processQueue;
-        private readonly AmoAccount _acc;
-        private readonly SheetsService _service;
-        private readonly string SpreadsheetId;
-        private readonly long _dateFrom;
-        private readonly long _dateTo;
-        private readonly IAmoRepo<Lead> leadRepo;
-        private readonly IAmoRepo<Company> compRepo;
-        protected readonly CancellationToken _token;
+        private readonly int _dateFrom;
+        private readonly int _dateTo;
 
-        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, CancellationToken token)
+        /// <summary>
+        /// Формирует отчёт по продажам для корпоративного отдела.
+        /// </summary>
+        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+            : base(acc, gSheets, spreadsheetId, processQueue, taskName, token) 
         {
-            _acc = acc;
-            _processQueue = processQueue;
-            _service = gSheets.GetService();
-            SpreadsheetId = spreadsheetId;
-            _dateFrom = dateFrom;
-            _dateTo = dateTo;
-            _token = token;
-            leadRepo = _acc.GetRepo<Lead>();
-            compRepo = _acc.GetRepo<Company>();
+            _dateFrom = (int)dateFrom;
+            _dateTo = (int)dateTo;
         }
 
         private readonly List<(int, string)> managers = new List<(int, string)>
@@ -56,7 +45,7 @@ namespace MZPO.Processors
         {
             #region Retrieving spreadsheet
             List<Request> requestContainer = new();
-            var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
+            var spreadsheet = _service.Spreadsheets.Get(_spreadsheetId).Execute();
             #endregion
 
             #region Deleting existing sheets except first
@@ -158,106 +147,68 @@ namespace MZPO.Processors
                 #endregion
             }
 
-            #region Executing request
-            await UpdateSheetsAsync(requestContainer);
-            #endregion
+            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private Request GetRowRequest(int sheetId, string A, string B, int C, string D, int E, string F, string G, string H, int I, int J, string K)
+        private static CellData[] GetCellData(string A, string B, int C, string D, int E, string F, string G, string H, int I, int J, string K)
         {
-            #region Prepare data
-            var rows = new List<RowData>
-            {
-                new RowData()
-                {
-                    Values = new List<CellData>(){
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = A},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = B},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ NumberValue = C},
-                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = D},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ NumberValue = E},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = F},
-                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "DATE" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = G},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = H},
-                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ NumberValue = I},
-                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ NumberValue = J},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER" }} },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue() { FormulaValue = K},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } }
-                    }
-                }
-            };
-            #endregion
-
-            return new Request()
-            {
-                AppendCells = new AppendCellsRequest()
-                {
-                    Fields = '*',
-                    Rows = rows,
-                    SheetId = sheetId
-                }
+            return new []{
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = A},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = B},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ NumberValue = C},
+                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ FormulaValue = D},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ NumberValue = E},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = F},
+                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "DATE" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = G},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = H},
+                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ NumberValue = I},
+                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ NumberValue = J},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER" }} },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue() { FormulaValue = K},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } }
             };
         }
 
-        private Request GetLastRowRequest(int sheetId)
+        private static CellData[] GetLastRowCellData()
         {
-            #region Prepare data
-            var rows = new List<RowData>
-            {
-                new RowData()
-                {
-                    Values = new List<CellData>(){
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = "Итого:"},
-                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "RIGHT", TextFormat = new TextFormat(){ Bold = true } } },
-                         new CellData(),
-                         new CellData(),
-                         new CellData(),
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=SUM(E2:INDIRECT(""R[-1]C[0]"", FALSE))"},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
-                         new CellData(),
-                         new CellData(),
-                         new CellData(),
-                         new CellData(),
-                         new CellData(),
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=SUM(K2:INDIRECT(""R[-1]C[0]"", FALSE))"},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } }
-                }
-                }
-            };
-            #endregion
-
-            return new Request()
-            {
-                AppendCells = new AppendCellsRequest()
-                {
-                    Fields = '*',
-                    Rows = rows,
-                    SheetId = sheetId
-                }
+            return new []{
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = "Итого:"},
+                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "RIGHT", TextFormat = new TextFormat(){ Bold = true } } },
+                new CellData(),
+                new CellData(),
+                new CellData(),
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=SUM(E2:INDIRECT(""R[-1]C[0]"", FALSE))"},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
+                new CellData(),
+                new CellData(),
+                new CellData(),
+                new CellData(),
+                new CellData(),
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=SUM(K2:INDIRECT(""R[-1]C[0]"", FALSE))"},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } }
             };
         }
 
@@ -279,7 +230,7 @@ namespace MZPO.Processors
 
             #region Оганизация
             if (lead._embedded.companies.Any())
-                A = compRepo.GetById(lead._embedded.companies.FirstOrDefault().id).name;
+                A = _compRepo.GetById(lead._embedded.companies.FirstOrDefault().id).name;
             #endregion
 
             #region Назначение платежа
@@ -336,15 +287,15 @@ namespace MZPO.Processors
             K = @"=INDIRECT(""R[0]C[-6]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
             #endregion
 
-            return GetRowRequest(sheetId, A, B, C, D, E, F, G, H, I, J, K);
+            return GetRowRequest(sheetId, GetCellData(A, B, C, D, E, F, G, H, I, J, K));
         }
 
         private async Task ProcessManager((int, string) manager)
         {
             #region Preparing
-            _processQueue.AddSubTask("report_corp", $"report_corp_{manager.Item2}", $"CorpReport: new leads");
+            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"CorpReport: new leads");
 
-            var allLeads = leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={manager.Item1}");
+            var allLeads = _leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={manager.Item1}");
 
             if (allLeads is null) return;
 
@@ -354,52 +305,33 @@ namespace MZPO.Processors
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value >= _dateFrom) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)
                 );
-
-            List<Request> requestContainer = new();
             #endregion
 
             #region Processing
-            _processQueue.UpdateTaskName($"report_corp_{manager.Item2}", $"CorpReport: total leads {leads.Count()}");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"CorpReport: total leads {leads.Count()}");
+            List<Request> requestContainer = new();
 
             Parallel.ForEach(leads, l => {
                 requestContainer.Add(GetProcessedLeadRequest(l, manager.Item1));
             });
-
             #endregion
 
-            #region Finalization
-            requestContainer.Add(GetLastRowRequest(manager.Item1));
+            requestContainer.Add(GetRowRequest(manager.Item1, GetLastRowCellData()));
 
-            await UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove($"report_corp_{manager.Item2}");
-            #endregion
-        }
-
-        private async Task UpdateSheetsAsync(List<Request> requestContainer)
-        {
-            if (requestContainer.Any())
-            {
-                var batchRequest = new BatchUpdateSpreadsheetRequest
-                {
-                    Requests = requestContainer
-                };
-
-                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
-            }
+            _processQueue.Remove($"{_taskName}_{manager.Item2}");
         }
         #endregion
 
         #region Realization
-        public async Task Run()
+        public override async Task Run()
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove("report_corp");
+                _processQueue.Remove(_taskName);
                 return;
             }
-
-            Log.Add("Started corporate report.");
 
             await PrepareSheets();
 
@@ -415,9 +347,7 @@ namespace MZPO.Processors
 
             await Task.WhenAll(tasks);
 
-            Log.Add("Finished corporate report.");
-
-            _processQueue.Remove("report_corp");
+            _processQueue.Remove(_taskName);
         }
         #endregion
     }

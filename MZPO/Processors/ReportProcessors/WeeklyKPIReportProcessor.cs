@@ -8,24 +8,24 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MZPO.Processors
+namespace MZPO.ReportProcessors
 {
     public class WeeklyKPIReportProcessor : AbstractReportProcessor, IProcessor
     {
         #region Definition
-        private readonly long endDate;
-        private readonly string KPISpreadsheetId;
+        private readonly long _dateTo;
+        private readonly string _KPISpreadsheetId;
 
         /// <summary>
         /// Формирует отчёт для отдела розницы, собирает показатели с начала месяца, сравнивает со среднемесячными показателями за аналогичный период.
         /// </summary>
-        public WeeklyKPIReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, long dateTo, CancellationToken token) 
-            :base(acc, gSheets, spreadsheetId, processQueue, token)
+        public WeeklyKPIReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, long dateTo, string taskName, CancellationToken token) 
+            :base(acc, gSheets, spreadsheetId, processQueue, taskName, token)
         {
-            KPISpreadsheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k";
+            _KPISpreadsheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k";
 
             dataRanges = new List<(int, int)>();
-            endDate = dateTo;
+            _dateTo = dateTo;
         }
 
         private double monthRatio;
@@ -189,7 +189,7 @@ namespace MZPO.Processors
 
         private void CalculateDateRange()
         {
-            DateTime dt = DateTimeOffset.FromUnixTimeSeconds(endDate).UtcDateTime;
+            DateTime dt = DateTimeOffset.FromUnixTimeSeconds(_dateTo).UtcDateTime;
 
             var d2_2 = dt;
             var d2_1 = new DateTime(d2_2.Year, d2_2.Month, 1, 2, 0, 0);
@@ -250,7 +250,7 @@ namespace MZPO.Processors
             List<Request> requestContainer = new();
 
             var range = "Сводные!A:M";
-            var request = _service.Spreadsheets.Values.Get(KPISpreadsheetId, range);
+            var request = _service.Spreadsheets.Values.Get(_KPISpreadsheetId, range);
             request.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.UNFORMATTEDVALUE;
             var values = request.Execute().Values;
 
@@ -285,7 +285,7 @@ namespace MZPO.Processors
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
             //Список новых сделок в воронках из pipelines
-            _processQueue.AddSubTask("report_retail", $"report_retail_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
+            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
 
             List<Lead> newLeads = new List<Lead>();
 
@@ -299,13 +299,13 @@ namespace MZPO.Processors
 
             int totalNewLeads = newLeads.Count;
 
-            _processQueue.UpdateTaskName($"report_retail_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
 
             double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
             int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
 
             //Список закрытых сделок
-            _processQueue.UpdateTaskName($"report_retail_{manager.Item2}", $"WeeklyReport: {dates}, closed leads");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, closed leads");
 
             var allLeads = _leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
 
@@ -316,7 +316,7 @@ namespace MZPO.Processors
             int successLeads = allLeads.Where(x => x.status_id == 142).Count();
 
             //Список звонков
-            _processQueue.UpdateTaskName($"report_retail_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
             Calls calls = new(dataRange, _contRepo, manager.Item1); 
 
             //Количество исходящих вызовов
@@ -326,7 +326,7 @@ namespace MZPO.Processors
             int inCallsCount = calls.inCalls.Count();
 
             //Количество пропущенных вызовов
-            _processQueue.UpdateTaskName($"report_retail_{manager.Item2}", $"WeeklyReport: {dates}, calculating missed calls");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, calculating missed calls");
 
             int missedCallsCount = 0;
 
@@ -361,7 +361,7 @@ namespace MZPO.Processors
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove($"report_retail_{manager.Item2}");
+            _processQueue.Remove($"{_taskName}_{manager.Item2}");
         }
 
         private async Task FinalizeManagers()
@@ -445,11 +445,9 @@ namespace MZPO.Processors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove("report_retail");
+                _processQueue.Remove(_taskName);
                 return;
             }
-
-            Log.Add("Started weekly report.");
 
             CalculateDateRange();
 
@@ -476,9 +474,7 @@ namespace MZPO.Processors
 
             await FinalizeManagers();
 
-            Log.Add("Finished weekly report.");
-
-            _processQueue.Remove("report_retail");
+            _processQueue.Remove(_taskName);
         }
         #endregion
     }

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MZPO.Processors
+namespace MZPO.ReportProcessors
 {
     public abstract class AbstractReportProcessor : IProcessor
     {
@@ -20,8 +20,22 @@ namespace MZPO.Processors
         protected readonly IAmoRepo<Company> _compRepo;
         protected readonly IAmoRepo<Contact> _contRepo;
         protected readonly CancellationToken _token;
+        protected readonly string _taskName;
 
         protected List<(int?, int, int, int?)> _longAnsweredLeads;
+
+        public AbstractReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, string taskName, CancellationToken token)
+        {
+            _acc = acc;
+            _processQueue = processQueue;
+            _token = token;
+            _service = gSheets.GetService();
+            _spreadsheetId = spreadsheetId;
+            _leadRepo = _acc.GetRepo<Lead>();
+            _compRepo = _acc.GetRepo<Company>();
+            _contRepo = _acc.GetRepo<Contact>();
+            _taskName = taskName;
+        }
 
         protected class Calls
         {
@@ -39,19 +53,6 @@ namespace MZPO.Processors
 
                 Task.WhenAll(tasks).Wait();
             }
-        }
-
-
-        public AbstractReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
-        {
-            _acc = acc;
-            _processQueue = processQueue;
-            _token = token;
-            _service = gSheets.GetService();
-            _spreadsheetId = spreadsheetId;
-            _leadRepo = _acc.GetRepo<Lead>();
-            _compRepo = _acc.GetRepo<Company>();
-            _contRepo = _acc.GetRepo<Contact>();
         }
 
         /// <summary>

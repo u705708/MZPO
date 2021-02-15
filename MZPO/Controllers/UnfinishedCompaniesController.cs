@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MZPO.Processors;
+using MZPO.ReportProcessors;
 using MZPO.Services;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
@@ -15,14 +14,18 @@ namespace MZPO.Controllers
         private readonly AmoAccount _acc;
         private readonly GSheets _gSheets;
         private readonly string sheetId;
+        private readonly string reportName;
+        private readonly string taskName;
 
         public UnfinishedCompaniesController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _processQueue = processQueue;
             _gSheets = gSheets;
 
-            _acc = amo.GetAccountById(19453687); //corp
-            sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk"; //UnfinishedContacts
+            _acc = amo.GetAccountById(19453687);
+            sheetId = "1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk";
+            reportName = "CorpReport Unfinished contacts";
+            taskName = "report_corp_unfinished";
         }
 
         // GET: preparereports/unfinished
@@ -31,11 +34,10 @@ namespace MZPO.Controllers
         {
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
-            Lazy<IProcessor> dataReportProcessor = new Lazy<IProcessor>(() =>                         //Создаём экземпляр процессора
-                               new UnfinishedContactsProcessor(_acc, _gSheets, sheetId, _processQueue, token));
+            Lazy<IProcessor> reportProcessor = new Lazy<IProcessor>(() =>                                                                       //Создаём экземпляр процессора
+                               new UnfinishedContactsProcessor(_acc, _gSheets, sheetId, _processQueue, taskName, token));
 
-            Task task = Task.Run(() => dataReportProcessor.Value.Run());                                                //Запускаем его
-            _processQueue.AddTask(task, cts, "report_data", _acc.name, "DataReport");                                       //И добавляем в очередь
+            _processQueue.AddTask(reportProcessor.Value.Run(), cts, taskName, _acc.name, reportName);                                           //Запускаем его и добавляем в очередь
 
             return Ok();
         }

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MZPO.Processors
+namespace MZPO.LeadProcessors
 {
     public abstract class AbstractLeadProcessor : IProcessor
     {

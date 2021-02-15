@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MZPO.Processors
+namespace MZPO.LeadProcessors
 {
     public class InitialLeadProcessor : AbstractLeadProcessor, IProcessor                                                               //Процессор осуществляет первоначальную обработку сделок
     {
@@ -157,7 +157,7 @@ namespace MZPO.Processors
                     if (word == "Акция") continue;
                     if (word == "Записаться") sb.Append(word.ToLower());
                     else sb.Append(word);
-                    sb.Append(" ");
+                    sb.Append(' ');
                 }
 
                 sb.Remove(sb.Length - 1, 1);

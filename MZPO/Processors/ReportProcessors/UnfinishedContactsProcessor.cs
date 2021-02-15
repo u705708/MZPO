@@ -1,38 +1,22 @@
-﻿using Google.Apis.Sheets.v4;
-using Google.Apis.Sheets.v4.Data;
+﻿using Google.Apis.Sheets.v4.Data;
 using MZPO.AmoRepo;
 using MZPO.Services;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MZPO.Processors
+namespace MZPO.ReportProcessors
 {
-    public class UnfinishedContactsProcessor : IProcessor
+    public class UnfinishedContactsProcessor : AbstractReportProcessor, IProcessor
     {
         #region Definition
-        private readonly TaskList _processQueue;
-        private readonly AmoAccount _acc;
-        private readonly SheetsService _service;
-        private readonly string SpreadsheetId;
-        private readonly IAmoRepo<Lead> leadRepo;
-        private readonly IAmoRepo<Company> compRepo;
-        private readonly IAmoRepo<Contact> contRepo;
-        protected readonly CancellationToken _token;
 
-        public UnfinishedContactsProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, CancellationToken token)
-        {
-            _acc = acc;
-            _processQueue = processQueue;
-            _token = token;
-            _service = gSheets.GetService();
-            SpreadsheetId = spreadsheetId;
-            leadRepo = _acc.GetRepo<Lead>();
-            compRepo = _acc.GetRepo<Company>();
-            contRepo = _acc.GetRepo<Contact>();
-        }
+        /// <summary>
+        /// Формирует отчёт для корпоративного отдела. Выгружает по каждому менеджеру список компаний с незаполненными контактами.
+        /// </summary>
+        public UnfinishedContactsProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, string taskName, CancellationToken token)
+            : base(acc, gSheets, spreadsheetId, processQueue, taskName, token) { }
 
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
@@ -54,7 +38,7 @@ namespace MZPO.Processors
         {
             #region Retrieving spreadsheet
             List<Request> requestContainer = new();
-            var spreadsheet = _service.Spreadsheets.Get(SpreadsheetId).Execute();
+            var spreadsheet = _service.Spreadsheets.Get(_spreadsheetId).Execute();
             #endregion
 
             #region Deleting existing sheets except first
@@ -140,50 +124,33 @@ namespace MZPO.Processors
                 #endregion
             }
 
-            await UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private Request PrepareRow(int sheetId, int A, string B, string C, bool D, bool E, string F)
+        private static CellData[] GetCellData(int A, string B, string C, bool D, bool E, string F)
         {
-            #region Prepare data
-            var rows = new List<RowData>();
-
             string Dt = D ? "Да" : "";
             string Et = E ? "Да" : "";
 
-            rows.Add(new RowData()
-            {
-                Values = new List<CellData>(){
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{A}"", ""{A}"")" },
-                             UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = B},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = C},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = Dt},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = Et},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = F},
-                             UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-                }
-            });
-            #endregion
-
-            return new Request()
-            {
-                AppendCells = new AppendCellsRequest()
-                {
-                    Fields = '*',
-                    Rows = rows,
-                    SheetId = sheetId
-                }
+            return new []{
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{A}"", ""{A}"")" },
+                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = B},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = C},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = Dt},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = Et},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = F},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
             };
         }
 
@@ -202,7 +169,7 @@ namespace MZPO.Processors
 
             #region Processing associated company
             if (l._embedded.companies.Any())
-                company = compRepo.GetById(l._embedded.companies.FirstOrDefault().id);
+                company = _compRepo.GetById(l._embedded.companies.FirstOrDefault().id);
             else
                 company = new Company() { name = $"Сделка {leadNumber} без компании" };
 
@@ -238,7 +205,7 @@ namespace MZPO.Processors
                 foreach (var c in company._embedded.contacts)
                     contactIdList.Add(c.id);
 
-            var contacts = contRepo.BulkGetById(contactIdList);
+            var contacts = _contRepo.BulkGetById(contactIdList);
             #endregion
 
             #region Getting contact name if any
@@ -259,7 +226,7 @@ namespace MZPO.Processors
 
             #region Preparing row if needed
             if (!phoneAdded || !emailAdded)
-                return PrepareRow(sheetId, leadNumber, contactName, companyName, phoneAdded, emailAdded, LPR);
+                return GetRowRequest(sheetId, GetCellData(leadNumber, contactName, companyName, phoneAdded, emailAdded, LPR));
             else return null;
             #endregion
         }
@@ -278,19 +245,19 @@ namespace MZPO.Processors
                 };
             #endregion
 
-            _processQueue.AddSubTask("report_data", $"report_data_{m.Item2}", $"Unfinished Companies report");
+            _processQueue.AddSubTask(_taskName, $"{_taskName}_{m.Item2}", $"Unfinished Companies report");
 
             List<Lead> allLeads = new();
 
             Parallel.ForEach(criteria, cr => { 
-                var range = leadRepo.GetByCriteria(cr);
+                var range = _leadRepo.GetByCriteria(cr);
                 lock (allLeads)
                 {
                     allLeads.AddRange(range);
                 }
             });
 
-            _processQueue.UpdateTaskName($"report_data_{m.Item2}", $"Unfinished Companies report: total {allLeads.Count()} leads to check.");
+            _processQueue.UpdateTaskName($"{_taskName}_{m.Item2}", $"Unfinished Companies report: total {allLeads.Count} leads to check.");
 
             int counter = 0;
 
@@ -299,7 +266,7 @@ namespace MZPO.Processors
                 if (_token.IsCancellationRequested) break;
 
                 if (counter % 10 == 0)
-                    _processQueue.UpdateTaskName($"report_data_{m.Item2}", $"Unfinished Companies report: Processed {counter} of {allLeads.Count()} leads.");
+                    _processQueue.UpdateTaskName($"{_taskName}_{m.Item2}", $"Unfinished Companies report: Processed {counter} of {allLeads.Count} leads.");
                 var result = ProcessLead(l, m.Item1);
                 if (result is not null)
                     requestContainer.Add(result);
@@ -333,35 +300,20 @@ namespace MZPO.Processors
             }
             #endregion
 
-            await UpdateSheetsAsync(requestContainer);
+            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove($"report_data_{m.Item2}");
-        }
-
-        private async Task UpdateSheetsAsync(List<Request> requestContainer)
-        {
-            if (requestContainer.Any())
-            {
-                var batchRequest = new BatchUpdateSpreadsheetRequest
-                {
-                    Requests = requestContainer
-                };
-
-                await _service.Spreadsheets.BatchUpdate(batchRequest, SpreadsheetId).ExecuteAsync();
-            }
+            _processQueue.Remove($"{_taskName}_{m.Item2}");
         }
         #endregion
 
         #region Realization
-        public async Task Run()
+        public override async Task Run()
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove("report_data");
+                _processQueue.Remove(_taskName);
                 return;
             }
-
-            Log.Add("Started Unfinished Companies report");
 
             await PrepareSheets();
 
@@ -376,8 +328,7 @@ namespace MZPO.Processors
 
             await Task.WhenAll(tasks);
 
-            Log.Add("Finished Unfinished Companies report");
-            _processQueue.Remove("report_data");
+            _processQueue.Remove(_taskName);
         }
         #endregion
     }
