@@ -6,27 +6,20 @@ using System.Threading.Tasks;
 
 namespace MZPO.LeadProcessors
 {
-    public class UnsortedProcessor : IProcessor
+    public class UnsortedProcessor : AbstractLeadProcessor, ILeadProcessor
     {
         #region Definition
-        protected readonly IAmoRepo<Lead> _leadRepo;
-        protected readonly AmoAccount _acc;
-        protected readonly TaskList _processQueue;
-        protected readonly CancellationToken _token; 
         private readonly string _uid;
 
-        public UnsortedProcessor(string uid, AmoAccount acc, TaskList processQueue, CancellationToken token)         //Процессор принимает сделку из Неразобранного
+        public UnsortedProcessor(string uid, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)       //Процессор принимает сделку из Неразобранного
+            : base(acc, processQueue, log, token)
         {
-            _acc = acc;
-            _leadRepo = acc.GetRepo<Lead>();
-            _processQueue = processQueue;
-            _token = token;
             _uid = uid;
         }
         #endregion
 
         #region Realization
-        public Task Run()
+        public override Task Run()
         {
             if (_token.IsCancellationRequested)
             {
@@ -35,15 +28,15 @@ namespace MZPO.LeadProcessors
             }
             try
             {
-                _leadRepo.AcceptUnsorted(_uid);                                                                         //принимаем из Неразобранного по uid
+                _leadRepo.AcceptUnsorted(_uid);                                                                             //принимаем из Неразобранного по uid
                 _processQueue.Remove(_uid);
-                //Log.Add($"Unsorted accepted: {_uid}");
+                _log.Add($"Unsorted accepted: {_uid}");
                 return Task.CompletedTask;
             }
             catch (Exception e) 
             {
                 _processQueue.Remove(_uid);
-                //Log.Add($"Error: Unable to accept unsorted: {_uid}:{e.Message}");
+                _log.Add($"Error: Unable to accept unsorted: {_uid}:{e.Message}");
                 return Task.FromException(e);
             }
         }

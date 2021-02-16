@@ -6,9 +6,9 @@ using System.Threading;
 
 namespace MZPO.Controllers
 {
-    [Route("preparereports/longleads")]
+    [Route("preparereports/kpi")]
     [ApiController]
-    public class LongLeadsController : ControllerBase
+    public class KPIReportController : ControllerBase
     {
         private readonly TaskList _processQueue;
         private readonly AmoAccount _acc;
@@ -17,17 +17,17 @@ namespace MZPO.Controllers
         private readonly string reportName;
         private readonly string taskName;
 
-        public LongLeadsController(Amo amo, TaskList processQueue, GSheets gSheets)
+        public KPIReportController(Amo amo, TaskList processQueue, GSheets gSheets)
         {
             _acc = amo.GetAccountById(28395871);
             _processQueue = processQueue;
             _gSheets = gSheets;
-            sheetId = "1EtpEiq5meigVrY9-n3phHxQRVO3iHgpF6V0-wpJ5Yg4";
-            reportName = "LongLeadsReport";
-            taskName = "report_long";
+            sheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k";
+            reportName = "KPIReport";
+            taskName = "report_kpi";
         }
 
-        // GET: preparereports/longleads
+        // GET: preparereports/kpi
         [HttpGet]
         public ActionResult Get()
         {
@@ -38,14 +38,14 @@ namespace MZPO.Controllers
 
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
-            Lazy<IProcessor> reportProcessor = new Lazy<IProcessor>(() =>                                                                       //Создаём экземпляр процессора
-                               new LongLeadsProcessor(_acc, _gSheets, sheetId, _processQueue, dateFrom, dateTo, taskName, token));
+            Lazy<IReportProcessor> reportProcessor = new Lazy<IReportProcessor>(() =>                                                                       //Создаём экземпляр процессора
+                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, dateFrom, dateTo, taskName, token));
 
             _processQueue.AddTask(reportProcessor.Value.Run(), cts, taskName, _acc.name, reportName);                                           //Запускаем его и добавляем в очередь
             return Ok();
         }
 
-        // GET preparereports/longleads/1610294400,1612886399
+        // GET reports/kpi/1612126799,1612886399
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public ActionResult Get(string from, string to)
         {
@@ -54,8 +54,8 @@ namespace MZPO.Controllers
 
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
-            Lazy<IProcessor> reportProcessor = new Lazy<IProcessor>(() =>                                                                       //Создаём экземпляр процессора
-                               new LongLeadsProcessor(_acc, _gSheets, sheetId, _processQueue, dateFrom, dateTo, taskName, token));
+            Lazy<IReportProcessor> reportProcessor = new Lazy<IReportProcessor>(() =>                                                                       //Создаём экземпляр процессора
+                               new RetailKPIProcessor(_acc, _gSheets, sheetId, _processQueue, dateFrom, dateTo, taskName, token));
 
             _processQueue.AddTask(reportProcessor.Value.Run(), cts, taskName, _acc.name, reportName);                                           //Запускаем его и добавляем в очередь
             return Ok();

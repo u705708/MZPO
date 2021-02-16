@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class LongLeadsProcessor : AbstractReportProcessor, IProcessor
+    public class LongLeadsProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
         /// <summary>

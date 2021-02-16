@@ -13,10 +13,12 @@ namespace MZPO.Controllers
     public class LeadsLogController : ControllerBase
     {
         private readonly AmoAccount _acc;
+        private readonly Log _log;
 
-        public LeadsLogController(Amo amo)
+        public LeadsLogController(Amo amo, Log log)
         {
             _acc = amo.GetAccountById(28395871);
+            _log = log;
         }
         
         
@@ -24,7 +26,7 @@ namespace MZPO.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            return Ok(Log.GetLog());
+            return Ok(_log.GetLog());
         }
 
         // GET log/leads/5

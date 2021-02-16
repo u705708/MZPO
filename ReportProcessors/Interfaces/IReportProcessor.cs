@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace MZPO.LeadProcessors
+namespace MZPO.ReportProcessors
 {
-    public interface IProcessor
+    public interface IReportProcessor
     {
         public Task Run();
     }

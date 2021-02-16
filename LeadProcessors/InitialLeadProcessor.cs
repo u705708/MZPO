@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace MZPO.LeadProcessors
 {
-    public class InitialLeadProcessor : AbstractLeadProcessor, IProcessor                                                               //Процессор осуществляет первоначальную обработку сделок
+    public class InitialLeadProcessor : AbstractLeadProcessor, ILeadProcessor                                                               //Процессор осуществляет первоначальную обработку сделок
     {
         #region Definition
-        public InitialLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, CancellationToken token) 
-            : base(leadNumber, acc, processQueue, token) { }
+        public InitialLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token) 
+            : base(leadNumber, acc, processQueue, log, token) { }
 
         private readonly List<string> sites = new List<string>
         {
@@ -50,7 +50,7 @@ namespace MZPO.LeadProcessors
 
         #region Realization
         #region Название формы
-        private IEnumerable<Note> FormName()                                                                            //Проверяем значение поля id_form и добавляем комментарий к сделке
+        private void FormName()                                                                                         //Проверяем значение поля id_form и добавляем комментарий к сделке
         {
             try
             {
@@ -60,12 +60,17 @@ namespace MZPO.LeadProcessors
                     switch (fieldValue)
                     {
                         case "contactForm_tel":
-                            return _leadRepo.AddNotes(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Форма: \"Заказать обратный звонок\"" } });
+                            {
+                                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Форма: \"Заказать обратный звонок\"" } });
+                                return;
+                            }
                         case "contactForm":
-                            return _leadRepo.AddNotes(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Форма: \"Записаться\"" } });
+                            {
+                                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Форма: \"Записаться\"" } });
+                                return;
+                            }
                     }
                 }
-                return null;
             }
             catch (Exception e) { throw new Exception($"FormName: {e.Message}"); }
         }
@@ -134,12 +139,12 @@ namespace MZPO.LeadProcessors
                 try
                 {
                     var city = GetFieldValue(639087);                                                                   //Пытаемся получить поле город
-                    if (city is not null)                                                                                    //Если оно не пустое
+                    if (city is not null)                                                                               //Если оно не пустое
                         SetFieldValue(639087, _acc.GetCity(city));                                                      //Подставляем значение из базы городов
                 }
                 catch (Exception e)
                 {
-                    //Log.Add($"Warning message: {e.Message}; Сделка: {lead.id}");
+                    _log.Add($"Warning message: {e.Message}; Сделка: {lead.id}");
                 }
             }
             #endregion
@@ -167,10 +172,7 @@ namespace MZPO.LeadProcessors
             }
             #endregion
 
-            Lead result = new Lead() { id = lead.id, name = "Новая сделка", _embedded = new Lead.Embedded() };           //Создаём и наполняем экземпляр сделки для отправки в амо
-            result.custom_fields_values = custom_fields_values;
-            result._embedded.tags = tags;
-            try { _leadRepo.Save(result); }
+            try { SaveLead("Новая сделка"); }
             catch (Exception e) { throw new Exception($"Phase 1: {e.Message}"); }
         }
         #endregion
@@ -185,7 +187,7 @@ namespace MZPO.LeadProcessors
                 for (int i = 1; i <= 30; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
-                    lead = _leadRepo.GetById(_leadNumber);                                                              //Загружаем сделку
+                    UpdateLeadFromAmo();                                                                                //Загружаем сделку
                     if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
                     Thread.Sleep((int)TimeSpan.FromMinutes(1).TotalMilliseconds);                                       //Ждём минуту
                 }
@@ -280,21 +282,17 @@ namespace MZPO.LeadProcessors
             }
             #endregion
 
-            Lead result = new Lead() { id = lead.id, _embedded = new Lead.Embedded() };
-            result.custom_fields_values = custom_fields_values;
-            result._embedded.tags = tags;
+            Lead result = new();
 
-            #region Взять в работу
-            if ((GetFieldValue(644675) == "Принят") &&                                                                  //Результат звонка
-                (lead.pipeline_id == 3198184) &&                                                                        //Продажи(Розница)
-                (lead.status_id == 32532880))                                                                           //Получен новый лид
+            if (GetFieldValue(644675) == "Принят" &&                                                                    //Результат звонка
+                lead.pipeline_id == 3198184 &&                                                                          //Продажи(Розница)
+                lead.status_id == 32532880)                                                                             //Получен новый лид
             {
                 result.pipeline_id = 3198184;                                                                           //Продажа(Розница)
                 result.status_id = 32532883;                                                                            //Взят в работу
             }
-            #endregion
 
-            try { _leadRepo.Save(result); }
+            try { SaveLead(result); }
             catch (Exception e) { throw new Exception($"Phase 2: {e.Message}"); }
         }
         #endregion
@@ -322,7 +320,7 @@ namespace MZPO.LeadProcessors
 
             if (pipelines.Any(x => x.Item1 == lead.pipeline_id))                                                        //Если сделка в одной из воронок из списка
             {
-                var line = pipelines.Where(x => x.Item1 == lead.pipeline_id).First();                                   //получаем значения полей для этой воронки
+                var line = pipelines.First(x => x.Item1 == lead.pipeline_id);                                           //получаем значения полей для этой воронки
 
                 foreach (var tag in line.Item2)                                                                         //Задаём теги
                     SetTag(tag);
@@ -357,7 +355,7 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(lead.id.ToString());
+                _processQueue.Remove(_leadNumber.ToString());
                 return;
             }
             try
@@ -365,46 +363,40 @@ namespace MZPO.LeadProcessors
                 if (lead is null)
                 {
                     _processQueue.Remove(_leadNumber.ToString());
-                    //Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
+                    _log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                     return;
                 }
                 if (lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
                 {
                     FormName();
                     PhaseOne();
-                    _leadRepo.AddNotes(_leadNumber, "Phase 1 finished.");
+                    AddNote("Phase 1 finished.");
 
                     await Task.Run(() => CallResultWaiter());
 
-                    lead = _leadRepo.GetById(_leadNumber);                                                                      //Обновляем информацию о сделке, если она изменилась за время ожидания
+                    UpdateLeadFromAmo();                                                                                    //Обновляем информацию о сделке, если она изменилась за время ожидания
 
                     if (lead is null)
                     {
                         _processQueue.Remove(_leadNumber.ToString());
-                        //Log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
+                        _log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                         return;
                     }
 
-                    custom_fields_values = new List<Lead.Custom_fields_value>();
-                    tags = new List<Tag>();
-                    if (lead._embedded is not null && lead._embedded.tags is not null)
-                        tags = lead._embedded.tags;
-
                     PhaseTwo();
-                    _leadRepo.AddNotes(_leadNumber, "Phase 2 finished.");
-            }
+                    AddNote("Phase 2 finished.");
+                }
                 else
-            {
-                SocialNetworks();
-            }
-
-                _processQueue.Remove(lead.id.ToString());
-                //Log.Add($"Success: Lead {_leadNumber}");
+                {
+                    SocialNetworks();
+                }
+                _processQueue.Remove(_leadNumber.ToString());
+                _log.Add($"Success: Lead {_leadNumber}");
             }
             catch (Exception e) 
             {
                 _processQueue.Remove(_leadNumber.ToString());
-                //Log.Add($"Error: Unable to process lead {_leadNumber}: {e.Message}");
+                _log.Add($"Error: Unable to process lead {_leadNumber}: {e.Message}");
             }
         }
         #endregion

@@ -40,6 +40,7 @@ namespace MZPO
             services.AddSingleton<Amo>();
             services.AddSingleton<TaskList>();
             services.AddSingleton<CallSorter>();
+            services.AddSingleton<Log>();
             services.AddTransient<GSheets>();
         }
 

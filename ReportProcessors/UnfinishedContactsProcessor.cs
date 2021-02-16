@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class UnfinishedContactsProcessor : AbstractReportProcessor, IProcessor
+    public class UnfinishedContactsProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
 

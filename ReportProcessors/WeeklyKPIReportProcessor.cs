@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class WeeklyKPIReportProcessor : AbstractReportProcessor, IProcessor
+    public class WeeklyKPIReportProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
         private readonly long _dateTo;

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class CorpReportProcessor : AbstractReportProcessor, IProcessor
+    public class CorpReportProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
         private readonly int _dateFrom;

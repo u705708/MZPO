@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public abstract class AbstractReportProcessor : IProcessor
+    public abstract class AbstractReportProcessor : IReportProcessor
     {
         protected readonly TaskList _processQueue;
         protected readonly AmoAccount _acc;
