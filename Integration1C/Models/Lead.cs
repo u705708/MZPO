@@ -8,6 +8,7 @@ namespace Integration1C
 {
     public class Lead
     {
+#pragma warning disable IDE1006 // Naming Styles
         public int lead_id_1C { get; set; }
         public int client_id_1C { get; set; }
         public int product_id_1C { get; set; }
@@ -20,5 +21,6 @@ namespace Integration1C
         public string marketing_source { get; set; }
         public string author { get; set; }
         public string responsible_user { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

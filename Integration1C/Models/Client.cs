@@ -8,7 +8,8 @@ namespace Integration1C
 {
     public class Client
     {
-        public int client_id { get; set; }
+#pragma warning disable IDE1006 // Naming Styles
+        public int client_id_1C { get; set; }
         public string email { get; set; }
         public string phone { get; set; }
         public string name { get; set; }
@@ -20,5 +21,6 @@ namespace Integration1C
         public string pass_issued_at { get; set; }
         public string pass_dpt_code { get; set; }
         public string address { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

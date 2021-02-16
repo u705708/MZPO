@@ -8,6 +8,7 @@ namespace Integration1C
 {
     public class Company
     {
+#pragma warning disable IDE1006 // Naming Styles
         public int company_id_1C { get; set; }
         public string name { get; set; }
         public string email { get; set; }
@@ -21,5 +22,6 @@ namespace Integration1C
         public string address { get; set; }
         public string LPR_name { get; set; }
         public string post_address { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

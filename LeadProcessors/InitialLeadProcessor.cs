@@ -330,21 +330,16 @@ namespace MZPO.LeadProcessors
                 SetFieldValue(639075, line.Item5);                                                                      //Тип обращения
                 SetFieldValue(644675, line.Item5);                                                                      //Результат звонка
 
-                Lead result = new Lead() { id = lead.id, _embedded = new Lead.Embedded() };                             //Создаём экземпляр сделки для передачи в амо
-                result.custom_fields_values = custom_fields_values;                                                     //Задаём значения полей
-                result._embedded.tags = tags;                                                                           //Теги
-                result.responsible_user_id = line.Item6;                                                                //Ответственный
+                Lead result = new() { responsible_user_id = line.Item6 };                                               //Создаём экземпляр сделки для передачи в амо
 
-                try { _leadRepo.Save(result); }
+                try { SaveLead(result); }
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }
 
-                result = new Lead() { id = lead.id, name = "Новая сделка", _embedded = new Lead.Embedded() };           //Переводим сделку в основную воронку. Если переводить и менять ответственного одновременно, то срабатывает триггер в воронке, что может повлиять на запущенные процессы
-                result.pipeline_id = 3198184;                                                                           //Продажа(Розница)
-                result.status_id = 32532880;                                                                            //Получен новый лид
+                result = new() { name = "Новая сделка", pipeline_id = 3198184, status_id = 32532880 };           //Переводим сделку в основную воронку. Если переводить и менять ответственного одновременно, то срабатывает триггер в воронке, что может повлиять на запущенные процессы
 
-                try { _leadRepo.Save(result); }
+                try { SaveLead(result); }
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }
-                _leadRepo.AddNotes(lead.id, "Processing finished.");
+                AddNote("Processing finished.");
             }
         }
         #endregion

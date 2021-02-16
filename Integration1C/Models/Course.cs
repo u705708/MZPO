@@ -8,6 +8,7 @@ namespace Integration1C
 {
     public class Course
     {
+#pragma warning disable IDE1006 // Naming Styles
         public int product_id_1C { get; set; }
         public string name { get; set; }
         public string short_name { get; set; }
@@ -18,5 +19,6 @@ namespace Integration1C
         public string group { get; set; }
         public string requirements { get; set; }
         public string supplementary_info { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }
