@@ -9,20 +9,15 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class CorpReportProcessor : AbstractReportProcessor, IReportProcessor
+    internal class CorpReportProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
-        private readonly int _dateFrom;
-        private readonly int _dateTo;
-
         /// <summary>
         /// Формирует отчёт по продажам для корпоративного отдела.
         /// </summary>
-        public CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
-            : base(acc, gSheets, spreadsheetId, processQueue, taskName, token) 
+        internal CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+            : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token) 
         {
-            _dateFrom = (int)dateFrom;
-            _dateTo = (int)dateTo;
         }
 
         private readonly List<(int, string)> managers = new List<(int, string)>

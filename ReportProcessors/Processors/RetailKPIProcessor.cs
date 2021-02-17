@@ -1,5 +1,4 @@
-﻿using Google.Apis.Sheets.v4;
-using Google.Apis.Sheets.v4.Data;
+﻿using Google.Apis.Sheets.v4.Data;
 using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
@@ -10,27 +9,16 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class WeeklyKPIReportProcessor : AbstractReportProcessor, IReportProcessor
+    internal class RetailKPIProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
-        private readonly long _dateTo;
-        private readonly string _KPISpreadsheetId;
-
         /// <summary>
-        /// Формирует отчёт для отдела розницы, собирает показатели с начала месяца, сравнивает со среднемесячными показателями за аналогичный период.
+        /// Формирует отчёт для отдела розницы. Собирает среднемесячные показатели по каждому менеджеру.
         /// </summary>
-        public WeeklyKPIReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, long dateTo, string taskName, CancellationToken token) 
-            :base(acc, gSheets, spreadsheetId, processQueue, taskName, token)
+        internal RetailKPIProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+            : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
-            _KPISpreadsheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k";
-
-            dataRanges = new List<(int, int)>();
-            _dateTo = dateTo;
         }
-
-        private double monthRatio;
-
-        private readonly List<(int, int)> dataRanges;
 
         private readonly List<(int, string)> managers = new List<(int, string)>
         {
@@ -47,6 +35,15 @@ namespace MZPO.ReportProcessors
             (6729241, "Серик Айбасов")
         };
 
+        private readonly List<(int, int)> dataRanges = new List<(int, int)>
+        {
+            (1601499600,1604177999),    //октябрь
+            (1604178000,1606769999),    //ноябрь
+            (1606770000,1609448399),    //декабрь
+            (1609448400,1612126799),    //январь
+            //(1612126800,1614545999)     //февраль
+        };
+
         private readonly List<int> pipelines = new List<int>
         {
             3198184,
@@ -56,7 +53,7 @@ namespace MZPO.ReportProcessors
             3558922
         };
 
-        private readonly Dictionary<string, CellFormat> columnsFormat = new Dictionary<string, CellFormat>()
+        private readonly Dictionary<string, CellFormat> columns = new Dictionary<string, CellFormat>()
         {
             { "A", new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
             { "B",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###" } } },
@@ -121,7 +118,7 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Adjusting column width
-            var width = new List<int>() { 168, 120, 84, 72, 108, 96, 120, 108, 144, 120, 108, 108, 108 };
+            var width = new List<int>() { 168, 120, 84, 72, 108, 96, 120, 108, 144, 120, 108, 108, 108};
             int i = 0;
 
             foreach (var c in width)
@@ -147,59 +144,44 @@ namespace MZPO.ReportProcessors
             return new[]{
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ StringValue = A},
-                    UserEnteredFormat = columnsFormat["A"] },
+                    UserEnteredFormat = columns["A"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = B},
-                    UserEnteredFormat = columnsFormat["B"] },
+                    UserEnteredFormat = columns["B"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = C},
-                    UserEnteredFormat = columnsFormat["C"] },
+                    UserEnteredFormat = columns["C"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = D},
-                    UserEnteredFormat = columnsFormat["D"] },
+                    UserEnteredFormat = columns["D"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = E},
-                    UserEnteredFormat = columnsFormat["E"] },
+                    UserEnteredFormat = columns["E"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=IF(INDIRECT(""R[0]C[-3]"", FALSE) = 0, 0, INDIRECT(""R[0]C[-2]"", FALSE)/INDIRECT(""R[0]C[-3]"", FALSE))"},
-                    UserEnteredFormat = columnsFormat["F"] },
+                    UserEnteredFormat = columns["F"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=IF(INDIRECT(""R[0]C[-3]"", FALSE) = 0, 0, INDIRECT(""R[0]C[-2]"", FALSE)/INDIRECT(""R[0]C[-3]"", FALSE))"},
-                    UserEnteredFormat = columnsFormat["G"] },
+                    UserEnteredFormat = columns["G"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = H},
-                    UserEnteredFormat = columnsFormat["H"] },
+                    UserEnteredFormat = columns["H"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = I},
-                    UserEnteredFormat = columnsFormat["I"] },
+                    UserEnteredFormat = columns["I"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = J},
-                    UserEnteredFormat = columnsFormat["J"] },
+                    UserEnteredFormat = columns["J"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = K},
-                    UserEnteredFormat = columnsFormat["K"] },
+                    UserEnteredFormat = columns["K"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = L},
-                    UserEnteredFormat = columnsFormat["L"] },
+                    UserEnteredFormat = columns["L"] },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = M},
-                    UserEnteredFormat = columnsFormat["M"] },
+                    UserEnteredFormat = columns["M"] },
             };
-        }
-
-        private void CalculateDateRange()
-        {
-            DateTime dt = DateTimeOffset.FromUnixTimeSeconds(_dateTo).UtcDateTime;
-
-            var d2_2 = dt;
-            var d2_1 = new DateTime(d2_2.Year, d2_2.Month, 1, 2, 0, 0);
-
-            var dr2_2 = (int)((DateTimeOffset)d2_2).ToUnixTimeSeconds();
-            var dr2_1 = (int)((DateTimeOffset)d2_1).ToUnixTimeSeconds();
-
-            dataRanges.Add((dr2_1, dr2_2));
-
-            monthRatio = ((dr2_2 - dr2_1) / 86400f) / 30.42;
         }
 
         private async Task PrepareSheets()
@@ -210,12 +192,66 @@ namespace MZPO.ReportProcessors
             var spreadsheet = _service.Spreadsheets.Get(_spreadsheetId).Execute();
             #endregion
 
-            #region Deleting existing sheets except first
+            #region Adding temp sheet
+            requestContainer.Add(new Request()
+            {
+                AddSheet = new AddSheetRequest()
+                {
+                    Properties = new SheetProperties()
+                    {
+                        GridProperties = new GridProperties()
+                        {
+                            ColumnCount = columns.Count,
+                            FrozenRowCount = 1
+                        },
+                        Title = "_temp",
+                        SheetId = 31337
+                    }
+                }
+            });
+            #endregion
+
+            #region Deleting existing sheets except temp
             foreach (var s in spreadsheet.Sheets)
             {
-                if (s.Properties.SheetId == 0) continue;
+                if (s.Properties.SheetId == 31337) continue;
                 requestContainer.Add(new Request() { DeleteSheet = new DeleteSheetRequest() { SheetId = s.Properties.SheetId } });
             }
+            #endregion
+
+            #region Prepare First Sheet
+            requestContainer.Add(new Request()
+            {
+                AddSheet = new AddSheetRequest()
+                {
+                    Properties = new SheetProperties()
+                    {
+                        GridProperties = new GridProperties()
+                        {
+                            RowCount = 50,
+                            ColumnCount = columns.Count,
+                            FrozenRowCount = 1
+                        },
+                        Title = "Сводные",
+                        SheetId = 0,
+                        Index = 0
+                    }
+                }
+            });
+
+            requestContainer.Add(new Request()
+            {
+                UpdateCells = new UpdateCellsRequest()
+                {
+                    Fields = "*",
+                    Range = new GridRange()
+                    {
+                        SheetId = 0,
+                    }
+                }
+            });
+
+            requestContainer.AddRange(GetHeaderRequests(0));
             #endregion
 
             foreach (var m in managers)
@@ -229,7 +265,7 @@ namespace MZPO.ReportProcessors
                         {
                             GridProperties = new GridProperties()
                             {
-                                ColumnCount = columnsFormat.Count,
+                                ColumnCount = columns.Count,
                                 FrozenRowCount = 1
                             },
                             Title = m.Item2,
@@ -242,50 +278,20 @@ namespace MZPO.ReportProcessors
                 requestContainer.AddRange(GetHeaderRequests(m.Item1));
             }
 
+            #region Delete temp sheet
+            requestContainer.Add(new Request() { DeleteSheet = new DeleteSheetRequest() { SheetId = 31337 } });
+            #endregion
+
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
-
-        private async Task AddKPIData()
-        {
-            List<Request> requestContainer = new();
-
-            var range = "Сводные!A:M";
-            var request = _service.Spreadsheets.Values.Get(_KPISpreadsheetId, range);
-            request.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.UNFORMATTEDVALUE;
-            var values = request.Execute().Values;
-
-            if (values is not null)
-                foreach (var row in values)
-                {
-                    if (managers.Any(x => x.Item2 == (string)row[0]))
-                    {
-                        string A = "Средние в % от мес";
-                        var B = (int)(Convert.ToDouble(row[1]) * monthRatio);
-                        var C = (int)(Convert.ToDouble(row[2]) * monthRatio);
-                        var D = (int)(Convert.ToDouble(row[3]) * monthRatio);
-                        var E = (int)(Convert.ToDouble(row[4]) * monthRatio);
-                        var H = Convert.ToDouble(row[7]);
-                        var I = Convert.ToDouble(row[8]);
-                        var J = (int)(Convert.ToDouble(row[9]) * monthRatio);
-                        var K = (int)(Convert.ToDouble(row[10]) * monthRatio);
-                        var L = (int)(Convert.ToDouble(row[11]) * monthRatio);
-                        var M = (int)(Convert.ToDouble(row[12]) * monthRatio);
-
-                        int sheetId = managers.First(x => x.Item2 == (string)row[0]).Item1;
-
-                        requestContainer.Add(GetRowRequest(sheetId, GetCellData(A, B, C, D, E, H, I, J, K, L, M)));
-                    }
-                }
-            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
-        }
-
+        
         private async Task ProcessManager((int, string) manager, (int, int) dataRange)
         {
             //Даты
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
             //Список новых сделок в воронках из pipelines
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
+            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, new leads");
 
             List<Lead> newLeads = new List<Lead>();
 
@@ -299,13 +305,13 @@ namespace MZPO.ReportProcessors
 
             int totalNewLeads = newLeads.Count;
 
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, new leads: {totalNewLeads}");
 
             double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
             int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
 
             //Список закрытых сделок
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, closed leads");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, closed leads");
 
             var allLeads = _leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
 
@@ -317,7 +323,7 @@ namespace MZPO.ReportProcessors
 
             //Список звонков
             _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
-            Calls calls = new(dataRange, _contRepo, manager.Item1); 
+            Calls calls = new(dataRange, _contRepo, manager.Item1);
 
             //Количество исходящих вызовов
             int outCallsCount = calls.outCalls.Count();
@@ -326,7 +332,7 @@ namespace MZPO.ReportProcessors
             int inCallsCount = calls.inCalls.Count();
 
             //Количество пропущенных вызовов
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, calculating missed calls");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, missed calls");
 
             int missedCallsCount = 0;
 
@@ -348,7 +354,7 @@ namespace MZPO.ReportProcessors
             //Всего продаж
             int totalSales = allLeads.Where(x => x.status_id == 142).Sum(n => (int)n.price);
 
-            //Цикл сделки
+            //Время сделки
             double averageTime = 0;
             if (finishedLeads > 0)
                 averageTime = allLeads.AsParallel()
@@ -356,7 +362,6 @@ namespace MZPO.ReportProcessors
                     .Select(x => (int)x.closed_at - (int)x.created_at).Average() / 86400;
 
             List<Request> requestContainer = new();
-
             requestContainer.Add(GetRowRequest(manager.Item1, GetCellData(dates, totalNewLeads, finishedLeads, successLeads, totalSales, averageTime, responseTime, longLeads, inCallsCount, outCallsCount, missedCallsCount)));
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
@@ -370,35 +375,57 @@ namespace MZPO.ReportProcessors
 
             foreach (var m in managers)
             {
-                #region Prepare Data
-                List<(int?, int, int, int?)> leads = new();
-                if (_longAnsweredLeads.Any(x => x.Item1 == m.Item1))
-                    leads.AddRange(_longAnsweredLeads.Where(x => x.Item1 == m.Item1));
-                var rows = new List<RowData>();
-
-                #region Header
-                rows.Add(new RowData()
+                #region Prepare data
+                var rows = new List<RowData>
                 {
-                    Values = new List<CellData>(){
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Сделка" } },
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Время ответа, сек" } }
-                        }
-                });
-                #endregion
-
-                foreach (var l in leads)
-                {
-                    rows.Add(new RowData()
+                    new RowData()
                     {
                         Values = new List<CellData>(){
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{l.Item2}"", ""{l.Item2}"")" } },
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item3}" } }
-                        }
-                    });
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = "Среднее:"},
+                             UserEnteredFormat = columns["A"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(B2:B{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["B"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(C2:C{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["C"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(D2:D{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["D"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(E2:E{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["E"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(F2:F{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["F"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(G2:G{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["G"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(H2:H{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["H"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(I2:I{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["I"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(J2:J{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["J"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(K2:K{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["K"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(L2:L{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["L"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"=AVERAGE(M2:M{dataRanges.Count + 1})" },
+                             UserEnteredFormat = columns["M"] },
                 }
+                    }
+                };
                 #endregion
 
-                #region Add Request
+                #region Add request
                 requestContainer.Add(new Request()
                 {
                     UpdateCells = new UpdateCellsRequest()
@@ -408,10 +435,10 @@ namespace MZPO.ReportProcessors
                         Range = new GridRange()
                         {
                             SheetId = m.Item1,
-                            StartRowIndex = dataRanges.Count + 3,
-                            EndRowIndex = dataRanges.Count + 3 + rows.Count,
+                            StartRowIndex = dataRanges.Count + 1,
+                            EndRowIndex = dataRanges.Count + 2,
                             StartColumnIndex = 0,
-                            EndColumnIndex = 2
+                            EndColumnIndex = columns.Count
                         }
                     }
                 });
@@ -438,6 +465,97 @@ namespace MZPO.ReportProcessors
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
+
+        private async Task FinalizeTotals()
+        {
+            List<Request> requestContainer = new();
+
+            foreach (var m in managers)
+            {
+                #region Prepare data
+                var rows = new List<RowData>
+                {
+                    new RowData()
+                    {
+                        Values = new List<CellData>(){
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ StringValue = $"{m.Item2}"},
+                             UserEnteredFormat = columns["A"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!B{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["B"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!C{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["C"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!D{dataRanges.Count + 2}"},
+                             UserEnteredFormat = columns["D"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!E{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["E"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!F{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["F"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!G{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["G"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!H{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["H"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!I{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["I"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!J{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["J"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!K{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["K"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!L{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["L"] },
+                         new CellData(){
+                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!M{dataRanges.Count + 2}" },
+                             UserEnteredFormat = columns["M"] },
+                }
+                    }
+                };
+                #endregion
+
+                #region Add request
+                requestContainer.Add(new Request()
+                {
+                    AppendCells = new AppendCellsRequest()
+                    {
+                        Fields = '*',
+                        Rows = rows,
+                        SheetId = 0
+                    }
+                });
+                #endregion            
+            }
+
+            #region Add banding
+            requestContainer.Add(new Request()
+            {
+                AddBanding = new AddBandingRequest()
+                {
+                    BandedRange = new BandedRange()
+                    {
+                        Range = new GridRange() { SheetId = 0, StartRowIndex = 1, EndRowIndex = managers.Count + 1 },
+                        BandedRangeId = 0,
+                        RowProperties = new BandingProperties()
+                        {
+                            FirstBandColor = new Color() { Red = 217f / 255, Green = 234f / 255, Blue = 211f / 255 },
+                            SecondBandColor = new Color() { Red = 182f / 255, Green = 215f / 255, Blue = 168f / 255 },
+                        }
+                    }
+                }
+            });
+            #endregion
+
+            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
+        }
         #endregion
 
         #region Realization
@@ -449,16 +567,11 @@ namespace MZPO.ReportProcessors
                 return;
             }
 
-            CalculateDateRange();
-
             await PrepareSheets();
-
-            await AddKPIData();
 
             foreach (var d in dataRanges)
             {
                 if (_token.IsCancellationRequested) break;
-
                 _longAnsweredLeads = new();
                 List<Task> tasks = new();
 
@@ -468,11 +581,12 @@ namespace MZPO.ReportProcessors
                     var m = manager;
                     tasks.Add(Task.Run(() => ProcessManager(m, d), _token));
                 }
-
+                
                 await Task.WhenAll(tasks);
             }
 
             await FinalizeManagers();
+            await FinalizeTotals();
 
             _processQueue.Remove(_taskName);
         }

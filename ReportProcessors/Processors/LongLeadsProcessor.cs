@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class LongLeadsProcessor : AbstractReportProcessor, IReportProcessor
+    internal class LongLeadsProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
         /// <summary>
         /// Формирует отчёт для отдела розницы. Проверяет в сделках время ответа клиента. Выводит список сделок, где время ответа больше часа.
         /// </summary>
-        public LongLeadsProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, long dateFrom, long dateTo, string taskName, CancellationToken token)
-            : base(acc, gSheets, spreadsheetId, processQueue, taskName, token)
+        internal LongLeadsProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+            : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
             dataRanges = new() { ((int)dateFrom, (int)dateTo) };
         }

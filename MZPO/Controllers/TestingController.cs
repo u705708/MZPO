@@ -6,11 +6,6 @@ namespace MZPO.Controllers
     [ApiController]
     public class TestingController : ControllerBase
     {
-        public TestingController()
-        {
-
-        }
-
         // GET: api/testing
         [HttpGet]
         public ActionResult Get()

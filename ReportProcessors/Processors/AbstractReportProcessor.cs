@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public abstract class AbstractReportProcessor : IReportProcessor
+    internal abstract class AbstractReportProcessor : IReportProcessor
     {
         protected readonly TaskList _processQueue;
         protected readonly AmoAccount _acc;
@@ -20,11 +20,13 @@ namespace MZPO.ReportProcessors
         protected readonly IAmoRepo<Company> _compRepo;
         protected readonly IAmoRepo<Contact> _contRepo;
         protected readonly CancellationToken _token;
+        protected readonly int _dateFrom;
+        protected readonly int _dateTo;
         protected readonly string _taskName;
 
         protected List<(int?, int, int, int?)> _longAnsweredLeads;
 
-        public AbstractReportProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, string taskName, CancellationToken token)
+        internal AbstractReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -34,6 +36,8 @@ namespace MZPO.ReportProcessors
             _leadRepo = _acc.GetRepo<Lead>();
             _compRepo = _acc.GetRepo<Company>();
             _contRepo = _acc.GetRepo<Contact>();
+            _dateFrom = (int)dateFrom;
+            _dateTo = (int)dateTo;
             _taskName = taskName;
         }
 

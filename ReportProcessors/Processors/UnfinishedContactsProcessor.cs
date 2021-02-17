@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace MZPO.ReportProcessors
 {
-    public class UnfinishedContactsProcessor : AbstractReportProcessor, IReportProcessor
+    internal class UnfinishedContactsProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
 
         /// <summary>
         /// Формирует отчёт для корпоративного отдела. Выгружает по каждому менеджеру список компаний с незаполненными контактами.
         /// </summary>
-        public UnfinishedContactsProcessor(AmoAccount acc, GSheets gSheets, string spreadsheetId, TaskList processQueue, string taskName, CancellationToken token)
-            : base(acc, gSheets, spreadsheetId, processQueue, taskName, token) { }
+        internal UnfinishedContactsProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+            : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token) { }
 
         private readonly List<(int, string)> managers = new List<(int, string)>
         {

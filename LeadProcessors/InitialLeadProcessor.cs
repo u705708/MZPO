@@ -335,7 +335,7 @@ namespace MZPO.LeadProcessors
                 try { SaveLead(result); }
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }
 
-                result = new() { name = "Новая сделка", pipeline_id = 3198184, status_id = 32532880 };           //Переводим сделку в основную воронку. Если переводить и менять ответственного одновременно, то срабатывает триггер в воронке, что может повлиять на запущенные процессы
+                result = new() { name = "Новая сделка", pipeline_id = 3198184, status_id = 32532880 };                  //Переводим сделку в основную воронку. Если переводить и менять ответственного одновременно, то срабатывает триггер в воронке, что может повлиять на запущенные процессы
 
                 try { SaveLead(result); }
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }
