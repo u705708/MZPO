@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AmoRepository\AmoRepository.csproj" />
-    <ProjectReference Include="..\Data\Data.csproj" />
+    <ProjectReference Include="..\Data\DBRepository.csproj" />
   </ItemGroup>
 
 </Project>

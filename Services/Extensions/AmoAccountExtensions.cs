@@ -1,5 +1,5 @@
 ﻿using MZPO.AmoRepo;
-using MZPO.Data;
+using MZPO.DBRepository;
 using System.Collections.Generic;
 using System.Linq;
 

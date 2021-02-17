@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace MZPO.Data
+namespace MZPO.DBRepository
 {
     public class MySQLContext : DbContext
     {

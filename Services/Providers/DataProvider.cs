@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using MZPO.AmoRepo;
-using MZPO.Data;
+using MZPO.DBRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -90,9 +90,9 @@ namespace MZPO.Services
         #endregion
 
         #region Tags
-        public Data.Tag GetTag(int tagId, AmoAccount account)
+        public DBRepository.Tag GetTag(int tagId, AmoAccount account)
         {
-            Data.Tag result;
+            DBRepository.Tag result;
             using (var scope = scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
@@ -140,7 +140,7 @@ namespace MZPO.Services
                         var leadRepo = account.GetRepo<Lead>();
                         var newTag = leadRepo.AddTag(tagName).FirstOrDefault();
                         result = newTag.id;
-                        await db.AddTag(new Data.Tag()
+                        await db.AddTag(new DBRepository.Tag()
                         {
                             Id = newTag.id,
                             Name = newTag.name,

@@ -33,7 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AmoRepository\AmoRepository.csproj" />
-    <ProjectReference Include="..\Data\Data.csproj" />
+    <ProjectReference Include="..\Data\DBRepository.csproj" />
     <ProjectReference Include="..\Integration1C\Integration1C.csproj" />
     <ProjectReference Include="..\LeadProcessors\LeadProcessors.csproj" />
     <ProjectReference Include="..\ReportProcessors\ReportProcessors.csproj" />

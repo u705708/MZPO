@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MZPO.Services;
-using MZPO.Data;
+using MZPO.DBRepository;
 using Microsoft.EntityFrameworkCore;
 using System;
 

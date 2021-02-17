@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MZPO.Data
+namespace MZPO.DBRepository
 {
     public class AmoAccountAuth
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MZPO.Data
+namespace MZPO.DBRepository
 {
     public class AccountRepo : IAccountRepo
     {

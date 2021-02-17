@@ -1,5 +1,5 @@
 ﻿using MZPO.AmoRepo;
-using MZPO.Data;
+using MZPO.DBRepository;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using MZPO.Data;
+using MZPO.DBRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

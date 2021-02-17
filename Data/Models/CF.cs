@@ -1,4 +1,4 @@
-﻿namespace MZPO.Data
+﻿namespace MZPO.DBRepository
 {
     public class CF
     {
