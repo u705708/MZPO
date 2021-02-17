@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmoRepository", "AmoReposit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReportProcessors", "ReportProcessors\ReportProcessors.csproj", "{74D8E6AD-7B4D-4A7A-8F31-E943E06E55E1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBRepository", "Data\DBRepository.csproj", "{496123C3-5DFA-4E3D-936E-B4B0A81B3308}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBRepository", "DBRepository\DBRepository.csproj", "{496123C3-5DFA-4E3D-936E-B4B0A81B3308}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Services.csproj", "{39DEB0BA-B63F-45AF-97C4-59D5F8592276}"
 EndProject
