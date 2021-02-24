@@ -172,6 +172,14 @@ namespace MZPO.LeadProcessors
             }
             #endregion
 
+            #region Длина поля
+            if (lead.custom_fields_values is not null &&
+                lead.custom_fields_values.Any(x => x.values[0].value.ToString().Length > 256))
+                foreach (var cf in lead.custom_fields_values.Where(x => x.values[0].value.ToString().Length > 256))
+                    SetFieldValue(cf.field_id,
+                        cf.values[0].value.ToString().Substring(0, 256));
+            #endregion
+
             try { SaveLead("Новая сделка"); }
             catch (Exception e) { throw new Exception($"Phase 1: {e.Message}"); }
         }
