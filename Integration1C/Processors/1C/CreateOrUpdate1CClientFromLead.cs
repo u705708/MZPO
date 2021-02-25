@@ -1,4 +1,5 @@
-﻿using MZPO.Services;
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,8 +25,8 @@ namespace Integration1C
 
         public void Run()
         {
-            var leadRepo = _acc.GetRepo<MZPO.AmoRepo.Lead>();
-            var contRepo = _acc.GetRepo<MZPO.AmoRepo.Contact>();
+            var leadRepo = _acc.GetRepo<Lead>();
+            var contRepo = _acc.GetRepo<Contact>();
 
             Dictionary<string, int> fieldIds;
             if (_acc.id == 19453687) fieldIds = FieldLists.ContactCorp;
@@ -57,8 +58,8 @@ namespace Integration1C
                     contact.custom_fields_values.Add(new()
                     {
                         field_id = fieldIds["client_id_1C"],
-                        values = new MZPO.AmoRepo.Contact.Custom_fields_value.Values[] {
-                            new MZPO.AmoRepo.Contact.Custom_fields_value.Values() { value = $"{client_id}" }
+                        values = new Contact.Custom_fields_value.Values[] {
+                            new Contact.Custom_fields_value.Values() { value = $"{client_id}" }
                         }
                     });
                     try { contRepo.Save(contact); }

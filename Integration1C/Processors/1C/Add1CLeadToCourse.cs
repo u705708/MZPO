@@ -1,4 +1,5 @@
-﻿using MZPO.Services;
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace Integration1C
 
         public void Run()
         {
-            var leadRepo = _acc.GetRepo<MZPO.AmoRepo.Lead>();
+            var leadRepo = _acc.GetRepo<Lead>();
 
             var lead = leadRepo.GetById(_lead_id);
 

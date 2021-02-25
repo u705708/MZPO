@@ -1,4 +1,5 @@
-﻿using MZPO.Services;
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace Integration1C
 
         public void Run()
         {
-            var contRepo = _acc.GetRepo<MZPO.AmoRepo.Contact>();
+            var contRepo = _acc.GetRepo<Contact>();
 
             Dictionary<string, int> fieldIds;
             if (_acc.id == 19453687) fieldIds = FieldLists.ContactCorp;

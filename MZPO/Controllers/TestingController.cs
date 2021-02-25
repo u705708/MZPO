@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,7 +45,7 @@ namespace MZPO.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            //return Ok("𓅮 𓃟 ne tovarisch");
+            return Ok("𓅮 𓃟 ne tovarisch");
 
             //var _spreadsheetId = "1NuP1qpKDuWlQAje0mIA4i73KgfTH6TGi5iLvzMY46pU";
             //var range = "Сводные!A:F";
@@ -76,13 +77,54 @@ namespace MZPO.Controllers
             //        });
             //    }
 
-            var _acc = _amo.GetAccountById(28395871);
+            //return Ok(JsonConvert.SerializeObject(data, Formatting.Indented));
 
-            var _compRepo = _acc.GetRepo<Company>();
+            //var leadRepo = _amo.GetAccountById(28395871).GetRepo<Lead>();
 
-            var data = _compRepo.GetById(30922773);
+            //List<(int, string)> managers = new List<(int, string)>
+            //{
+            //    (2375107, "Кристина Гребенникова"),
+            //    (2375143, "Екатерина Белоусова"),
+            //    (2976226, "Вера Гладкова"),
+            //    (3835801, "Наталья Кубышина"),
+            //    (6158035, "Анастасия Матюк"),
+            //    (2375152, "Карен Оганисян"),
+            //    (3813670, "Федорова Александра"),
+            //    (6102562, "Валерия Лукьянова"),
+            //    (6410290, "Вероника Бармина"),
+            //    (6699043, "Татьяна Ганоу"),
+            //    (6729241, "Серик Айбасов")
+            //};
 
-            return Ok(JsonConvert.SerializeObject(data, Formatting.Indented));
+            //var d2 = new DateTime(2021, 2, 3).AddHours(2).AddSeconds(-1);
+            //var d1 = new DateTime(2021, 2, 2).AddHours(2);
+            //var du2 = (int)((DateTimeOffset)d2).ToUnixTimeSeconds();
+            //var du1 = (int)((DateTimeOffset)d1).ToUnixTimeSeconds();
+
+            //var criteria = $"filter[created_at][from]={du1}&filter[created_at][to]={du2}&filter[entity][]=lead&filter[type][]=entity_responsible_changed&filter[value_after][responsible_user_id]=6158035";
+            //var eventsList = new List<Event>();
+            //var result = leadRepo.GetEventsByCriteria(criteria);
+
+            //if (result is not null)
+            //    eventsList.AddRange(result);
+
+            //var leadIdList = eventsList.Select(x => (x._embedded.entity.id, x.value_before[0].responsible_user.id));
+
+            //List<(int?, int)> managersLeadsList = new();
+
+            //Parallel.ForEach(leadIdList, l =>
+            //{
+            //    var lead = leadRepo.GetById(l.Item1);
+            //    if (lead.pipeline_id != 3558922) return;
+            //    managersLeadsList.Add((l.Item2, lead.id));
+            //});
+
+            //List<(string, int)> totals = new();
+
+            //foreach (var m in managers)
+            //    totals.Add((m.Item2, managersLeadsList.Count(x => x.Item1 == m.Item1)));
+
+            //return Ok(JsonConvert.SerializeObject(totals, Formatting.Indented));
         }
 
         // POST: api/testing

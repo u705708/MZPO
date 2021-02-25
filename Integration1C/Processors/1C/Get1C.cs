@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MZPO.AmoRepo;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,11 @@ namespace Integration1C
 {
     internal static class Get1C
     {
-        internal static Client ClientFromContact(MZPO.AmoRepo.Contact contact, Dictionary<string, int> fieldIds)
+        internal static Client1C ClientFromContact(Contact contact, Dictionary<string, int> fieldIds)
         {
             if (contact.custom_fields_values is null) throw new Exception($"Empty contact: {contact.id}");
 
-            Client result = new() { name = $"{contact.name}", client_id_1C = 0 };
+            Client1C result = new() { name = $"{contact.name}", client_id_1C = 0 };
 
             if (result.name == "") throw new Exception($"No contact name: {contact.id}");
 
@@ -54,11 +55,11 @@ namespace Integration1C
             return result;
         }
 
-        internal static Company CompanyFromCompany(MZPO.AmoRepo.Company company, Dictionary<string, int> fieldIds)
+        internal static Company1C CompanyFromCompany(Company company, Dictionary<string, int> fieldIds)
         {
             if (company.custom_fields_values is null) throw new Exception($"Empty company: {company.id}");
 
-            Company result = new() { name = $"{company.name}", company_id_1C = 0 };
+            Company1C result = new() { name = $"{company.name}", company_id_1C = 0 };
 
             if (result.name == "") throw new Exception($"No company name: {company.id}");
 

@@ -107,7 +107,7 @@ namespace MZPO.AmoRepo
                 criteria.Append($"filter[id][{i++}]={id}&");
                 if (i % 10 == 0)
                 {
-                    criteria.Append($"with=companies,contacts,leads");
+                    criteria.Append($"with=companies,contacts,leads,catalog_elements");
                     result.AddRange(GetByCriteria(criteria.ToString()));
                     criteria = new("");
                     i = 0;
@@ -116,7 +116,7 @@ namespace MZPO.AmoRepo
 
             if (criteria.ToString() != "")
             {
-                criteria.Append($"with=companies,contacts,leads");
+                criteria.Append($"with=companies,contacts,leads,catalog_elements");
                 result.AddRange(GetByCriteria(criteria.ToString()));
             }
 
@@ -124,7 +124,7 @@ namespace MZPO.AmoRepo
         }
         public T GetById(int id)
         {
-            var uri = $"{_apiAddress}{_entityLink}/{id}?with=leads,contacts,companies";                                                               //?with = contacts,leads,catalog_elements,customers
+            var uri = $"{_apiAddress}{_entityLink}/{id}?with=leads,contacts,companies,catalog_elements";
 
             AmoRequest request = new("GET", uri, _auth);
             return GetResult(request, new T());
@@ -280,6 +280,86 @@ namespace MZPO.AmoRepo
         }
         public IEnumerable<CustomField> AddField(CustomField customField) => AddField(new List<CustomField>() { customField });
         public IEnumerable<CustomField> AddField(string fieldName) => AddField(new CustomField() { name = fieldName, type = "text" });
+        public CatalogElement GetCEById(int id)
+        {
+            var catalog_id = 12463;
+            var uri = $"{_apiAddress[0..^3]}v2/catalog_elements?catalog_id={catalog_id}&id={id}";
+
+            var result = GetList(uri);
+
+            if (result._embedded is not null && result._embedded.items is not null)
+                return result._embedded.items.First();
+            return null;
+        }
+        public IEnumerable<CatalogElement> GetCEs()
+        {
+            var catalog_id = 12463;
+            var uri = $"{_apiAddress[0..^3]}v2/catalog_elements?catalog_id={catalog_id}";
+
+            var result = GetList(uri);
+
+            if (result._embedded is not null && result._embedded.items is not null)
+                return result._embedded.items.ToList();
+            return new List<CatalogElement>();
+        }
+        public IEnumerable<CatalogElement> AddCEs(IEnumerable<CatalogElement> elements)
+        {
+            foreach (var e in elements)
+                e.catalog_id = 12463;
+            var payload = new { add = elements };
+
+            var uri = $"{_apiAddress[0..^3]}v2/catalog_elements";
+
+            var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+            AmoRequest request = new("POST", uri, content, _auth);
+
+            EntityList list = new();
+            var result = GetResult(request, list);
+            if (result._embedded is not null && result._embedded.items is not null)
+                return result._embedded.items.ToList();
+            return new List<CatalogElement>();
+        }
+        public IEnumerable<CatalogElement> AddCEs(CatalogElement element) => AddCEs(new List<CatalogElement>() { element });
+        public IEnumerable<CatalogElement> UpdateCEs(IEnumerable<CatalogElement> elements)
+        {
+            foreach (var e in elements)
+                e.catalog_id = 12463;
+            var payload = new { update = elements };
+
+            var uri = $"{_apiAddress[0..^3]}v2/catalog_elements";
+
+            var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+            AmoRequest request = new("POST", uri, content, _auth);
+
+            EntityList list = new();
+            var result = GetResult(request, list);
+            if (result._embedded is not null && result._embedded.items is not null)
+                return result._embedded.items.ToList();
+            return new List<CatalogElement>();
+        }
+        public IEnumerable<CatalogElement> UpdateCEs(CatalogElement element) => UpdateCEs(new List<CatalogElement>() { element });
+        public IEnumerable<CatalogElement> DeleteCEs(IEnumerable<CatalogElement> elements)
+        {
+            foreach (var e in elements)
+                e.catalog_id = 12463;
+            var payload = new { delete = elements };
+
+            var uri = $"{_apiAddress[0..^3]}v2/catalog_elements";
+
+            var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+            AmoRequest request = new("POST", uri, content, _auth);
+
+            EntityList list = new();
+            var result = GetResult(request, list);
+            if (result._embedded is not null && result._embedded.items is not null)
+                return result._embedded.items.ToList();
+            return new List<CatalogElement>();
+        }
+        public IEnumerable<CatalogElement> DeleteCEs(CatalogElement element) => DeleteCEs(new List<CatalogElement>() { element });
+
         public void AcceptUnsorted(string uid)
         {
             var uri = $"{_apiAddress}leads/unsorted/{uid}/accept";

@@ -1,4 +1,5 @@
-﻿using MZPO.Services;
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,9 +23,9 @@ namespace Integration1C
             _log = log;
         }
 
-        private static Lead Get1CLead(MZPO.AmoRepo.Lead lead, AmoAccount acc, Log log)
+        private static Lead1C Get1CLead(Lead lead, AmoAccount acc, Log log)
         {
-            Lead result = new() { lead_id_1C = 0, client_id_1C = 0, is_corporate = false };
+            Lead1C result = new() { lead_id_1C = 0, client_id_1C = 0, is_corporate = false };
 
             #region Prepare field dictionaries
             Dictionary<string, int> leadFieldIds = FieldLists.LeadRet;
@@ -45,7 +46,7 @@ namespace Integration1C
                 lead._embedded.contacts is not null &&
                 lead._embedded.contacts.Any())
             {
-                var contRepo = acc.GetRepo<MZPO.AmoRepo.Contact>();
+                var contRepo = acc.GetRepo<Contact>();
                 var contact = contRepo.GetById(lead._embedded.contacts.First().id);
 
                 if (contact.custom_fields_values is not null &&
@@ -66,7 +67,7 @@ namespace Integration1C
                 lead._embedded.companies is not null &&
                 lead._embedded.companies.Any())
             {
-                var compRepo = acc.GetRepo<MZPO.AmoRepo.Company>();
+                var compRepo = acc.GetRepo<Company>();
                 var company = compRepo.GetById(lead._embedded.companies.First().id);
 
                 if (company.custom_fields_values is not null &&
@@ -92,6 +93,9 @@ namespace Integration1C
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["organization"]))
                     result.organization = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["organization"]).values[0].value;
 
+                if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["lead_id_1C"]))
+                    result.lead_id_1C = (int)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["lead_id_1C"]).values[0].value;
+
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["marketing_channel"]))
                     result.marketing_channel = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_channel"]).values[0].value;
 
@@ -104,7 +108,7 @@ namespace Integration1C
 
         public void Run()
         {
-            var leadRepo = _acc.GetRepo<MZPO.AmoRepo.Lead>();
+            var leadRepo = _acc.GetRepo<Lead>();
 
             var lead = leadRepo.GetById(_lead_id);
 
@@ -129,8 +133,8 @@ namespace Integration1C
                 lead.custom_fields_values.Add(new()
                 {
                     field_id = fieldIds["lead_id_1C"],
-                    values = new MZPO.AmoRepo.Lead.Custom_fields_value.Values[] {
-                        new MZPO.AmoRepo.Lead.Custom_fields_value.Values() { value = $"{lead_id_1C}" }
+                    values = new Lead.Custom_fields_value.Values[] {
+                        new Lead.Custom_fields_value.Values() { value = $"{lead_id_1C}" }
                     }
                 });
                 try { leadRepo.Save(lead); }

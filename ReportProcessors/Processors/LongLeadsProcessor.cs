@@ -200,7 +200,7 @@ namespace MZPO.ReportProcessors
                     UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=COUNTIF(INDIRECT(""R[3]C[2]"", FALSE):INDIRECT(""R[999]C[2]"", FALSE), ""Закрыто и не реализовано"")"},
                     UserEnteredFormat = columnsFormat["G"] },
                 new CellData(){
-                    UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=INDIRECT(""R[0]C[-1]"", FALSE)/(INDIRECT(""R[0]C[-1]"", FALSE)+COUNTIF(INDIRECT(""R[3]C[2]"", FALSE):INDIRECT(""R[999]C[2]"", FALSE), ""Успешно реализовано""))"},
+                    UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=INDIRECT(""R[0]C[-1]"", FALSE)/(INDIRECT(""R[0]C[-1]"", FALSE)+COUNTIF(INDIRECT(""R[3]C[1]"", FALSE):INDIRECT(""R[999]C[1]"", FALSE), ""Успешно реализовано""))"},
                     UserEnteredFormat = columnsFormat["H"] },
             };
         }
@@ -254,7 +254,7 @@ namespace MZPO.ReportProcessors
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private async Task ProcessManager((int, string) manager, (int, int) dataRange)
+        private void ProcessManager((int, string) manager, (int, int) dataRange)
         {
             //Даты
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
@@ -283,7 +283,7 @@ namespace MZPO.ReportProcessors
 
             requestContainer.Add(GetRowRequest(manager.Item1, GetCellData(dates, totalNewLeads, responseTime)));
 
-            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
+            UpdateSheetsAsync(requestContainer, _service, _spreadsheetId).Wait();
 
             _processQueue.Remove($"{_taskName}_{manager.Item2}");
         }

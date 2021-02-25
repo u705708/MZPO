@@ -1,4 +1,5 @@
-﻿using MZPO.Services;
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace Integration1C
 
         public void Run()
         {
-            var compRepo = _acc.GetRepo<MZPO.AmoRepo.Company>();
+            var compRepo = _acc.GetRepo<Company>();
 
             Dictionary<string, int> fieldIds;
             if (_acc.id == 19453687) fieldIds = FieldLists.CompanyCorp;

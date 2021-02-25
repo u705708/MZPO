@@ -231,7 +231,7 @@ namespace MZPO.ReportProcessors
             #endregion
         }
 
-        private async Task ProcessManager((int, string) m)
+        private void ProcessManager((int, string) m)
         {
             List<Request> requestContainer = new();
 
@@ -300,7 +300,7 @@ namespace MZPO.ReportProcessors
             }
             #endregion
 
-            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
+            UpdateSheetsAsync(requestContainer, _service, _spreadsheetId).Wait();
 
             _processQueue.Remove($"{_taskName}_{m.Item2}");
         }

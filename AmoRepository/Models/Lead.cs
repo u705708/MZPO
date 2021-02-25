@@ -190,15 +190,18 @@ namespace MZPO.AmoRepo
                 /// <summary>
                 /// Мета-данные элемента.
                 /// </summary>
-                public object metadata { get; set; }
-                /// <summary>
-                /// Количество элементов у сделки.
-                /// </summary>
-                public int quantity { get; set; }
-                /// <summary>
-                /// ID списка, в котором находится элемент.
-                /// </summary>
-                public int catalog_id { get; set; }
+                public Meta metadata { get; set; }
+                public class Meta
+                {
+                    /// <summary>
+                    /// Количество элементов у сделки.
+                    /// </summary>
+                    public int quantity { get; set; }
+                    /// <summary>
+                    /// ID списка, в котором находится элемент.
+                    /// </summary>
+                    public int catalog_id { get; set; }
+                }
             }
         }
 #pragma warning restore IDE1006 // Naming Styles

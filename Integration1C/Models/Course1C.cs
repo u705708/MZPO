@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace Integration1C
 {
-    public class Course
+    public class Course1C
     {
 #pragma warning disable IDE1006 // Naming Styles
         public int product_id_1C { get; set; }
+        public List<Amo_id> amo_ids { get; set; }
         public string name { get; set; }
         public string short_name { get; set; }
         public int price { get; set; }

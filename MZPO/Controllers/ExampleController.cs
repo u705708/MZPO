@@ -13,28 +13,28 @@ namespace MZPO.Controllers.Example
         [HttpGet]
         public ActionResult Client()
         {
-            return Ok(new Integration1C.Client());
+            return Ok(new Integration1C.Client1C() { amo_ids = new() { new() } });
         }
 
         // GET example/company
         [HttpGet]
         public ActionResult Company()
         {
-            return Ok(new Integration1C.Company());
+            return Ok(new Integration1C.Company1C() { amo_ids = new() { new() } });
         }
 
         // GET example/course
         [HttpGet]
         public ActionResult Course()
         {
-            return Ok(new Integration1C.Course());
+            return Ok(new Integration1C.Course1C() { amo_ids = new() { new() } });
         }
 
         // GET example/lead
         [HttpGet]
         public ActionResult Lead()
         {
-            return Ok(new Integration1C.Lead());
+            return Ok(new Integration1C.Lead1C() { amo_ids = new() { new() } });
         }
     }
 }
