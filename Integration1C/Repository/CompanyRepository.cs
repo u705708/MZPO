@@ -1,13 +1,14 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Net;
 
 namespace Integration1C
 {
     internal class CompanyRepository
     {
-        internal Company1C GetCompany(Company1C company) => GetCompany(company.company_id_1C);
+        internal Company1C GetCompany(Company1C company) => GetCompany(company.Company_id_1C);
 
-        internal Company1C GetCompany(int company_id)
+        internal Company1C GetCompany(Guid company_id)
         {
             string uri = "";
             Request1C request = new("GET", uri);

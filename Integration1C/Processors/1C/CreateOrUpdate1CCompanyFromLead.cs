@@ -46,10 +46,12 @@ namespace Integration1C
                 catch (Exception e) { _log.Add($"Unable to update company in 1C: {e}"); }
             else
             {
-                int company_id = 0;
+                Guid company_id = default;
 
-                try { company_id = _companyRepo1C.AddCompany(Get1C.CompanyFromCompany(company, fieldIds)).company_id_1C; }
+                try { company_id = _companyRepo1C.AddCompany(Get1C.CompanyFromCompany(company, fieldIds)).Company_id_1C; }
                 catch (Exception e) { _log.Add($"Unable to update company in 1C: {e}"); }
+
+                if (company_id == default) return;
 
                 if (company.custom_fields_values is null) company.custom_fields_values = new();
                 company.custom_fields_values.Add(new()

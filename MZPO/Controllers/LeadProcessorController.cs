@@ -24,7 +24,7 @@ namespace MZPO.Controllers
 
         // GET wh/leadprocessor/5
         [HttpGet("{id}")]
-        public ActionResult Get(string id)                                                                                                      //Передаём вручную сделку в процессор (в дальнейшем заменить на POST)
+        public IActionResult Get(string id)                                                                                                      //Передаём вручную сделку в процессор (в дальнейшем заменить на POST)
         {
             if (!Int32.TryParse(id, out int leadNumber)) return BadRequest("Incorrect lead number.");
 
@@ -42,7 +42,7 @@ namespace MZPO.Controllers
 
         // POST wh/leadprocessor
         [HttpPost]
-        public ActionResult Post()
+        public IActionResult Post()
         {
             var col = Request.Form;
             int leadNumber = 0;

@@ -21,6 +21,20 @@ namespace MZPO
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(
+                    builder =>
+                    {
+                        builder.WithOrigins("https://www.mzpo-s.ru",
+                                            "https://mzpo-s.ru")
+                               //.AllowAnyOrigin()
+                               .AllowCredentials()
+                               .AllowAnyHeader()
+                               .AllowAnyMethod();
+                    });
+            });
+
             services.AddControllers();
 
             services.AddDbContext<MySQLContext>(opt => opt.UseMySql(
@@ -50,6 +64,8 @@ namespace MZPO
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors();
 
             app.UseEndpoints(endpoints =>
             {

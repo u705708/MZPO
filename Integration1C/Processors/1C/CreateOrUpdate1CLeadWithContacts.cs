@@ -25,7 +25,7 @@ namespace Integration1C
 
         private static Lead1C Get1CLead(Lead lead, AmoAccount acc, Log log)
         {
-            Lead1C result = new() { lead_id_1C = 0, client_id_1C = 0, is_corporate = false };
+            Lead1C result = new() { Lead_id_1C = default, Client_id_1C = default, Is_corporate = false };
 
             #region Prepare field dictionaries
             Dictionary<string, int> leadFieldIds = FieldLists.LeadRet;
@@ -37,7 +37,7 @@ namespace Integration1C
                 contactFieldIds = FieldLists.ContactCorp;
                 companyFieldIds = FieldLists.CompanyCorp;
 
-                result.is_corporate = true;
+                result.Is_corporate = true;
             }
             #endregion
 
@@ -47,18 +47,21 @@ namespace Integration1C
                 lead._embedded.contacts.Any())
             {
                 var contRepo = acc.GetRepo<Contact>();
-                var contact = contRepo.GetById(lead._embedded.contacts.First().id);
+                var contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
 
                 if (contact.custom_fields_values is not null &&
                     !contact.custom_fields_values.Any(x => x.field_id == contactFieldIds["client_id_1C"]))
                 {
-                    new CreateOrUpdate1CClientFromLead(lead.id, acc, log).Run();
-                    contact = contRepo.GetById(lead._embedded.contacts.First().id);
+                    //new CreateOrUpdate1CClientFromLead(lead.id, acc, log).Run();
+                    contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
                 }
 
                 if (contact.custom_fields_values is not null &&
                     contact.custom_fields_values.Any(x => x.field_id == contactFieldIds["client_id_1C"]))
-                    result.client_id_1C = (int)contact.custom_fields_values.First(x => x.field_id == contactFieldIds["client_id_1C"]).values[0].value;
+                {
+                    Guid.TryParse((string)contact.custom_fields_values.First(x => x.field_id == contactFieldIds["client_id_1C"]).values[0].value, out Guid value);
+                    result.Client_id_1C = value;
+                }
             }
             #endregion
 
@@ -79,28 +82,34 @@ namespace Integration1C
 
                 if (company.custom_fields_values is not null &&
                     company.custom_fields_values.Any(x => x.field_id == companyFieldIds["company_id_1C"]))
-                    result.company_id_1C = (int)company.custom_fields_values.First(x => x.field_id == companyFieldIds["company_id_1C"]).values[0].value;
+                {
+                    Guid.TryParse((string)company.custom_fields_values.First(x => x.field_id == companyFieldIds["company_id_1C"]).values[0].value, out Guid value);
+                    result.Company_id_1C = value;
+                }
             }
             #endregion
 
-            result.price = (int)lead.price;
-            result.author = lead.created_by.ToString();
-            result.responsible_user = lead.responsible_user_id.ToString();
-            result.lead_status = lead.status_id.ToString();
+            result.Price = (int)lead.price;
+            result.Author = lead.created_by.ToString();
+            result.Responsible_user = lead.responsible_user_id.ToString();
+            result.Lead_status = lead.status_id.ToString();
 
             if (lead.custom_fields_values is not null)
             {
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["organization"]))
-                    result.organization = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["organization"]).values[0].value;
+                    result.Organization = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["organization"]).values[0].value;
 
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["lead_id_1C"]))
-                    result.lead_id_1C = (int)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["lead_id_1C"]).values[0].value;
+                {
+                    Guid.TryParse((string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["lead_id_1C"]).values[0].value, out Guid value);
+                    result.Lead_id_1C = value;
+                }
 
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["marketing_channel"]))
-                    result.marketing_channel = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_channel"]).values[0].value;
+                    result.Marketing_channel = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_channel"]).values[0].value;
 
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["marketing_source"]))
-                    result.marketing_source = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_source"]).values[0].value;
+                    result.Marketing_source = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_source"]).values[0].value;
             }
 
             return result;
@@ -124,10 +133,12 @@ namespace Integration1C
                 catch (Exception e) { _log.Add($"Unable to update lead in 1C: {e}"); }
             else
             {
-                int lead_id_1C = 0;
+                Guid lead_id_1C = default;
 
-                try { lead_id_1C = _leadRepo1C.AddLead(Get1CLead(lead, _acc, _log)).lead_id_1C; }
+                try { lead_id_1C = _leadRepo1C.AddLead(Get1CLead(lead, _acc, _log)).Lead_id_1C; }
                 catch (Exception e) { _log.Add($"Unable to update lead in 1C: {e}"); }
+
+                if (lead_id_1C == default) return;
 
                 if (lead.custom_fields_values is null) lead.custom_fields_values = new();
                 lead.custom_fields_values.Add(new()

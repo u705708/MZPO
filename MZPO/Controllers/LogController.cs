@@ -21,7 +21,7 @@ namespace MZPO.Controllers
         
         // GET: log/leads                                                                                                   //Возвращаем логи операций
         [HttpGet]
-        public ActionResult Leads()
+        public IActionResult Leads()
         {
             return Ok(_log.GetLog());
         }

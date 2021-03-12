@@ -198,12 +198,12 @@ namespace MZPO.ReportProcessors
             if ((l._embedded.contacts is not null) &&
                 (l._embedded.contacts.Any()))
                 foreach (var c in l._embedded.contacts)
-                    contactIdList.Add(c.id); 
+                    contactIdList.Add((int)c.id); 
             if ((company._embedded is not null) &&
                 (company._embedded.contacts is not null) &&
                 (company._embedded.contacts.Any()))
                 foreach (var c in company._embedded.contacts)
-                    contactIdList.Add(c.id);
+                    contactIdList.Add((int)c.id);
 
             var contacts = _contRepo.BulkGetById(contactIdList);
             #endregion

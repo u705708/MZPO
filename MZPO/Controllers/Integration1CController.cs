@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Integration1C;
+using System.IO;
+using System.Net;
 
 namespace MZPO.Controllers
 {
@@ -32,17 +34,12 @@ namespace MZPO.Controllers
         {
             var col = Request.Form;
 
-            AmoAccount acc;
-
             if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
-
-            try { acc = _amo.GetAccountById(accNumber); }
-            catch (Exception e) { _log.Add(e.Message); return Ok(); }
 
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CClientFromLead(leadNumber, acc, _log).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CClientFromLead(leadNumber, accNumber, _amo, _log).Run());
 
             return Ok();
         }
@@ -74,6 +71,14 @@ namespace MZPO.Controllers
         [ActionName("Client")]
         public IActionResult CreateClientAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("POST: integration/1c/client");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -82,6 +87,14 @@ namespace MZPO.Controllers
         [ActionName("Client")]
         public IActionResult UpdateClientAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("PATCH: integration/1c/client");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -134,6 +147,14 @@ namespace MZPO.Controllers
         [ActionName("Company")]
         public IActionResult CreateCompanyAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("POST: integration/1c/company");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -142,6 +163,14 @@ namespace MZPO.Controllers
         [ActionName("Company")]
         public IActionResult UpdateCompanyAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("PATCH: integration/1c/company");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -194,6 +223,14 @@ namespace MZPO.Controllers
         [ActionName("Lead")]
         public IActionResult CreateLeadAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("POST: integration/1c/lead");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -202,6 +239,14 @@ namespace MZPO.Controllers
         [ActionName("Lead")]
         public IActionResult UpdateLeadAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("PATCH: integration/1c/lead");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -210,6 +255,14 @@ namespace MZPO.Controllers
         [ActionName("Course")]
         public IActionResult CreateCourseAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("POST: integration/1c/course");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -218,6 +271,14 @@ namespace MZPO.Controllers
         [ActionName("Course")]
         public IActionResult UpdateCourseAmo()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("PATCH: integration/1c/course");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -226,6 +287,14 @@ namespace MZPO.Controllers
         [ActionName("PaymentReceived")]
         public IActionResult ProcessPayment()
         {
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
+
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("POST: integration/1c/paymentreceived");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
+
             return Ok();
         }
 
@@ -234,27 +303,13 @@ namespace MZPO.Controllers
         [ActionName("CourseEnded")]
         public IActionResult FinishCourse()
         {
-            return Ok();
-        }
+            using StreamReader sr = new StreamReader(Request.Body);
+            var hook = sr.ReadToEndAsync().Result;
 
-        // POST: integration/1c/addtocourse
-        [HttpPost]
-        [ActionName("AddToCourse")]
-        public IActionResult AddLeadToCourse()
-        {
-            var col = Request.Form;
-
-            AmoAccount acc;
-
-            if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
-
-            try { acc = _amo.GetAccountById(accNumber); }
-            catch (Exception e) { _log.Add(e.Message); return Ok(); }
-
-            if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
-            if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
-
-            var task = Task.Run(() => new Add1CLeadToCourse(leadNumber, acc, _log).Run());
+            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            sw.WriteLine("POST: integration/1c/courseended");
+            sw.WriteLine(WebUtility.UrlDecode(hook));
+            sw.WriteLine("--**--**--");
 
             return Ok();
         }

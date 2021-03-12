@@ -8,21 +8,19 @@ namespace Integration1C
 {
     public class Company1C
     {
-#pragma warning disable IDE1006 // Naming Styles
-        public int company_id_1C { get; set; }
-        public List<Amo_id> amo_ids { get; set; }
-        public string name { get; set; }
-        public string email { get; set; }
-        public string phone { get; set; }
-        public string signee { get; set; }
+        public Guid Company_id_1C { get; set; }
+        public List<Amo_id> Amo_ids { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Signee { get; set; }
         public string OGRN { get; set; }
         public string INN { get; set; }
-        public string acc_no { get; set; }
+        public string Acc_no { get; set; }
         public string KPP { get; set; }
         public string BIK { get; set; }
-        public string address { get; set; }
+        public string Address { get; set; }
         public string LPR_name { get; set; }
-        public string post_address { get; set; }
-#pragma warning restore IDE1006 // Naming Styles
+        public string Post_address { get; set; }
     }
 }

@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <Configurations>Debug;Release;Deploy</Configurations>
     <UserSecretsId>29d5ae91-1b05-4e65-bbd4-e194178fba4a</UserSecretsId>
+	<IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,21 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="accounts.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-    <Content Update="cities.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-    <Content Update="security.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-    <Content Update="todo.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-    <Content Update="token.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
+	<Content Update="Configuration\web.config" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" Link="web.config" />
   </ItemGroup>
 
 

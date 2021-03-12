@@ -87,6 +87,16 @@ namespace MZPO.AmoRepo
             return GetEmbedded(GetResult(request, result));
         }
         public IEnumerable<T> AddNew(T payload) => AddNew(new List<T>() { payload });
+        public IEnumerable<int> AddNewComplex(IEnumerable<T> payload)
+        {
+            var uri = $"{_apiAddress}{_entityLink}/complex";
+
+            var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            AmoRequest request = new("POST", uri, content, _auth);
+            List<ComplexResponse> result = new();
+            return GetResult(request, result).Select(x => x.Id);
+        }
+        public IEnumerable<int> AddNewComplex(T payload) => AddNewComplex(new List<T>() { payload });
         public IEnumerable<T> GetByCriteria(string criteria)
         {
             var uri = $"{_apiAddress}{_entityLink}?{criteria}";

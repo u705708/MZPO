@@ -192,11 +192,15 @@ namespace MZPO.ReportProcessors
                     UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "RIGHT", TextFormat = new TextFormat(){ Bold = true } } },
                 new CellData(),
                 new CellData(),
-                new CellData(),
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=AVERAGE(D2:INDIRECT(""R[-1]C[0]"", FALSE))"},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=SUM(E2:INDIRECT(""R[-1]C[0]"", FALSE))"},
                     UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
-                new CellData(),
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=AVERAGE(E2:INDIRECT(""R[-1]C[-1]"", FALSE))"},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "Средняя # ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
                 new CellData(),
                 new CellData(),
                 new CellData(),

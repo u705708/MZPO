@@ -23,7 +23,7 @@ namespace MZPO.Controllers
 
         // GET: api/callsorter
         [HttpGet]
-        public ActionResult Get()
+        public IActionResult Get()
         {
             var remoteIp = HttpContext.Connection.RemoteIpAddress.ToString();
 

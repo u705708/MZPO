@@ -34,12 +34,12 @@ namespace MZPO.Services
 
         public void AddSubTask(string oldTaskId, string subTaskId, string subTaskName)
         {
-            if (_taskList.Any(x => x.Item3 == oldTaskId))
-            {
-                var oldTask = _taskList.First(x => x.Item3 == oldTaskId);
-                var newTask = (oldTask.Item1, oldTask.Item2, subTaskId, oldTask.Item4, subTaskName, DateTime.Now);
-                lock (_taskList)
+            lock (_taskList)
+            { 
+                if (_taskList.Any(x => x.Item3 == oldTaskId))
                 {
+                    var oldTask = _taskList.First(x => x.Item3 == oldTaskId);
+                    var newTask = (oldTask.Item1, oldTask.Item2, subTaskId, oldTask.Item4, subTaskName, DateTime.Now);
                     _taskList.Add(newTask);
                 }
             }
@@ -47,12 +47,12 @@ namespace MZPO.Services
 
         public void UpdateTaskName(string id, string taskName)
         {
-            if (_taskList.Any(x => x.Item3 == id))
-            {
-                var oldTask = _taskList.First(x => x.Item3 == id);
-                var newTask = (oldTask.Item1, oldTask.Item2, oldTask.Item3, oldTask.Item4, taskName, oldTask.Item6);
-                lock (_taskList)
+            lock (_taskList)
+            { 
+                if (_taskList.Any(x => x.Item3 == id))
                 {
+                    var oldTask = _taskList.First(x => x.Item3 == id);
+                    var newTask = (oldTask.Item1, oldTask.Item2, oldTask.Item3, oldTask.Item4, taskName, oldTask.Item6);
                     _taskList.Remove(oldTask);
                     _taskList.Add(newTask);
                 }
@@ -61,11 +61,12 @@ namespace MZPO.Services
 
         public void Remove(string id)
         {
-            if (_taskList.Any(x => x.Item3 == id))
-            {
-                var line = _taskList.First(x => x.Item3 == id);
-                lock (_taskList)
+            lock (_taskList)
+            { 
+                if (_taskList.Any(x => x.Item3 == id))
                 {
+                    var line = _taskList.First(x => x.Item3 == id);
+                    line.Item2.Dispose();
                     _taskList.Remove(line);
                 }
                 GC.Collect();

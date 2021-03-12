@@ -20,7 +20,21 @@ namespace MZPO.AmoRepo
         /// </summary>
         /// <param name="payload">Список сущностей.</param>
         /// <returns>Список добавленных сущностей.</returns>
-        public IEnumerable<T> AddNew(T payload);
+        public IEnumerable<T> AddNew(T payload);        
+        
+        /// <summary>
+        /// Добавляет в amoCRM новые сущности с проверкой на дубли. Принимает список сущностей. Возвращает список id добавленных сущностей.
+        /// </summary>
+        /// <param name="payload">Список сущностей.</param>
+        /// <returns>Список id добавленных сущностей.</returns>
+        public IEnumerable<int> AddNewComplex(IEnumerable<T> payload);
+
+        /// <summary>
+        /// Добавляет в amoCRM новую сущность с проверкой на дубли. Принимает объект сущности. Возвращает список, содержащий id добавленной сущности.
+        /// </summary>
+        /// <param name="payload">Список сущностей.</param>
+        /// <returns>Список id добавленных сущностей.</returns>
+        public IEnumerable<int> AddNewComplex(T payload);
 
         /// <summary>
         /// Возвращает из amoCRM список сущностей, запрошенных по критерию.
@@ -174,6 +188,61 @@ namespace MZPO.AmoRepo
         /// <param name="fieldName">Название дополнительного поля.</param>
         /// <returns>Список содержащий добавленное поле.</returns>
         public IEnumerable<CustomField> AddField(string fieldName);
+
+        /// <summary>
+        /// Возвращает из amoCRM элемент каталога. Принимает id поля.
+        /// </summary>
+        /// <param name="id">ID элемента каталога.</param>
+        /// <returns>Объект элемента каталога.</returns>
+        public CatalogElement GetCEById(int id);
+
+        /// <summary>
+        /// Возвращает из amoCRM список элементов каталога товаров.
+        /// </summary>
+        /// <returns>Список элементов каталога.</returns>
+        public IEnumerable<CatalogElement> GetCEs();
+
+        /// <summary>
+        /// Добавляет в amoCRM элементы каталога. Принимает список элементов каталога. Возвращает список добавленных элементов каталога.
+        /// </summary>
+        /// <param name="elements">Список элементов каталога.</param>
+        /// <returns>Список содержащий добавленные элементы каталога.</returns>
+        public IEnumerable<CatalogElement> AddCEs(IEnumerable<CatalogElement> elements);
+
+        /// <summary>
+        /// Добавляет в amoCRM элемент каталога. Принимает элемент каталога. Возвращает список, содержащий добавленный элемент каталога.
+        /// </summary>
+        /// <param name="element">Элемент каталога.</param>
+        /// <returns>Список содержащий добавленный элемент каталога.</returns>
+        public IEnumerable<CatalogElement> AddCEs(CatalogElement element);
+
+        /// <summary>
+        /// Обновляет в amoCRM элементы каталога. Принимает список элементов каталога. Возвращает список обновленных элементов каталога.
+        /// </summary>
+        /// <param name="elements">Список элементов каталога.</param>
+        /// <returns>Список содержащий обновленные элементы каталога.</returns>
+        public IEnumerable<CatalogElement> UpdateCEs(IEnumerable<CatalogElement> elements);
+
+        /// <summary>
+        /// Обновляет в amoCRM элемент каталога. Принимает элемент каталога. Возвращает список, содержащий обновленный элемент каталога.
+        /// </summary>
+        /// <param name="element">Элемент каталога.</param>
+        /// <returns>Список содержащий обновленный элемент каталога.</returns>
+        public IEnumerable<CatalogElement> UpdateCEs(CatalogElement element);
+
+        /// <summary>
+        /// Удаляет из amoCRM элементы каталога. Принимает список элементов каталога. Возвращает список удаленных элементов каталога.
+        /// </summary>
+        /// <param name="elements">Список элементов каталога.</param>
+        /// <returns>Список содержащий удаленные элементы каталога.</returns>
+        public IEnumerable<CatalogElement> DeleteCEs(IEnumerable<CatalogElement> elements);
+
+        /// <summary>
+        /// Удаляет из amoCRM элемент каталога. Принимает элемент каталога. Возвращает список, содержащий удаленный элемент каталога.
+        /// </summary>
+        /// <param name="element">Элемент каталога.</param>
+        /// <returns>Список содержащий удаленный элемент каталога.</returns>
+        public IEnumerable<CatalogElement> DeleteCEs(CatalogElement element);
 
         /// <summary>
         /// Принимает в amoCRM Неразобранное по идентификатору.

@@ -35,6 +35,11 @@ namespace Integration1C
             using HttpClient httpClient = new HttpClient();
             using HttpRequestMessage request = new HttpRequestMessage(_httpMethod, _uri);
 
+            string username = "";
+            string pwd = "";
+
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                                    "Basic", Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{username}:{pwd}")));
             request.Headers.TryAddWithoutValidation("User-Agent", "mzpo1C-client/1.0");
 
             if (_content is not null)
