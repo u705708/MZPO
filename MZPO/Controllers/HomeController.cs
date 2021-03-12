@@ -9,7 +9,7 @@ namespace MZPO.Controllers
     public class HomeController : Controller
     {
         [Route("")]
-        public ActionResult Index()
+        public IActionResult Index()
         {
             return Ok("mzpo2amo");
         }

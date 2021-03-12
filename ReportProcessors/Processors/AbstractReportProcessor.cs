@@ -111,12 +111,12 @@ namespace MZPO.ReportProcessors
             if (lead._embedded.contacts is not null)
                 Parallel.ForEach(lead._embedded.contacts, contact =>
                 {
-                    var events = contRepo.GetEntityEvents(contact.id);
+                    var events = contRepo.GetEntityEvents((int)contact.id);
                     lock (allEvents)
                     {
                         allEvents.AddRange(events);
                     }
-                    var notes = contRepo.GetEntityNotes(contact.id);
+                    var notes = contRepo.GetEntityNotes((int)contact.id);
                     lock (allNotes)
                     {
                         allNotes.AddRange(notes);

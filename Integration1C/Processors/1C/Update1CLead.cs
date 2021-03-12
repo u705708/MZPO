@@ -33,21 +33,21 @@ namespace Integration1C
             }
             #endregion
 
-            lead1C.price = (int)lead.price;
-            lead1C.author = lead.created_by.ToString();
-            lead1C.responsible_user = lead.responsible_user_id.ToString();
-            lead1C.lead_status = lead.status_id.ToString();
+            lead1C.Price = (int)lead.price;
+            lead1C.Author = lead.created_by.ToString();
+            lead1C.Responsible_user = lead.responsible_user_id.ToString();
+            lead1C.Lead_status = lead.status_id.ToString();
 
             if (lead.custom_fields_values is not null)
             {
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["organization"]))
-                    lead1C.organization = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["organization"]).values[0].value;
+                    lead1C.Organization = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["organization"]).values[0].value;
 
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["marketing_channel"]))
-                    lead1C.marketing_channel = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_channel"]).values[0].value;
+                    lead1C.Marketing_channel = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_channel"]).values[0].value;
 
                 if (lead.custom_fields_values.Any(x => x.field_id == leadFieldIds["marketing_source"]))
-                    lead1C.marketing_source = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_source"]).values[0].value;
+                    lead1C.Marketing_source = (string)lead.custom_fields_values.First(x => x.field_id == leadFieldIds["marketing_source"]).values[0].value;
             }
 
             return lead1C;
@@ -69,7 +69,7 @@ namespace Integration1C
                 lead.custom_fields_values.Any(x => x.field_id == fieldIds["lead_id_1C"]))
                 try { _leadRepo1C.UpdateLead(Get1CLead(
                         lead, 
-                        _leadRepo1C.GetLead((int)lead.custom_fields_values.First(x => x.field_id == fieldIds["lead_id_1C"]).values[0].value), 
+                        _leadRepo1C.GetLead((Guid)lead.custom_fields_values.First(x => x.field_id == fieldIds["lead_id_1C"]).values[0].value), 
                         _acc
                     )); }
                 catch (Exception e) { _log.Add($"Unable to update lead in 1C: {e}"); }

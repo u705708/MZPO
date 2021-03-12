@@ -12,14 +12,12 @@ namespace Integration1C
             { "client_id_1C", 710429 },
             { "email", 264913 },
             { "phone", 264911 },
-            { "sex", 710417 },
             { "dob", 644285 },
             { "pass_serie", 650835 },
             { "pass_number", 650837 },
             { "pass_issued_by", 650839 },
             { "pass_issued_at", 650841 },
             { "pass_dpt_code", 710419 },
-            { "address", 650841 },
         };
 
         internal static readonly Dictionary<string, int> ContactCorp = new()
@@ -27,14 +25,12 @@ namespace Integration1C
             { "client_id_1C", 748405 },
             { "email", 33577 },
             { "phone", 33575 },
-            { "sex", 748391 },
             { "dob", 68819 },
             { "pass_serie", 748393 },
             { "pass_number", 748395 },
             { "pass_issued_by", 748397 },
             { "pass_issued_at", 748399 },
             { "pass_dpt_code", 748401 },
-            { "address", 748403 },
         };
 
         internal static readonly Dictionary<string, int> CompanyRet = new()

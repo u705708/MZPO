@@ -15,7 +15,7 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// ID контакта.
         /// </summary>
-        public int id { get; set; }
+        public int? id { get; set; }
         /// <summary>
         /// Название контакта.
         /// </summary>

@@ -21,14 +21,14 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET: reports/corporatesales
         [HttpGet]
-        public ActionResult CorporateSales()
+        public IActionResult CorporateSales()
         {
             return Redirect($"https://docs.google.com/spreadsheets/d/1jzqcptdlCpSPXcyLpumSGCaHtSVi28bg8Ga2aEFXCoQ/");
         }
 
-        // GET reports/corporatesales/1609448400,1612126800
+        // GET reports/corporatesales/1612126800,1614545999
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
-        public ActionResult CorporateSales(string from, string to)
+        public IActionResult CorporateSales(string from, string to)
         {
             if (!long.TryParse(from, out long dateFrom) &
                 !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
@@ -40,7 +40,7 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET: reports/kpi
         [HttpGet]
-        public ActionResult KPI()
+        public IActionResult KPI()
         {
             var yesterday = DateTime.Today.AddSeconds(-1).AddHours(2);                                                                          //Поправить на использование UTC
             var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 2, 0, 0);
@@ -54,7 +54,7 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET reports/kpi/1612126799,1612886399
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
-        public ActionResult KPI(string from, string to)
+        public IActionResult KPI(string from, string to)
         {
             if (!long.TryParse(from, out long dateFrom) &
                 !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
@@ -66,7 +66,7 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET: reports/longleads
         [HttpGet]
-        public ActionResult LongLeads()
+        public IActionResult LongLeads()
         {
             var yesterday = DateTime.Today.AddSeconds(-1).AddHours(2);                                                                          //Поправить на использование UTC
             var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 2, 0, 0);
@@ -80,7 +80,7 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET reports/longleads/1610294400,1612886399
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
-        public ActionResult LongLeads(string from, string to)
+        public IActionResult LongLeads(string from, string to)
         {
             if (!long.TryParse(from, out long dateFrom) &
                 !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
@@ -92,7 +92,7 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET: reports/unfinishedcompanies
         [HttpGet]
-        public ActionResult UnfinishedCompanies()
+        public IActionResult UnfinishedCompanies()
         {
             ReportsProvider.StartReport(Reports.UnfinishedCompanies, _amo, _processQueue, _gSheets, 0, 0);
 
@@ -101,7 +101,7 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET: reports/weeklyreport/
         [HttpGet]
-        public ActionResult WeeklyReport()
+        public IActionResult WeeklyReport()
         {
             var yesterday = DateTime.Today.AddSeconds(-1).AddHours(2);                                                                          //Поправить на использование UTC
             long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
@@ -113,7 +113,7 @@ namespace MZPO.Controllers.ReportProcessors
 
         // GET reports/weeklyreport/1612126799
         [HttpGet("{to}")]                                                                                                                       //Запрашиваем отчёт для диапазона дат
-        public ActionResult WeeklyReport(string to)
+        public IActionResult WeeklyReport(string to)
         {
             if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
 

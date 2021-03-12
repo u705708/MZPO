@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MZPO.AmoRepo;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Integration1C
 {
     internal static class GetAmo
     {
-        internal static string GetFieldValue(MZPO.AmoRepo.Lead lead, int fieldId)
+        internal static string GetFieldValue(Lead lead, int fieldId)
         {
             if (lead.custom_fields_values is not null &&
                 lead.custom_fields_values.Any(x => x.field_id == fieldId))
@@ -16,16 +17,20 @@ namespace Integration1C
             return null;
         }
 
-        internal static string SetFieldValue(MZPO.AmoRepo.Lead lead, int fieldId, string fieldValue)
+        internal static string SetFieldValue(ref Lead lead, int fieldId, string fieldValue)
         {
             if (lead.custom_fields_values is null) lead.custom_fields_values = new();
-            lead.custom_fields_values.Add(new MZPO.AmoRepo.Lead.Custom_fields_value()
-            {
-                field_id = fieldId,
-                values = new MZPO.AmoRepo.Lead.Custom_fields_value.Values[] { 
-                    new MZPO.AmoRepo.Lead.Custom_fields_value.Values() { value = fieldValue } 
-                }
-            });
+
+            if (lead.custom_fields_values.Any(x => x.field_id == fieldId))
+                lead.custom_fields_values.First(x => x.field_id == fieldId).values[0].value = fieldValue;
+            else
+                lead.custom_fields_values.Add(new Lead.Custom_fields_value()
+                {
+                    field_id = fieldId,
+                    values = new Lead.Custom_fields_value.Values[] { 
+                        new Lead.Custom_fields_value.Values() { value = fieldValue } 
+                    }
+                });
             return fieldValue;
         }
     }

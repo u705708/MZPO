@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Net;
 
@@ -6,9 +7,9 @@ namespace Integration1C
 {
     internal class CourseRepository
     {
-        internal Course1C GetCourse(Course1C course) => GetCourse(course.product_id_1C);
+        internal Course1C GetCourse(Course1C course) => GetCourse(course.Product_id_1C);
 
-        internal Course1C GetCourse(int course_id)
+        internal Course1C GetCourse(Guid course_id)
         {
             string uri = "";
             Request1C request = new("GET", uri);

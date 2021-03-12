@@ -34,7 +34,8 @@ namespace MZPO.LeadProcessors
             "obr-diz.ru",
             "obr-men.ru",
             "курсы-косметологии.рф",
-            "mirk.vrach.kosmetolog"
+            "mirk.vrach.kosmetolog",
+            "ucheba.ru"
         };                                                      //Список сайтов компании
         private readonly List<(string, string)> wz = new List<(string, string)>
         {
@@ -180,6 +181,11 @@ namespace MZPO.LeadProcessors
                         cf.values[0].value.ToString().Substring(0, 256));
             #endregion
 
+            #region Курсы НМО
+            if (lead.pipeline_id == 2231320)
+                SetTag("Вебинар НМО неврология");
+            #endregion
+
             try { SaveLead("Новая сделка"); }
             catch (Exception e) { throw new Exception($"Phase 1: {e.Message}"); }
         }
@@ -192,12 +198,12 @@ namespace MZPO.LeadProcessors
             if (source is null) return;
             if (source.Contains("Прямой") || source.Contains("Коллтрекинг") || source.Contains("instagram"))
             {
-                for (int i = 1; i <= 30; i++)
+                for (int i = 1; i <= 60; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
+                    Thread.Sleep((int)TimeSpan.FromSeconds(30).TotalMilliseconds);                                       //Ждём минуту
                     UpdateLeadFromAmo();                                                                                //Загружаем сделку
                     if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
-                    Thread.Sleep((int)TimeSpan.FromMinutes(1).TotalMilliseconds);                                       //Ждём минуту
                 }
             }
             return;
@@ -323,7 +329,8 @@ namespace MZPO.LeadProcessors
                     (3812128, new List<string>(){"mirk.msk.ru", "facebook"}, "mirk.msk.ru", "mirk.msk.ru-facebook", "facebook", 2576764),
                     (3812131, new List<string>(){"mzpo.education", "facebook"}, "mzpo.education", "mzpo.education-facebook", "facebook", 2576764),
                     (3812134, new List<string>(){"skillbank.su", "facebook"}, "skillbank.su", "skillbank.su-facebook", "facebook", 2576764),
-                    (3812137, new List<string>(){ "cruche-academy.ru", "facebook"}, "cruche-academy.ru", "cruche-academy.ru-facebook", "facebook", 2576764)
+                    (3812137, new List<string>(){ "cruche-academy.ru", "facebook"}, "cruche-academy.ru", "cruche-academy.ru-facebook", "facebook", 2576764),
+                    (4065031, new List<string>(){ "ucheba.ru"}, "ucheba.ru", "Заявка с почты", "Заявка с почты uchebaru@mzpo-s.ru", 2576764),
                 };                            //Список воронок соцсетей и соответствующих значений полей
 
             if (pipelines.Any(x => x.Item1 == lead.pipeline_id))                                                        //Если сделка в одной из воронок из списка
@@ -369,7 +376,8 @@ namespace MZPO.LeadProcessors
                     _log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                     return;
                 }
-                if (lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
+                if (lead.pipeline_id == 2231320 ||                                                                          //Если сделка в корп. воронке
+                    lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
                 {
                     FormName();
                     PhaseOne();
@@ -400,6 +408,7 @@ namespace MZPO.LeadProcessors
             {
                 _processQueue.Remove(_leadNumber.ToString());
                 _log.Add($"Error: Unable to process lead {_leadNumber}: {e.Message}");
+                throw;
             }
         }
         #endregion
