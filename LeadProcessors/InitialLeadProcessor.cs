@@ -198,7 +198,7 @@ namespace MZPO.LeadProcessors
             if (source is null) return;
             if (source.Contains("Прямой") || source.Contains("Коллтрекинг") || source.Contains("instagram"))
             {
-                for (int i = 1; i <= 60; i++)
+                for (int i = 1; i <= 30; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
                     try { Task.Delay((int)TimeSpan.FromSeconds(60).TotalMilliseconds, _token).Wait(); }
