@@ -1,0 +1,76 @@
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Integration1C
+{
+    class UpdateAmoCourse
+    {
+        private readonly Amo _amo;
+        private readonly Log _log;
+        private readonly Course1C _course1C;
+
+        public UpdateAmoCourse(Course1C course, Amo amo, Log log)
+        {
+            _amo = amo;
+            _log = log;
+            _course1C = course;
+        }
+
+        private static Amo_id UpdateCourseInAmo(Course1C course, IAmoRepo<Lead> leadRepo, int ce_id, int acc_id)
+        {
+            CatalogElement ce = new()
+            {
+                id = ce_id,
+                name = course.name,
+                custom_fields = new()
+            };
+
+            ce.custom_fields.Add(new CatalogElement.Custom_fields()
+            {
+                id = FieldLists.Courses[acc_id]["product_id_1C"],
+                values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.product_id_1C.ToString("D") } }
+            });
+
+            foreach (var p in course.GetType().GetProperties())
+                if (FieldLists.Courses[acc_id].ContainsKey(p.Name) &&
+                    p.GetValue(course) is not null &&
+                    (string)p.GetValue(course) != "") //В зависимости от политики передачи пустых полей
+                {
+                    ce.custom_fields.Add(new CatalogElement.Custom_fields()
+                    {
+                        id = FieldLists.Courses[acc_id][p.Name],
+                        values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = (string)p.GetValue(course) } }
+                    });
+                }
+
+            var result = leadRepo.UpdateCEs(ce);
+
+            if (!result.Any()) throw new Exception($"Unable to update course in amo {ce_id}");
+
+            return new() { account_id = acc_id, entity_id = result.First().id };
+        }
+
+        public List<Amo_id> Run()
+        {
+            List<Amo_id> amo_Ids = new();
+
+            try
+            {
+                if (_course1C.amo_ids is not null)
+                {
+                    foreach (var a in _course1C.amo_ids)
+                        amo_Ids.Add(UpdateCourseInAmo(_course1C, _amo.GetAccountById(a.account_id).GetRepo<Lead>(), a.entity_id, a.account_id));
+                }
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to update course in amo: {e}");
+            }
+
+            return amo_Ids;
+        }
+    }
+}

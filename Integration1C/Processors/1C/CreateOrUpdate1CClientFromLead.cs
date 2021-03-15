@@ -76,7 +76,7 @@ namespace Integration1C
 
                     try 
                     { 
-                        client_id = _clientRepo1C.AddClient(Get1C.ClientFromContact(c, mainFields)).Client_id_1C; 
+                        client_id = _clientRepo1C.AddClient(Get1C.ClientFromContact(c, mainFields)).client_id_1C; 
                     }
 
                     catch (Exception e) 

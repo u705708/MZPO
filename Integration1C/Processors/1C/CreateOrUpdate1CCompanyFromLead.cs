@@ -15,9 +15,9 @@ namespace Integration1C
         private readonly CompanyRepository _companyRepo1C;
         private readonly Log _log;
 
-        public CreateOrUpdate1CCompanyFromLead(int lead_id, AmoAccount acc, Log log)
+        public CreateOrUpdate1CCompanyFromLead(int lead_id, Amo amo, Log log)
         {
-            _acc = acc;
+            _acc = amo.GetAccountById(19453687);
             _lead_id = lead_id;
             _companyRepo1C = new();
             _log = log;
@@ -48,7 +48,7 @@ namespace Integration1C
             {
                 Guid company_id = default;
 
-                try { company_id = _companyRepo1C.AddCompany(Get1C.CompanyFromCompany(company, fieldIds)).Company_id_1C; }
+                try { company_id = _companyRepo1C.AddCompany(Get1C.CompanyFromCompany(company, fieldIds)).company_id_1C; }
                 catch (Exception e) { _log.Add($"Unable to update company in 1C: {e}"); }
 
                 if (company_id == default) return;

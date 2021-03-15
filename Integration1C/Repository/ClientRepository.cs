@@ -24,7 +24,7 @@ namespace Integration1C
             }
         }
         
-        internal Client1C GetClient(Client1C client) => GetClient(client.Client_id_1C);
+        internal Client1C GetClient(Client1C client) => GetClient(client.client_id_1C);
 
         internal Client1C GetClient(Guid client_id)
         {
@@ -35,23 +35,24 @@ namespace Integration1C
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), student);
 
             return new() { 
-                Name = student.name,
-                Client_id_1C = student.uid,
-                Phone = student.Telephone,
-                Email = student.Mail,
-                Pass_number = student.Pasport.Number,
-                Pass_serie = student.Pasport.Series,
-                Pass_issued_by = student.Pasport.Issued,
-                Pass_dpt_code = student.Pasport.DivisionCode,
-                Pass_issued_at = student.Pasport.DateOfIssued.ToShortDateString()
+                name = student.name,
+                client_id_1C = student.uid,
+                phone = student.Telephone,
+                email = student.Mail,
+                pass_number = student.Pasport.Number,
+                pass_serie = student.Pasport.Series,
+                pass_issued_by = student.Pasport.Issued,
+                pass_dpt_code = student.Pasport.DivisionCode,
+                pass_issued_at = student.Pasport.DateOfIssued.ToShortDateString()
             };
         }
 
         internal Client1C UpdateClient(Client1C client)
         {
-            string uri = "";
+            string uri = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("PATCH", uri, content);
+            
             Client1C result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
             return result;
@@ -59,9 +60,10 @@ namespace Integration1C
 
         internal Client1C AddClient(Client1C client)
         {
-            string uri = "";
+            string uri = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("POST", uri, content);
+            
             Client1C result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
             return result;

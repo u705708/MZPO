@@ -8,6 +8,30 @@ namespace Integration1C
 {
     internal static class FieldLists
     {
+        internal static readonly Dictionary<int, Dictionary<string, int>> Contacts = new()
+        {
+            { 28395871, ContactRet },
+            { 19453687, ContactCorp },
+        };
+
+        internal static readonly Dictionary<int, Dictionary<string, int>> Companies = new()
+        {
+            { 28395871, CompanyRet },
+            { 19453687, CompanyCorp },
+        };
+
+        internal static readonly Dictionary<int, Dictionary<string, int>> Leads = new()
+        {
+            { 28395871, LeadRet },
+            { 19453687, LeadCorp },
+        };
+
+        internal static readonly Dictionary<int, Dictionary<string, int>> Courses = new()
+        {
+            { 28395871, CourseRet },
+            { 19453687, CourseCorp },
+        };
+
         internal static readonly Dictionary<string, int> ContactRet = new() {
             { "client_id_1C", 710429 },
             { "email", 264913 },
@@ -79,6 +103,30 @@ namespace Integration1C
             { "organization", 162301 },
             { "marketing_channel", 748383 },
             { "marketing_source", 748385 },
+        };
+
+        internal static readonly Dictionary<string, int> CourseRet = new()
+        {
+            { "product_id_1C", 710407 },
+            { "short_name", 647993 },
+            { "price", 647997 },
+            { "duration", 715507 },
+            { "format", 715509 },
+            { "group", 647999 },
+            { "requirements", 650253 },
+            { "supplementary_info", 647995 },
+        };
+
+        internal static readonly Dictionary<string, int> CourseCorp = new()
+        {
+            { "product_id_1C", 751191 },
+            { "short_name", 751165 },
+            { "price", 751169 },
+            { "duration", 751185 },
+            { "format", 751187 },
+            { "group", 751171 },
+            { "requirements", 751189 },
+            { "supplementary_info", 751167 },
         };
     }
 }

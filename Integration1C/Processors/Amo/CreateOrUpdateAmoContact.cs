@@ -1,33 +1,32 @@
-﻿using MZPO.Services;
-using MZPO.AmoRepo;
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 
 namespace Integration1C
 {
-    class CreateOrUpdateAmoContact
+    public class CreateOrUpdateAmoContact
     {
         private readonly Amo _amo;
         private readonly Log _log;
-        private readonly Client1C _client;
-        private readonly string _request;
-        private readonly IAmoRepo<Contact> _retRepo;
-        private readonly IAmoRepo<Contact> _corpRepo;
+        private readonly Client1C _client1C;
         private readonly ClientRepository _1CRepo;
 
-        public CreateOrUpdateAmoContact(string request, Amo amo, Log log)
+        public CreateOrUpdateAmoContact(Client1C client1C, Amo amo, Log log)
         {
             _amo = amo;
             _log = log;
-            _client = new();
-            _request = request;
-            _retRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-            _corpRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
+            _client1C = client1C;
             _1CRepo = new();
         }
+
+        List<int> amo_accounts = new()
+        {
+            19453687,
+            28395871
+        };
 
         class ContactsComparer : IEqualityComparer<Contact>
         {
@@ -51,107 +50,74 @@ namespace Integration1C
             }
         }
 
-        private static object SetFieldValue(Contact contact, int fieldId, object fieldValue)
+        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
         {
-            if (contact.custom_fields_values is null) contact.custom_fields_values = new();
-
-            if (contact.custom_fields_values.Any(x => x.field_id == fieldId))
-                contact.custom_fields_values.First(x => x.field_id == fieldId).values[0].value = fieldValue;
-            else
-                contact.custom_fields_values.Add(new Contact.Custom_fields_value()
-                {
-                    field_id = fieldId,
-                    values = new Contact.Custom_fields_value.Values[] {
-                        new Contact.Custom_fields_value.Values() { value = fieldValue }
-                    }
-                });
-            return fieldValue;
-        }
-
-        private static void UpdateContactInAmo(IAmoRepo<Contact> repo, Dictionary<string, int> fieldList, Client1C client, int id)
-        {
-            if (id == 0)
-            {
-                CreateContactInAmo(repo, fieldList, client);
-                return;
-            }
-
             Contact contact = new()
             {
-                id = id,
-                name = client.Name
+                id = contact_id,
+                name = client1C.name,
+                custom_fields_values = new(),
             };
 
-            SetFieldValue(contact, fieldList["client_id_1C"], client.Client_id_1C);
-            SetFieldValue(contact, fieldList["phone"], client.Phone);
-            SetFieldValue(contact, fieldList["email"], client.Email);
-            SetFieldValue(contact, fieldList["dob"], (int)((DateTimeOffset)client.Dob).ToUnixTimeSeconds());
-            SetFieldValue(contact, fieldList["pass_serie"], client.Pass_serie);
-            SetFieldValue(contact, fieldList["pass_number"], client.Pass_number);
-            SetFieldValue(contact, fieldList["pass_issued_by"], client.Pass_issued_by);
-            SetFieldValue(contact, fieldList["pass_issued_at"], client.Pass_issued_at);
-            SetFieldValue(contact, fieldList["pass_dpt_code"], client.Pass_dpt_code);
+            contact.custom_fields_values.Add(new Contact.Custom_fields_value()
+            {
+                field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
+                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.ToString("D") } }
+            });
 
+            foreach (var p in client1C.GetType().GetProperties())
+                if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
+                    p.GetValue(client1C) is not null &&
+                    (string)p.GetValue(client1C) != "") //В зависимости от политики передачи пустых полей
+                {
+                    contact.custom_fields_values.Add(new Contact.Custom_fields_value()
+                    {
+                        field_id = FieldLists.Contacts[acc_id][p.Name],
+                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = (string)p.GetValue(client1C) } }
+                    });
+                }
             try
             {
-                var result = repo.Save(contact);
-
-                if (result.Any())
-                    switch (result.First().account_id)
-                    {
-                        case 19453687:
-                            if (client.Amo_ids is null) client.Amo_ids = new();
-                            //client.Amo_ids.corp_id = result.First().id;
-                            return;
-                        case 28395871:
-                            if (client.Amo_ids is null) client.Amo_ids = new();
-                            //client.Amo_ids.ret_id = result.First().id;
-                            return;
-                        default:
-                            return;
-                    }
+                contRepo.Save(contact);
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update contact in amo: {e}");
+                throw new Exception($"Unable to update contact {contact_id} in amo: {e}");
             }
         }
 
-        private static void CreateContactInAmo(IAmoRepo<Contact> repo, Dictionary<string, int> fieldList, Client1C client)
+        private static int CreateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int acc_id)
         {
             Contact contact = new()
             {
-                name = client.Name
+                name = client1C.name,
+                custom_fields_values = new(),
             };
 
-            SetFieldValue(contact, fieldList["client_id_1C"], client.Client_id_1C);
-            SetFieldValue(contact, fieldList["phone"], client.Phone);
-            SetFieldValue(contact, fieldList["email"], client.Email);
-            SetFieldValue(contact, fieldList["dob"], (int)((DateTimeOffset)client.Dob).ToUnixTimeSeconds());
-            SetFieldValue(contact, fieldList["pass_serie"], client.Pass_serie);
-            SetFieldValue(contact, fieldList["pass_number"], client.Pass_number);
-            SetFieldValue(contact, fieldList["pass_issued_by"], client.Pass_issued_by);
-            SetFieldValue(contact, fieldList["pass_issued_at"], client.Pass_issued_at);
-            SetFieldValue(contact, fieldList["pass_dpt_code"], client.Pass_dpt_code);
+            contact.custom_fields_values.Add(new Contact.Custom_fields_value()
+            {
+                field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
+                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.ToString("D") } }
+            });
+
+            foreach (var p in client1C.GetType().GetProperties())
+                if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
+                    p.GetValue(client1C) is not null &&
+                    (string)p.GetValue(client1C) != "") //В зависимости от политики передачи пустых полей
+                {
+                    contact.custom_fields_values.Add(new Contact.Custom_fields_value()
+                    {
+                        field_id = FieldLists.Contacts[acc_id][p.Name],
+                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = (string)p.GetValue(client1C) } }
+                    });
+                }
 
             try
             {
-                var result = repo.AddNew(contact);
-
+                var result = contRepo.AddNewComplex(contact);
                 if (result.Any())
-                    switch (result.First().account_id)
-                    {
-                        case 19453687:
-                            if (client.Amo_ids is null) client.Amo_ids = new();
-                            //client.Amo_ids.corp_id = result.First().id;
-                            return;
-                        case 28395871:
-                            if (client.Amo_ids is null) client.Amo_ids = new();
-                            //client.Amo_ids.ret_id = result.First().id;
-                            return;
-                        default:
-                            return;
-                    }
+                    return result.First();
+                else throw new Exception("Amo returned no contact Ids.");
             }
             catch (Exception e)
             {
@@ -161,79 +127,63 @@ namespace Integration1C
 
         public void Run()
         {
-            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(_request), _client); }
-            catch(Exception e) { _log.Add($"Unable to process request: {e} --- Request: {_request}"); return; }
-
             try
             {
-                #region Checking if already exist
-                if (_client.Amo_ids is not null)
+                foreach (var a in amo_accounts)
                 {
-                    //UpdateContactInAmo(_retRepo, FieldLists.ContactRet, _client, _client.Amo_ids.ret_id);
-                    //UpdateContactInAmo(_corpRepo, FieldLists.ContactCorp, _client, _client.Amo_ids.corp_id);
-                    return;
-                }
-                #endregion
+                    var contRepo = _amo.GetAccountById(a).GetRepo<Contact>();
 
-                #region Checking retail for contact
-                List<Contact> retContacts = new();
+                    if (_client1C.amo_ids is not null &&
+                        _client1C.amo_ids.Any(x => x.account_id == a))
+                    {
+                        UpdateContactInAmo(_client1C, contRepo, _client1C.amo_ids.First(x => x.account_id == a).entity_id, a);
+                        continue;
+                    }
 
-                retContacts.AddRange(_retRepo.GetByCriteria($"query={_client.Client_id_1C}"));
-                if (!retContacts.Any())
-                {
-                    retContacts.AddRange(_retRepo.GetByCriteria($"query={_client.Phone}"));
-                    retContacts.AddRange(_retRepo.GetByCriteria($"query={_client.Email}"));
+                    #region Checking contact
+                    List<Contact> similarContacts = new();
+                    if (_client1C.phone is not null &&
+                        _client1C.phone != "")
+                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.phone}"));
+
+                    if (_client1C.email is not null &&
+                        _client1C.email != "")
+                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.email}"));
+
+                    if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
+                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()), Formatting.Indented)}");
+                    #endregion
+
+                    #region Updating found contact
+                    if (similarContacts.Any())
+                    {
+                        UpdateContactInAmo(_client1C, contRepo, (int)similarContacts.First().id, a);
+                        if (_client1C.amo_ids is null) _client1C.amo_ids = new();
+                        _client1C.amo_ids.Add(new()
+                        {
+                            account_id = a,
+                            entity_id = (int)similarContacts.First().id
+                        });
+                        continue;
+                    }
+                    #endregion
+
+                    #region Creating new contact
+                    var compId = CreateContactInAmo(_client1C, contRepo, a);
+
+                    _client1C.amo_ids.Add(new()
+                    {
+                        account_id = a,
+                        entity_id = compId
+                    });
+                    #endregion
                 }
 
-                if (retContacts.Any() &&
-                    retContacts.Distinct(new ContactsComparer()).Count() == 1)
-                {
-                    UpdateContactInAmo(_retRepo, FieldLists.ContactRet, _client, (int)retContacts.First().id);
-                }
-                else if (retContacts.Any() &&
-                    retContacts.Distinct(new ContactsComparer()).Count() > 1)
-                {
-                    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(retContacts.Distinct(new ContactsComparer()), Formatting.Indented)}");
-                    CreateContactInAmo(_retRepo, FieldLists.ContactRet, _client);
-                }
-                else
-                {
-                    CreateContactInAmo(_retRepo, FieldLists.ContactRet, _client);
-                }
-                #endregion
-
-                #region Checking corporate for contact
-                List<Contact> corpContacts = new();
-
-                corpContacts.AddRange(_corpRepo.GetByCriteria($"query={_client.Client_id_1C}"));
-                if (!corpContacts.Any())
-                {
-                    corpContacts.AddRange(_corpRepo.GetByCriteria($"query={_client.Phone}"));
-                    corpContacts.AddRange(_corpRepo.GetByCriteria($"query={_client.Email}"));
-                }
-
-                if (corpContacts.Any() &&
-                    corpContacts.Distinct(new ContactsComparer()).Count() == 1)
-                {
-                    UpdateContactInAmo(_corpRepo, FieldLists.ContactCorp, _client, (int)corpContacts.First().id);
-                }
-                else if (corpContacts.Any() &&
-                    corpContacts.Distinct(new ContactsComparer()).Count() > 1)
-                {
-                    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(corpContacts.Distinct(new ContactsComparer()), Formatting.Indented)}");
-                    CreateContactInAmo(_corpRepo, FieldLists.ContactCorp, _client);
-                }
-                else
-                {
-                    CreateContactInAmo(_corpRepo, FieldLists.ContactCorp, _client);
-                }
-                #endregion
-
-                _1CRepo.UpdateClient(_client);
+                _1CRepo.UpdateClient(_client1C);
             }
             catch (Exception e)
             {
-                _log.Add($"Error in CreateOrUpdateAmoContact: {e}");
+                _log.Add($"Unable to update company in amo from 1C: {e}");
             }
         }
     }
