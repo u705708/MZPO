@@ -78,7 +78,7 @@ namespace Integration1C
                 if (company.custom_fields_values is not null &&
                     !company.custom_fields_values.Any(x => x.field_id == companyFieldIds["company_id_1C"]))
                 {
-                    new CreateOrUpdate1CCompanyFromLead(lead.id, amo, log).Run();
+                    new CreateOrUpdate1CCompany(amo, log, lead.id).Run();
                     company = compRepo.GetById(lead._embedded.companies.First().id);
                 }
 

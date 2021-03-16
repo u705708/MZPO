@@ -115,14 +115,14 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CCompanyFromLead(leadNumber, _amo, _log).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CCompany(_amo, _log, leadNumber).Run());
 
             return Ok();
         }
 
-        // POST: integration/1c/updateclient
+        // POST: integration/1c/updatecompany
         [HttpPost]
-        [ActionName("UpdateClient")]
+        [ActionName("UpdateCompany")]
         public IActionResult UpdateCompany1C()
         {
             var col = Request.Form;
@@ -137,7 +137,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("contacts[update][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["contacts[update][0][id]"], out int companyNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new Update1CCompany(companyNumber, acc, _log).Run());
+            var task = Task.Run(() => new Update1CCompany(_amo, _log, companyNumber).Run());
 
             return Ok();
         }

@@ -17,21 +17,17 @@ namespace Integration1C
             _client1C = client1C;
         }
 
-        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
+        private static void AddUIDToEntity(Client1C client1C, int acc_id, Contact contact)
         {
-            Contact contact = new()
-            {
-                id = contact_id,
-                name = client1C.name,
-                custom_fields_values = new(),
-            };
-
             contact.custom_fields_values.Add(new Contact.Custom_fields_value()
             {
                 field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
                 values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.ToString("D") } }
             });
+        }
 
+        private static void PopulateCFs(Client1C client1C, int acc_id, Contact contact)
+        {
             foreach (var p in client1C.GetType().GetProperties())
                 if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
                     p.GetValue(client1C) is not null &&
@@ -44,6 +40,21 @@ namespace Integration1C
                         values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = (string)p.GetValue(client1C) } }
                     });
                 }
+        }
+
+        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
+        {
+            Contact contact = new()
+            {
+                id = contact_id,
+                name = client1C.name,
+                custom_fields_values = new(),
+            };
+
+            AddUIDToEntity(client1C, acc_id, contact);
+
+            PopulateCFs(client1C, acc_id, contact);
+
             try
             {
                 contRepo.Save(contact);
@@ -59,11 +70,8 @@ namespace Integration1C
             try
             {
                 if (_client1C.amo_ids is not null)
-                {
                     foreach (var c in _client1C.amo_ids)
                         UpdateContactInAmo(_client1C, _amo.GetAccountById(c.account_id).GetRepo<Contact>(), c.entity_id, c.account_id);
-                    return;
-                }
             }
             catch (Exception e)
             {

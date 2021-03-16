@@ -20,21 +20,17 @@ namespace Integration1C
             _compRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
         }
 
-        private static void UpdateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int company_id)
+        private static void AddUIDToEntity(Company1C company1C, Company company)
         {
-            Company company = new()
-            {
-                id = company_id,
-                name = company1C.name,
-                custom_fields_values = new()
-            };
-
             company.custom_fields_values.Add(new Company.Custom_fields_value()
             {
                 field_id = FieldLists.Companies[19453687]["company_id_1C"],
                 values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = company1C.company_id_1C.ToString("D") } }
             });
+        }
 
+        private static void PopulateCFs(Company1C company1C, Company company)
+        {
             foreach (var p in company1C.GetType().GetProperties())
                 if (FieldLists.Companies[19453687].ContainsKey(p.Name) &&
                     p.GetValue(company1C) is not null &&
@@ -47,6 +43,21 @@ namespace Integration1C
                         values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = (string)p.GetValue(company1C) } }
                     });
                 }
+        }
+
+        private static void UpdateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int company_id)
+        {
+            Company company = new()
+            {
+                id = company_id,
+                name = company1C.name,
+                custom_fields_values = new()
+            };
+
+            AddUIDToEntity(company1C, company);
+
+            PopulateCFs(company1C, company);
+
             try
             {
                 compRepo.Save(company);
@@ -63,11 +74,8 @@ namespace Integration1C
             {
                 if (_company1C.amo_ids is not null &&
                     _company1C.amo_ids.Any(x => x.account_id == 19453687))
-                {
                     foreach (var c in _company1C.amo_ids.Where(x => x.account_id == 19453687))
                         UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id);
-                    return;
-                }
             }
             catch (Exception e)
             {

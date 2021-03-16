@@ -19,21 +19,17 @@ namespace Integration1C
             _course1C = course;
         }
 
-        private static Amo_id UpdateCourseInAmo(Course1C course, IAmoRepo<Lead> leadRepo, int ce_id, int acc_id)
+        private static void AddUIDToEntities(Course1C course, int acc_id, CatalogElement ce)
         {
-            CatalogElement ce = new()
-            {
-                id = ce_id,
-                name = course.name,
-                custom_fields = new()
-            };
-
             ce.custom_fields.Add(new CatalogElement.Custom_fields()
             {
                 id = FieldLists.Courses[acc_id]["product_id_1C"],
                 values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.product_id_1C.ToString("D") } }
             });
+        }
 
+        private static void PopulateCFs(Course1C course, int acc_id, CatalogElement ce)
+        {
             foreach (var p in course.GetType().GetProperties())
                 if (FieldLists.Courses[acc_id].ContainsKey(p.Name) &&
                     p.GetValue(course) is not null &&
@@ -45,32 +41,38 @@ namespace Integration1C
                         values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = (string)p.GetValue(course) } }
                     });
                 }
-
-            var result = leadRepo.UpdateCEs(ce);
-
-            if (!result.Any()) throw new Exception($"Unable to update course in amo {ce_id}");
-
-            return new() { account_id = acc_id, entity_id = result.First().id };
         }
 
-        public List<Amo_id> Run()
+        private static void UpdateCourseInAmo(Course1C course, IAmoRepo<Lead> leadRepo, int ce_id, int acc_id)
         {
-            List<Amo_id> amo_Ids = new();
+            CatalogElement ce = new()
+            {
+                id = ce_id,
+                name = course.name,
+                custom_fields = new()
+            };
 
+            AddUIDToEntities(course, acc_id, ce);
+
+            PopulateCFs(course, acc_id, ce);
+
+            leadRepo.UpdateCEs(ce);
+        }
+
+        public void Run()
+        {
             try
             {
                 if (_course1C.amo_ids is not null)
                 {
                     foreach (var a in _course1C.amo_ids)
-                        amo_Ids.Add(UpdateCourseInAmo(_course1C, _amo.GetAccountById(a.account_id).GetRepo<Lead>(), a.entity_id, a.account_id));
+                        UpdateCourseInAmo(_course1C, _amo.GetAccountById(a.account_id).GetRepo<Lead>(), a.entity_id, a.account_id);
                 }
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to update course in amo: {e}");
             }
-
-            return amo_Ids;
         }
     }
 }

@@ -12,14 +12,12 @@ namespace Integration1C
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly Client1C _client1C;
-        private readonly ClientRepository _1CRepo;
 
         public CreateOrUpdateAmoContact(Client1C client1C, Amo amo, Log log)
         {
             _amo = amo;
             _log = log;
             _client1C = client1C;
-            _1CRepo = new();
         }
 
         List<int> amo_accounts = new()
@@ -50,21 +48,17 @@ namespace Integration1C
             }
         }
 
-        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
+        private static void AddUIDToEntity(Client1C client1C, int acc_id, Contact contact)
         {
-            Contact contact = new()
-            {
-                id = contact_id,
-                name = client1C.name,
-                custom_fields_values = new(),
-            };
-
             contact.custom_fields_values.Add(new Contact.Custom_fields_value()
             {
                 field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
                 values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.ToString("D") } }
             });
+        }
 
+        private static void PopulateCFs(Client1C client1C, int acc_id, Contact contact)
+        {
             foreach (var p in client1C.GetType().GetProperties())
                 if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
                     p.GetValue(client1C) is not null &&
@@ -76,6 +70,21 @@ namespace Integration1C
                         values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = (string)p.GetValue(client1C) } }
                     });
                 }
+        }
+
+        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
+        {
+            Contact contact = new()
+            {
+                id = contact_id,
+                name = client1C.name,
+                custom_fields_values = new(),
+            };
+
+            AddUIDToEntity(client1C, acc_id, contact);
+
+            PopulateCFs(client1C, acc_id, contact);
+
             try
             {
                 contRepo.Save(contact);
@@ -94,23 +103,9 @@ namespace Integration1C
                 custom_fields_values = new(),
             };
 
-            contact.custom_fields_values.Add(new Contact.Custom_fields_value()
-            {
-                field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
-                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.ToString("D") } }
-            });
+            AddUIDToEntity(client1C, acc_id, contact);
 
-            foreach (var p in client1C.GetType().GetProperties())
-                if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
-                    p.GetValue(client1C) is not null &&
-                    (string)p.GetValue(client1C) != "") //В зависимости от политики передачи пустых полей
-                {
-                    contact.custom_fields_values.Add(new Contact.Custom_fields_value()
-                    {
-                        field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = (string)p.GetValue(client1C) } }
-                    });
-                }
+            PopulateCFs(client1C, acc_id, contact);
 
             try
             {
@@ -125,20 +120,23 @@ namespace Integration1C
             }
         }
 
-        public void Run()
+        public List<Amo_id> Run()
         {
+            if (_client1C.amo_ids is null) _client1C.amo_ids = new();
+
             try
             {
                 foreach (var a in amo_accounts)
                 {
                     var contRepo = _amo.GetAccountById(a).GetRepo<Contact>();
 
-                    if (_client1C.amo_ids is not null &&
-                        _client1C.amo_ids.Any(x => x.account_id == a))
+                    #region Checking if contact already linked to entity and updating if possible
+                    if (_client1C.amo_ids.Any(x => x.account_id == a))
                     {
                         UpdateContactInAmo(_client1C, contRepo, _client1C.amo_ids.First(x => x.account_id == a).entity_id, a);
                         continue;
-                    }
+                    } 
+                    #endregion
 
                     #region Checking contact
                     List<Contact> similarContacts = new();
@@ -158,7 +156,6 @@ namespace Integration1C
                     if (similarContacts.Any())
                     {
                         UpdateContactInAmo(_client1C, contRepo, (int)similarContacts.First().id, a);
-                        if (_client1C.amo_ids is null) _client1C.amo_ids = new();
                         _client1C.amo_ids.Add(new()
                         {
                             account_id = a,
@@ -178,13 +175,13 @@ namespace Integration1C
                     });
                     #endregion
                 }
-
-                _1CRepo.UpdateClient(_client1C);
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to update company in amo from 1C: {e}");
             }
+
+            return _client1C.amo_ids;
         }
     }
 }
