@@ -14,20 +14,20 @@ namespace MZPO.Controllers.Example
         public IActionResult Client()
         {
             return Ok(new Integration1C.Client1C() { 
-                Client_id_1C = default,
-                Amo_ids = new() { new() { 
-                    Account_id = 123465,
-                    Entity_id = 44556688
+                client_id_1C = default,
+                amo_ids = new() { new() { 
+                    account_id = 123465,
+                    entity_id = 44556688
                 } },
-                Email = "test@email.com",
-                Phone = "+79001112233",
-                Name = "Иван Иванов",
-                Dob = DateTime.Now,
-                Pass_serie = "1234",
-                Pass_number = "556677",
-                Pass_issued_by = "some text",
-                Pass_issued_at = "Date as string",
-                Pass_dpt_code = "123132"
+                email = "test@email.com",
+                phone = "+79001112233",
+                name = "Иван Иванов",
+                dob = DateTime.Now,
+                pass_serie = "1234",
+                pass_number = "556677",
+                pass_issued_by = "some text",
+                pass_issued_at = "Date as string",
+                pass_dpt_code = "123132"
             });
         }
 
@@ -36,23 +36,23 @@ namespace MZPO.Controllers.Example
         public IActionResult Company()
         {
             return Ok(new Integration1C.Company1C() { 
-                Company_id_1C = default,
-                Amo_ids = new() { new() { 
-                    Account_id = 123465,
-                    Entity_id = 44556688
+                company_id_1C = default,
+                amo_ids = new() { new() { 
+                    account_id = 123465,
+                    entity_id = 44556688
                 } },
-                Name = "ООО Ромашка",
-                Email = "test@email.com",
-                Phone = "+79001112233",
-                Signee = "Подписант",
+                name = "ООО Ромашка",
+                email = "test@email.com",
+                phone = "+79001112233",
+                signee = "Подписант",
                 LPR_name = "Иван Иванов",
                 OGRN = "13223131326",
                 INN = "5465454654",
-                Acc_no = "4654654654654654",
+                acc_no = "4654654654654654",
                 KPP = "546546465",
                 BIK = "45654654",
-                Address = "ул. Пушкина, 10",
-                Post_address = "ул. Колотушкина, 11"
+                address = "ул. Пушкина, 10",
+                post_address = "ул. Колотушкина, 11"
             });
         }
 
@@ -61,20 +61,20 @@ namespace MZPO.Controllers.Example
         public IActionResult Course()
         {
             return Ok(new Integration1C.Course1C() {
-                Product_id_1C = default,
-                Amo_ids = new() { new() {
-                    Account_id = 123465,
-                    Entity_id = 44556688
+                product_id_1C = default,
+                amo_ids = new() { new() {
+                    account_id = 123465,
+                    entity_id = 44556688
                 } },
-                Name = "Массаж медицинский",
-                Short_name = "МММ",
-                Price = 10000,
-                Duration = 44,
-                Format = "",
-                Program_id = "",
-                Group = "",
-                Requirements = "",
-                Supplementary_info = ""
+                name = "Массаж медицинский",
+                short_name = "МММ",
+                price = 10000,
+                duration = 44,
+                format = "",
+                program_id = "",
+                group = "",
+                requirements = "",
+                supplementary_info = ""
             });
         }
 
@@ -83,44 +83,44 @@ namespace MZPO.Controllers.Example
         public IActionResult Lead()
         {
             return Ok(new Integration1C.Lead1C() {
-                Lead_id_1C = default,
-                Amo_ids = new() { new() { 
-                    Account_id = 123465,
-                    Entity_id = 44556688
+                lead_id_1C = default,
+                amo_ids = new() { new() { 
+                    account_id = 123465,
+                    entity_id = 44556688
                 } },
-                Client_id_1C = default,
-                Product_id_1C = default,
-                Company_id_1C = default,
-                Organization = "МЦПО или МИРК",
-                Price = 10000,
-                Is_corporate = true,
-                Lead_status = "",
-                Marketing_channel = "",
-                Marketing_source = "",
-                Author = "",
-                Responsible_user = "",
-                Payments = new() { new() { 
-                    Payment_date = DateTime.Now,
-                    Payment_amount = 10000,
-                    Client_id_1C = default
+                client_id_1C = default,
+                product_id_1C = default,
+                company_id_1C = default,
+                organization = "МЦПО или МИРК",
+                price = 10000,
+                is_corporate = true,
+                lead_status = "",
+                marketing_channel = "",
+                marketing_source = "",
+                author = "",
+                responsible_user = "",
+                payments = new() { new() { 
+                    payment_date = DateTime.Now,
+                    payment_amount = 10000,
+                    client_id_1C = default
                 } }
             });
         }
 
-        // GET example/diploms
+        // GET example/diploma
         [HttpGet]
         public IActionResult Diploma()
         {
             return Ok(new Integration1C.Diploma()
             {
-                Discipline = "Массаж медицинский",
-                Qualification = "",
-                Hours = 288,
-                EducationForm = "Очная",
-                EducationType = "Вид обучения",
-                DiplomaNumber = "1231№54654",
-                DateOfIssue = DateTime.Now,
-                Client_Id_1C = default
+                discipline = "Массаж медицинский",
+                qualification = "",
+                hours = 288,
+                educationForm = "Очная",
+                educationType = "Вид обучения",
+                diplomaNumber = "1231№54654",
+                dateOfIssue = DateTime.Now,
+                client_Id_1C = default
             });
         }
     }

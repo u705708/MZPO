@@ -1,43 +1,71 @@
 ﻿using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Integration1C
 {
     public class Update1CCompany
     {
-        private readonly AmoAccount _acc;
-        private readonly int _company_id;
-        private readonly CompanyRepository _companyRepo1C;
+        private readonly Amo _amo;
         private readonly Log _log;
+        private readonly int _companyId;
+        private readonly int _amo_acc;
 
-        public Update1CCompany(int company_id, AmoAccount acc, Log log)
+        public Update1CCompany(Amo amo, Log log, int companyId)
         {
-            _acc = acc;
-            _company_id = company_id;
-            _companyRepo1C = new();
+            _amo = amo;
             _log = log;
+            _companyId = companyId;
+            _amo_acc = 19453687;
+        }
+
+        private static void PopulateCFs(Company company, int amo_acc, Company1C company1C)
+        {
+            if (company.custom_fields_values is not null)
+                foreach (var p in company1C.GetType().GetProperties())
+                    if (FieldLists.Companies[amo_acc].ContainsKey(p.Name) &&
+                        company.custom_fields_values.Any(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]))
+                        p.SetValue(company1C, company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]).values[0].value);
+        }
+
+        private static void UpdateCompanyIn1C(Company company, Guid company_id_1C, int amo_acc)
+        {
+            Company1C company1C = new() {
+                name = company.name,
+                company_id_1C = company_id_1C,
+                amo_ids = new() { new() {
+                        account_id = amo_acc,
+                        entity_id = company.id
+            } } };
+
+            PopulateCFs(company, amo_acc, company1C);
+
+            new CompanyRepository().UpdateCompany(company1C);
         }
 
         public void Run()
         {
-            var compRepo = _acc.GetRepo<Company>();
+            try
+            {
+                var compRepo = _amo.GetAccountById(_amo_acc).GetRepo<Company>();
 
-            Dictionary<string, int> fieldIds;
-            if (_acc.id == 19453687) fieldIds = FieldLists.CompanyCorp;
-            else fieldIds = FieldLists.CompanyRet;
+                #region Checking if company exists in 1C and updating if possible
+                Company company = compRepo.GetById(_companyId);
 
-            var company = compRepo.GetById(_company_id);
-
-            if (company is not null &&
-                company.custom_fields_values is not null &&
-                company.custom_fields_values.Any(x => x.field_id == fieldIds["company_id_1C"]))
-                try { _companyRepo1C.UpdateCompany(Get1C.CompanyFromCompany(company, fieldIds)); }
-                catch (Exception e) { _log.Add($"Unable to update company in 1C: {e}"); }
+                if (company.custom_fields_values is not null &&
+                    company.custom_fields_values.Any(x => x.field_id == FieldLists.Companies[_amo_acc]["company_id_1C"]) &&
+                    Guid.TryParse((string)company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[_amo_acc]["company_id_1C"]).values[0].value, out Guid company_id_1C))
+                {
+                    UpdateCompanyIn1C(company, company_id_1C, _amo_acc);
+                    _log.Add($"Updated company in 1C {company_id_1C}.");
+                }
+                #endregion
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to update company {_companyId} in 1C: {e}");
+            }
         }
     }
 }

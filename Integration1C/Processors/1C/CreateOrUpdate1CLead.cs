@@ -5,14 +5,14 @@ using System.Linq;
 
 namespace Integration1C
 {
-    public class Update1CLead
+    public class CreateOrUpdate1CLead
     {
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly int _leadId;
         private readonly int _amo_acc;
 
-        public Update1CLead(Amo amo, Log log, int leadId, int amo_acc)
+        public CreateOrUpdate1CLead(Amo amo, Log log, int leadId, int amo_acc)
         {
             _amo = amo;
             _log = log;
@@ -78,19 +78,13 @@ namespace Integration1C
 
         private static void UpdateLeadIn1C(Amo amo, Log log, Lead lead, Guid lead_id_1C, int amo_acc)
         {
-            Lead1C lead1C = new()
-            {
+            Lead1C lead1C = new() {
                 lead_id_1C = lead_id_1C,
                 price = (int)lead.price,
-                amo_ids = new()
-                {
-                    new()
-                    {
+                amo_ids = new() { new() {
                         account_id = amo_acc,
                         entity_id = lead.id
-                    }
-                }
-            };
+            } } };
 
             PopulateCFs(lead, amo_acc, lead1C);
 
@@ -102,7 +96,46 @@ namespace Integration1C
             new LeadRepository().UpdateLead(lead1C);
         }
 
-        public void Run()
+        private static Guid CreateLeadIn1C(Amo amo, Log log, Lead lead, int amo_acc)
+        {
+            Lead1C lead1C = new() {
+                price = (int)lead.price,
+                amo_ids = new() { new() {
+                        account_id = amo_acc,
+                        entity_id = lead.id
+            } } };
+
+            PopulateCFs(lead, amo_acc, lead1C);
+
+            if (amo_acc == 19453687)
+                lead1C.is_corporate = true;
+
+            GetConnectedEntities(amo, log, lead, amo_acc, lead1C);
+
+            return new LeadRepository().UpdateLead(lead1C);
+        }
+
+        private static void UpdateLeadInAmoWithUID(IAmoRepo<Lead> leadRepo, int amo_acc, int leadId, Guid uid)
+        {
+            Lead lead = new() {
+                id = leadId,
+                custom_fields_values = new() { new Lead.Custom_fields_value() {
+                        field_id = FieldLists.Leads[amo_acc]["lead_id_1C"],
+                        values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = uid.ToString("D") } }
+            } } };
+
+            try
+            {
+                leadRepo.Save(lead);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Unable to update lead {leadId} in amo {amo_acc}: {e}");
+            }
+        }
+
+
+        public Guid Run()
         {
             try
             {
@@ -117,11 +150,21 @@ namespace Integration1C
                 if (lead.custom_fields_values is not null &&
                     lead.custom_fields_values.Any(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]) &&
                     Guid.TryParse((string)lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]).values[0].value, out Guid lead_id_1C))
+                {
                     UpdateLeadIn1C(_amo, _log, lead, lead_id_1C, _amo_acc);
+                    return lead_id_1C;
+                }
+
+                var uid = CreateLeadIn1C(_amo, _log, lead, _amo_acc);
+
+                UpdateLeadInAmoWithUID(leadRepo, _amo_acc, _leadId, uid);
+
+                return uid;
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update lead {_leadId} in 1C: {e}");
+                _log.Add($"Unable to create or upadate lead {_leadId} in 1C: {e}");
+                return default;
             }
         }
     }

@@ -8,8 +8,10 @@ namespace Integration1C
 {
     public class Payment
     {
-        public DateTime Payment_date { get; set; }
-        public int Payment_amount { get; set; }
-        public Guid Client_id_1C { get; set; }
+#pragma warning disable IDE1006 // Naming Styles
+        public DateTime payment_date { get; set; }
+        public int payment_amount { get; set; }
+        public Guid client_id_1C { get; set; }
+#pragma warning restore IDE1006 // Naming Styles
     }
 }

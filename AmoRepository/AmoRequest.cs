@@ -35,8 +35,8 @@ namespace MZPO.AmoRepo
         {
             HttpResponseMessage response;
             
-            using HttpClient httpClient = new HttpClient();
-            using HttpRequestMessage request = new HttpRequestMessage(_httpMethod, _uri);
+            using HttpClient httpClient = new();
+            using HttpRequestMessage request = new(_httpMethod, _uri);
             
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _auth.GetToken());
             request.Headers.TryAddWithoutValidation("User-Agent", "mzpo2amo-client/1.1");

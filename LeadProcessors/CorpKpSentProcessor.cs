@@ -116,6 +116,8 @@ namespace MZPO.LeadProcessors
                 };
 
                 await _service.Spreadsheets.BatchUpdate(batchRequest, _spreadsheetId).ExecuteAsync();
+
+                _processQueue.Remove($"SentKP-{_leadNumber}");
             }
             catch (Exception e)
             {

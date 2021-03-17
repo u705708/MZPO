@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using MZPO.LeadProcessors;
 using MZPO.Services;
+using Newtonsoft.Json;
 using System;
+using System.IO;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,6 +45,15 @@ namespace MZPO.Controllers
                         p.SetValue(formRequest, (string)value);
             #endregion
 
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} siteform/retail ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(col)));
+            sw.WriteLine("-----");
+            sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(formRequest, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })));
+            sw.WriteLine();
+            #endregion
+
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken token = cts.Token;
 
@@ -70,6 +82,15 @@ namespace MZPO.Controllers
                 if (col.ContainsKey(p.Name))
                     if (col.TryGetValue(p.Name, out var value))
                         p.SetValue(formRequest, (string)value);
+            #endregion
+
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} siteform/corp ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(col)));
+            sw.WriteLine("-----");
+            sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(formRequest, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })));
+            sw.WriteLine();
             #endregion
 
             CancellationTokenSource cts = new CancellationTokenSource();

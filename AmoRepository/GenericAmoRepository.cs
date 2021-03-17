@@ -74,6 +74,14 @@ namespace MZPO.AmoRepo
 
             return entityList;
         }
+
+        private int GetCatalogId()
+        {
+            int acc_id = _auth.GetAccountId();
+            if (acc_id == 19453687) return 5111;
+            if (acc_id == 28395871) return 12463;
+            throw new Exception($"No catalog_d for account {acc_id}");
+        }
         #endregion
 
         #region Realization
@@ -314,8 +322,9 @@ namespace MZPO.AmoRepo
         }
         public IEnumerable<CatalogElement> AddCEs(IEnumerable<CatalogElement> elements)
         {
+            int catalog_id = GetCatalogId();
             foreach (var e in elements)
-                e.catalog_id = 12463;
+                e.catalog_id = catalog_id;
             var payload = new { add = elements };
 
             var uri = $"{_apiAddress[0..^3]}v2/catalog_elements";
@@ -333,8 +342,9 @@ namespace MZPO.AmoRepo
         public IEnumerable<CatalogElement> AddCEs(CatalogElement element) => AddCEs(new List<CatalogElement>() { element });
         public IEnumerable<CatalogElement> UpdateCEs(IEnumerable<CatalogElement> elements)
         {
+            int catalog_id = GetCatalogId();
             foreach (var e in elements)
-                e.catalog_id = 12463;
+                e.catalog_id = catalog_id;
             var payload = new { update = elements };
 
             var uri = $"{_apiAddress[0..^3]}v2/catalog_elements";
@@ -352,8 +362,9 @@ namespace MZPO.AmoRepo
         public IEnumerable<CatalogElement> UpdateCEs(CatalogElement element) => UpdateCEs(new List<CatalogElement>() { element });
         public IEnumerable<CatalogElement> DeleteCEs(IEnumerable<CatalogElement> elements)
         {
+            int catalog_id = GetCatalogId();
             foreach (var e in elements)
-                e.catalog_id = 12463;
+                e.catalog_id = catalog_id;
             var payload = new { delete = elements };
 
             var uri = $"{_apiAddress[0..^3]}v2/catalog_elements";

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Integration1C;
 using System.IO;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace MZPO.Controllers
 {
@@ -24,8 +25,6 @@ namespace MZPO.Controllers
             _processQueue = processQueue;
             _log = log;
         }
-
-        
         
         // POST: integration/1c/saveclient
         [HttpPost]
@@ -39,7 +38,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CClientFromLead(leadNumber, accNumber, _amo, _log).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CClient(_amo, _log, leadNumber, accNumber).Run());
 
             return Ok();
         }
@@ -59,9 +58,9 @@ namespace MZPO.Controllers
             catch (Exception e) { _log.Add(e.Message); return Ok(); }
 
             if (!col.ContainsKey("contacts[update][0][id]")) return BadRequest("Unexpected request.");
-            if (!Int32.TryParse(col["contacts[update][0][id]"], out int contactNumber)) return BadRequest("Incorrect lead number.");
+            if (!Int32.TryParse(col["contacts[update][0][id]"], out int contactNumber)) return BadRequest("Incorrect contact number.");
 
-            var task = Task.Run(() => new Update1CClient(contactNumber, acc, _log).Run());
+            var task = Task.Run(() => new Update1CClient(_amo, _log, contactNumber, accNumber).Run());
 
             return Ok();
         }
@@ -71,31 +70,53 @@ namespace MZPO.Controllers
         [ActionName("Client")]
         public IActionResult CreateClientAmo()
         {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("POST: integration/1c/client");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            Client1C client1C = new();
 
-            return Ok();
-        }
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/client ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
 
-        // PATCH: integration/1c/client
-        [HttpPatch]
-        [ActionName("Client")]
-        public IActionResult UpdateClientAmo()
-        {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), client1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to client1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("PATCH: integration/1c/client");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            if (client1C.client_id_1C is null)
+                return BadRequest("Incorrect client_id_1C");
 
-            return Ok();
+            if (string.IsNullOrEmpty(client1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(client1C.phone) &&
+                string.IsNullOrEmpty(client1C.email))
+                return BadRequest("Incorrect contacts");
+
+            if (client1C.amo_ids is not null &&
+                client1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
+
+            List<Amo_id> result = new();
+
+            if (client1C.amo_ids is null ||
+                !client1C.amo_ids.Any())
+                result.AddRange(new CreateOrUpdateAmoContact(client1C, _amo, _log).Run());
+            else
+                result.AddRange(new UpdateAmoContact(client1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
 
         // POST: integration/1c/savecompany
@@ -115,14 +136,14 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CCompanyFromLead(leadNumber, acc, _log).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CCompany(_amo, _log, leadNumber).Run());
 
             return Ok();
         }
 
-        // POST: integration/1c/updateclient
+        // POST: integration/1c/updatecompany
         [HttpPost]
-        [ActionName("UpdateClient")]
+        [ActionName("UpdateCompany")]
         public IActionResult UpdateCompany1C()
         {
             var col = Request.Form;
@@ -137,7 +158,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("contacts[update][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["contacts[update][0][id]"], out int companyNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new Update1CCompany(companyNumber, acc, _log).Run());
+            var task = Task.Run(() => new Update1CCompany(_amo, _log, companyNumber).Run());
 
             return Ok();
         }
@@ -147,31 +168,53 @@ namespace MZPO.Controllers
         [ActionName("Company")]
         public IActionResult CreateCompanyAmo()
         {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("POST: integration/1c/company");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            Company1C company1C = new();
 
-            return Ok();
-        }
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/company ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
 
-        // PATCH: integration/1c/company
-        [HttpPatch]
-        [ActionName("Company")]
-        public IActionResult UpdateCompanyAmo()
-        {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), company1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to company1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("PATCH: integration/1c/company");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            if (company1C.company_id_1C is null)
+                return BadRequest("Incorrect company_id_1C");
 
-            return Ok();
+            if (string.IsNullOrEmpty(company1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(company1C.phone) &&
+                string.IsNullOrEmpty(company1C.email))
+                return BadRequest("Incorrect contacts");
+
+            if (company1C.amo_ids is not null &&
+                company1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
+
+            List<Amo_id> result = new();
+
+            if (company1C.amo_ids is null ||
+                !company1C.amo_ids.Any())
+                result.AddRange(new CreateOrUpdateAmoCompany(company1C, _amo, _log).Run());
+            else
+                result.AddRange(new UpdateAmoCompany(company1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
 
         // POST: integration/1c/savelead
@@ -191,7 +234,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CLeadWithContacts(leadNumber, acc, _log).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CLead(_amo, _log, leadNumber, accNumber).Run());
 
             return Ok();
         }
@@ -213,7 +256,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new Update1CLead(leadNumber, acc, _log).Run());
+            var task = Task.Run(() => new Update1CLead(_amo, _log, leadNumber, accNumber).Run());
 
             return Ok();
         }
@@ -223,31 +266,59 @@ namespace MZPO.Controllers
         [ActionName("Lead")]
         public IActionResult CreateLeadAmo()
         {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("POST: integration/1c/lead");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            Lead1C lead1C = new();
 
-            return Ok();
-        }
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/lead ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
 
-        // PATCH: integration/1c/lead
-        [HttpPatch]
-        [ActionName("Lead")]
-        public IActionResult UpdateLeadAmo()
-        {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), lead1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to lead1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("PATCH: integration/1c/lead");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            if (lead1C.lead_id_1C is null)
+                return BadRequest("Incorrect lead_id_1C");
 
-            return Ok();
+            if (lead1C.client_id_1C == default)
+                return BadRequest("Incorrect client_id_1C");
+
+            if (lead1C.product_id_1C == default)
+                return BadRequest("Incorrect product_id_1C");
+
+            if (string.IsNullOrEmpty(lead1C.organization))
+                return BadRequest("Incorrect organization");
+
+            if (lead1C.is_corporate &&
+                (lead1C.company_id_1C is null))
+                return BadRequest("Incorrect company_id_1C");
+
+            if (lead1C.amo_ids is not null &&
+                lead1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
+
+            List<Amo_id> result = new();
+
+            if (lead1C.amo_ids is null ||
+                !lead1C.amo_ids.Any())
+                result.AddRange(new CreateOrUpdateAmoLead(lead1C, _amo, _log).Run());
+            else
+                result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
 
         // POST: integration/1c/course
@@ -255,31 +326,52 @@ namespace MZPO.Controllers
         [ActionName("Course")]
         public IActionResult CreateCourseAmo()
         {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("POST: integration/1c/course");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            Course1C course1C = new();
 
-            return Ok();
-        }
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/course ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
 
-        // PATCH: integration/1c/course
-        [HttpPatch]
-        [ActionName("Course")]
-        public IActionResult UpdateCourseAmo()
-        {
-            using StreamReader sr = new StreamReader(Request.Body);
-            var hook = sr.ReadToEndAsync().Result;
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), course1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to course1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
-            sw.WriteLine("PATCH: integration/1c/course");
-            sw.WriteLine(WebUtility.UrlDecode(hook));
-            sw.WriteLine("--**--**--");
+            if (course1C.product_id_1C is null)
+                return BadRequest("Incorrect product_id_1C");
 
-            return Ok();
+            if (string.IsNullOrEmpty(course1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(course1C.short_name))
+                return BadRequest("Incorrect short_name");
+
+            if (course1C.amo_ids is not null &&
+                course1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
+
+            List<Amo_id> result = new();
+
+            if (course1C.amo_ids is null ||
+                !course1C.amo_ids.Any())
+                result.AddRange(new CreateOrUpdateAmoCourse(course1C, _amo, _log).Run());
+            else
+                result.AddRange(new UpdateAmoCourse(course1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
 
         // POST: integration/1c/paymentreceived

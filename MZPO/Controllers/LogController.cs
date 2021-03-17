@@ -28,14 +28,14 @@ namespace MZPO.Controllers
 
         // GET: log/queue
         [HttpGet]
-        public ActionResult<string> Queue()                                                                                 //Возвращаем очередь обработки сделок
+        public IActionResult Queue()                                                                                 //Возвращаем очередь обработки сделок
         {
             return Ok(JsonConvert.SerializeObject(_processQueue.GetList(), new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented }));
         }
 
         // GET log/queue/5
         [HttpGet("{id}")]
-        public ActionResult<string> Queue(string id)                                                                        //Передаём CancellationToken по номеру сделки из очереди
+        public IActionResult Queue(string id)                                                                        //Передаём CancellationToken по номеру сделки из очереди
         {
             try
             {

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Net;
 
 namespace Integration1C
@@ -24,45 +25,57 @@ namespace Integration1C
             }
         }
         
-        internal Client1C GetClient(Client1C client) => GetClient(client.Client_id_1C);
+        internal Client1C GetClient(Client1C client) => GetClient((Guid)client.client_id_1C);
 
         internal Client1C GetClient(Guid client_id)
         {
-            string uri = $"http://94.230.11.182:50080/uuc/hs/courses/getStudentInfo?id={client_id.ToString("D")}";
+            string uri = $"http://94.230.11.182:50080/uuc/hs/courses/getStudentInfo?id={client_id:D}";
             Request1C request = new("GET", uri);
 
             StudentDTO student = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), student);
 
             return new() { 
-                Name = student.name,
-                Client_id_1C = student.uid,
-                Phone = student.Telephone,
-                Email = student.Mail,
-                Pass_number = student.Pasport.Number,
-                Pass_serie = student.Pasport.Series,
-                Pass_issued_by = student.Pasport.Issued,
-                Pass_dpt_code = student.Pasport.DivisionCode,
-                Pass_issued_at = student.Pasport.DateOfIssued.ToShortDateString()
+                name = student.name,
+                client_id_1C = student.uid,
+                phone = student.Telephone,
+                email = student.Mail,
+                pass_number = student.Pasport.Number,
+                pass_serie = student.Pasport.Series,
+                pass_issued_by = student.Pasport.Issued,
+                pass_dpt_code = student.Pasport.DivisionCode,
+                pass_issued_at = student.Pasport.DateOfIssued.ToShortDateString()
             };
         }
 
-        internal Client1C UpdateClient(Client1C client)
+        internal Guid UpdateClient(Client1C client)
         {
-            string uri = "";
+            if (client.client_id_1C is null ||
+                client.client_id_1C == default)
+                throw new Exception("Unable to update 1C client, no UID.");
+            
+            string uri = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
-            Request1C request = new("PATCH", uri, content);
-            Client1C result = new();
+            Request1C request = new("POST", uri, content);
+
+            Guid result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
             return result;
         }
 
-        internal Client1C AddClient(Client1C client)
+        internal Guid AddClient(Client1C client)
         {
-            string uri = "";
+            if (string.IsNullOrEmpty(client.email) &&
+                string.IsNullOrEmpty(client.phone))
+                throw new Exception("Unable to add client to 1C: no phone or email.");
+
+            client.client_id_1C = null;
+
+            string uri = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("POST", uri, content);
-            Client1C result = new();
+
+            Guid result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
             return result;
         }

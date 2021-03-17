@@ -1,30 +1,27 @@
-﻿using MZPO.Services;
-using MZPO.AmoRepo;
+﻿using MZPO.AmoRepo;
+using MZPO.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 
 namespace Integration1C
 {
-    class CreateOrUpdateAmoCompany
+    public class CreateOrUpdateAmoCompany
     {
         private readonly Amo _amo;
         private readonly Log _log;
-        private readonly Company1C _company;
-        private readonly string _request;
-        private readonly IAmoRepo<Company> _corpRepo;
-        private readonly CompanyRepository _1CRepo;
+        private readonly Company1C _company1C;
+        private readonly IAmoRepo<Company> _compRepo;
+        private readonly int _amo_acc;
 
-        public CreateOrUpdateAmoCompany(string request, Amo amo, Log log)
+        public CreateOrUpdateAmoCompany(Company1C company1C, Amo amo, Log log)
         {
             _amo = amo;
             _log = log;
-            _company = new();
-            _request = request;
-            _corpRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
-            _1CRepo = new();
+            _company1C = company1C;
+            _compRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
+            _amo_acc = 19453687;
         }
 
         class CompaniesComparer : IEqualityComparer<Company>
@@ -49,113 +46,70 @@ namespace Integration1C
             }
         }
 
-        private static object SetFieldValue(Company company, int fieldId, object fieldValue)
+        private static void AddUIDToEntity(Company1C company1C, int amo_acc, Company company)
         {
-            if (company.custom_fields_values is null) company.custom_fields_values = new();
-
-            if (company.custom_fields_values.Any(x => x.field_id == fieldId))
-                company.custom_fields_values.First(x => x.field_id == fieldId).values[0].value = fieldValue;
-            else
-                company.custom_fields_values.Add(new Company.Custom_fields_value()
-                {
-                    field_id = fieldId,
-                    values = new Company.Custom_fields_value.Values[] {
-                        new Company.Custom_fields_value.Values() { value = fieldValue }
-                    }
-                });
-            return fieldValue;
+            company.custom_fields_values.Add(new Company.Custom_fields_value()
+            {
+                field_id = FieldLists.Companies[amo_acc]["company_id_1C"],
+                values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = company1C.company_id_1C.Value.ToString("D") } }
+            });
         }
 
-        private static void UpdateCompanyInAmo(IAmoRepo<Company> repo, Dictionary<string, int> fieldList, Company1C company, int id)
+        private static void PopulateCFs(Company1C company1C, int amo_acc, Company company)
         {
-            if (id == 0)
+            foreach (var p in company1C.GetType().GetProperties())
+                if (FieldLists.Companies[amo_acc].ContainsKey(p.Name) &&
+                    p.GetValue(company1C) is not null)
+                {
+                    company.custom_fields_values.Add(new Company.Custom_fields_value()
+                    {
+                        field_id = FieldLists.Companies[amo_acc][p.Name],
+                        values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = p.GetValue(company1C) } }
+                    });
+                }
+        }
+
+        private static void UpdateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int company_id, int amo_acc)
+        {
+            Company company = new()
             {
-                CreateCompanyInAmo(repo, fieldList, company);
-                return;
-            }
-            
-            Company newCompany = new()
-            {
-                id = id,
-                name = company.Name
+                id = company_id,
+                name = company1C.name,
+                custom_fields_values = new()
             };
 
-            SetFieldValue(newCompany, fieldList["phone"], company.Phone);
-            SetFieldValue(newCompany, fieldList["email"], company.Email);
-            SetFieldValue(newCompany, fieldList["company_id_1C"], company.Company_id_1C);
-            SetFieldValue(newCompany, fieldList["LPR_name"], company.LPR_name);
-            SetFieldValue(newCompany, fieldList["signee"], company.Signee);
-            SetFieldValue(newCompany, fieldList["INN"], company.INN);
-            SetFieldValue(newCompany, fieldList["OGRN"], company.OGRN);
-            SetFieldValue(newCompany, fieldList["acc_no"], company.Acc_no);
-            SetFieldValue(newCompany, fieldList["KPP"], company.KPP);
-            SetFieldValue(newCompany, fieldList["BIK"], company.BIK);
-            SetFieldValue(newCompany, fieldList["address"], company.Address);
-            SetFieldValue(newCompany, fieldList["post_address"], company.Post_address);
+            AddUIDToEntity(company1C, amo_acc, company);
+
+            PopulateCFs(company1C, amo_acc, company);
 
             try
             {
-                var result = repo.Save(newCompany);
-
-                if (result.Any())
-                    switch (result.First().account_id)
-                    {
-                        case 19453687:
-                            if (company.Amo_ids is null) company.Amo_ids = new();
-                            //company.Amo_ids.corp_id = result.First().id;
-                            return;
-                        case 28395871:
-                            if (company.Amo_ids is null) company.Amo_ids = new();
-                            //company.Amo_ids.ret_id = result.First().id;
-                            return;
-                        default:
-                            return;
-                    }
+                compRepo.Save(company);
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update company in amo: {e}");
+                throw new Exception($"Unable to update company {company_id} in amo: {e}");
             }
         }
 
-        private static void CreateCompanyInAmo(IAmoRepo<Company> repo, Dictionary<string, int> fieldList, Company1C company)
+        private static int CreateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int amo_acc)
         {
-            Company newCompany = new()
+            Company company = new()
             {
-                name = company.Name
+                name = company1C.name,
+                custom_fields_values = new()
             };
 
-            SetFieldValue(newCompany, fieldList["phone"], company.Phone);
-            SetFieldValue(newCompany, fieldList["email"], company.Email);
-            SetFieldValue(newCompany, fieldList["company_id_1C"], company.Company_id_1C);
-            SetFieldValue(newCompany, fieldList["LPR_name"], company.LPR_name);
-            SetFieldValue(newCompany, fieldList["signee"], company.Signee);
-            SetFieldValue(newCompany, fieldList["INN"], company.INN);
-            SetFieldValue(newCompany, fieldList["OGRN"], company.OGRN);
-            SetFieldValue(newCompany, fieldList["acc_no"], company.Acc_no);
-            SetFieldValue(newCompany, fieldList["KPP"], company.KPP);
-            SetFieldValue(newCompany, fieldList["BIK"], company.BIK);
-            SetFieldValue(newCompany, fieldList["address"], company.Address);
-            SetFieldValue(newCompany, fieldList["post_address"], company.Post_address);
+            AddUIDToEntity(company1C, amo_acc, company);
+
+            PopulateCFs(company1C, amo_acc, company);
 
             try
             {
-                var result = repo.Save(newCompany);
-
+                var result = compRepo.AddNew(company);
                 if (result.Any())
-                    switch (result.First().account_id)
-                    {
-                        case 19453687:
-                            if (company.Amo_ids is null) company.Amo_ids = new();
-                            //company.Amo_ids.corp_id = result.First().id;
-                            return;
-                        case 28395871:
-                            if (company.Amo_ids is null) company.Amo_ids = new();
-                            //company.Amo_ids.ret_id = result.First().id;
-                            return;
-                        default:
-                            return;
-                    }
+                    return result.First().id;
+                else throw new Exception("Amo returned no company Ids.");
             }
             catch (Exception e)
             {
@@ -163,54 +117,66 @@ namespace Integration1C
             }
         }
 
-        public void Run()
+        public List<Amo_id> Run()
         {
-            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(_request), _company); }
-            catch (Exception e) { _log.Add($"Unable to process request: {e} --- Request: {_request}"); return; }
+            if (_company1C.amo_ids is null) _company1C.amo_ids = new();
 
             try
             {
-                #region Checking if already exist
-                if (_company.Amo_ids is not null)
+                #region Checking if company already linked to entity and updationg if possible
+                if (_company1C.amo_ids.Any(x => x.account_id == _amo_acc))
                 {
-                    UpdateCompanyInAmo(_corpRepo, FieldLists.CompanyCorp, _company, _company.Amo_ids.First().Entity_id);
-                    return;
-                }
+                    foreach (var c in _company1C.amo_ids.Where(x => x.account_id == _amo_acc))
+                        UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id, _amo_acc);
+                    return _company1C.amo_ids;
+                } 
                 #endregion
 
-                #region Checking corporate for company
-                List<Company> corpCompanies = new();
+                #region Checking company
+                List<Company> similarCompanies = new();
+                if (_company1C.phone is not null &&
+                    _company1C.phone != "")
+                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.phone}"));
 
-                corpCompanies.AddRange(_corpRepo.GetByCriteria($"query={_company.Company_id_1C}"));
-                if (!corpCompanies.Any())
-                {
-                    corpCompanies.AddRange(_corpRepo.GetByCriteria($"query={_company.Phone}"));
-                    corpCompanies.AddRange(_corpRepo.GetByCriteria($"query={_company.Email}"));
-                }
-
-                if (corpCompanies.Any() &&
-                    corpCompanies.Distinct(new CompaniesComparer()).Count() == 1)
-                {
-                    UpdateCompanyInAmo(_corpRepo, FieldLists.ContactCorp, _company, corpCompanies.First().id);
-                }
-                else if (corpCompanies.Any() &&
-                    corpCompanies.Distinct(new CompaniesComparer()).Count() > 1)
-                {
-                    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(corpCompanies.Distinct(new CompaniesComparer()), Formatting.Indented)}");
-                    CreateCompanyInAmo(_corpRepo, FieldLists.ContactCorp, _company);
-                }
-                else
-                {
-                    CreateCompanyInAmo(_corpRepo, FieldLists.ContactCorp, _company);
-                }
+                if (_company1C.email is not null &&
+                    _company1C.email != "")
+                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.email}"));
                 #endregion
 
-                _1CRepo.UpdateCompany(_company);
+                #region Updating found company
+                if (similarCompanies.Any())
+                {
+                    UpdateCompanyInAmo(_company1C, _compRepo, similarCompanies.First().id, _amo_acc);
+                    _company1C.amo_ids.Add(new()
+                    {
+                        account_id = _amo_acc,
+                        entity_id = similarCompanies.First().id
+                    });
+                    
+                    return _company1C.amo_ids;
+                }
+
+                if (similarCompanies.Distinct(new CompaniesComparer()).Count() > 1)
+                    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarCompanies.Distinct(new CompaniesComparer()), Formatting.Indented)}");
+                #endregion
+
+                #region Creating new company
+                var compId = CreateCompanyInAmo(_company1C, _compRepo, _amo_acc);
+
+                if (_company1C.amo_ids is null) _company1C.amo_ids = new();
+                _company1C.amo_ids.Add(new()
+                {
+                    account_id = 19453687,
+                    entity_id = compId
+                });
+                #endregion
             }
             catch (Exception e)
             {
-                _log.Add($"Error in CreateOrUpdateAmoCompany: {e}");
+                _log.Add($"Unable to update company in amo from 1C: {e}");
             }
+
+            return _company1C.amo_ids;
         }
     }
 }

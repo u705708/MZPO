@@ -8,13 +8,15 @@ namespace Integration1C
 {
     public class Diploma
     {
-        public string Discipline { get; set; }
-        public string Qualification { get; set; }
-        public int Hours { get; set; } 
-        public string EducationForm { get; set; }
-        public string EducationType { get; set; }
-        public string DiplomaNumber { get; set; }
-        public DateTime DateOfIssue { get; set; }
-        public Guid Client_Id_1C { get; set; }
+#pragma warning disable IDE1006 // Naming Styles
+        public string discipline { get; set; }
+        public string qualification { get; set; }
+        public int hours { get; set; } 
+        public string educationForm { get; set; }
+        public string educationType { get; set; }
+        public string diplomaNumber { get; set; }
+        public DateTime dateOfIssue { get; set; }
+        public Guid client_Id_1C { get; set; }
+#pragma warning restore IDE1006 // Naming Styles    
     }
 }
