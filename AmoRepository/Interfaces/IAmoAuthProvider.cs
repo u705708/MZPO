@@ -9,5 +9,10 @@
         /// Returns amoCRM authentication token.
         /// </summary>
         public string GetToken();
+
+        /// <summary>
+        /// Returns amoCRM account id.
+        /// </summary>
+        public int GetAccountId();
     }
 }

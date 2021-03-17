@@ -36,14 +36,13 @@ namespace Integration1C
         {
             foreach (var p in company1C.GetType().GetProperties())
                 if (FieldLists.Companies[19453687].ContainsKey(p.Name) &&
-                    p.GetValue(company1C) is not null &&
-                    (string)p.GetValue(company1C) != "") //В зависимости от политики передачи пустых полей
+                    p.GetValue(company1C) is not null)
                 {
                     if (company.custom_fields_values is null) company.custom_fields_values = new();
                     company.custom_fields_values.Add(new Company.Custom_fields_value()
                     {
                         field_id = FieldLists.Companies[19453687][p.Name],
-                        values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = (string)p.GetValue(company1C) } }
+                        values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = p.GetValue(company1C) } }
                     });
                 }
         }
@@ -79,13 +78,14 @@ namespace Integration1C
                     _company1C.amo_ids.Any(x => x.account_id == _amo_acc))
                     foreach (var c in _company1C.amo_ids.Where(x => x.account_id == _amo_acc))
                         UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id);
+                
+                return _company1C.amo_ids;
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to update company in amo from 1C: {e}");
+                return new();
             }
-            
-            return _company1C.amo_ids;
         }
     }
 }

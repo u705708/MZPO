@@ -126,6 +126,11 @@ namespace MZPO.Services
             Refresh();
             return _authToken;
         }
+
+        public int GetAccountId()
+        {
+            return _amoAccountAuth.id;
+        }
         #endregion
     }
 }

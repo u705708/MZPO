@@ -2,7 +2,6 @@
 using MZPO.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Integration1C
 {
@@ -32,13 +31,12 @@ namespace Integration1C
         {
             foreach (var p in course.GetType().GetProperties())
                 if (FieldLists.Courses[acc_id].ContainsKey(p.Name) &&
-                    p.GetValue(course) is not null &&
-                    (string)p.GetValue(course) != "") //В зависимости от политики передачи пустых полей
+                    p.GetValue(course) is not null)
                 {
                     ce.custom_fields.Add(new CatalogElement.Custom_fields()
                     {
                         id = FieldLists.Courses[acc_id][p.Name],
-                        values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = (string)p.GetValue(course) } }
+                        values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = p.GetValue(course).ToString() } }
                     });
                 }
         }

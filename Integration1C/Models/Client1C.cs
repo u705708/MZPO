@@ -14,7 +14,7 @@ namespace Integration1C
         public string email { get; set; }
         public string phone { get; set; }
         public string name { get; set; }
-        public DateTime dob { get; set; }
+        public DateTime? dob { get; set; }
         public string pass_serie { get; set; }
         public string pass_number { get; set; }
         public string pass_issued_by { get; set; }

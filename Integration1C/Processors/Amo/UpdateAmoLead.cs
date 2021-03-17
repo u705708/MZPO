@@ -35,13 +35,12 @@ namespace Integration1C
         {
             foreach (var p in lead1C.GetType().GetProperties())
                 if (FieldLists.Leads[acc_id].ContainsKey(p.Name) &&
-                    p.GetValue(lead1C) is not null &&
-                    (string)p.GetValue(lead1C) != "") //В зависимости от политики передачи пустых полей
+                    p.GetValue(lead1C) is not null)
                 {
                     lead.custom_fields_values.Add(new Lead.Custom_fields_value()
                     {
                         field_id = FieldLists.Leads[acc_id][p.Name],
-                        values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = (string)p.GetValue(lead1C) } }
+                        values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = p.GetValue(lead1C) } }
                     });
                 }
         }

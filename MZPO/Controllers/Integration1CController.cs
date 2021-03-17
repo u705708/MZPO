@@ -75,6 +75,14 @@ namespace MZPO.Controllers
 
             Client1C client1C = new();
 
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/client ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
             try
             {
                 JsonConvert.PopulateObject(WebUtility.UrlDecode(request), client1C);
@@ -82,8 +90,23 @@ namespace MZPO.Controllers
             catch (Exception e)
             {
                 _log.Add($"Unable to parse JSON to client1C: {e}");
-                return BadRequest("Incorrect JSON");
+                return BadRequest($"Incorrect JSON");
             }
+
+            if (client1C.client_id_1C is null)
+                return BadRequest("Incorrect client_id_1C");
+
+            if (string.IsNullOrEmpty(client1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(client1C.phone) &&
+                string.IsNullOrEmpty(client1C.email))
+                return BadRequest("Incorrect contacts");
+
+            if (client1C.amo_ids is not null &&
+                client1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
 
             List<Amo_id> result = new();
 
@@ -150,6 +173,14 @@ namespace MZPO.Controllers
 
             Company1C company1C = new();
 
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/company ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
             try
             {
                 JsonConvert.PopulateObject(WebUtility.UrlDecode(request), company1C);
@@ -157,8 +188,23 @@ namespace MZPO.Controllers
             catch (Exception e)
             {
                 _log.Add($"Unable to parse JSON to company1C: {e}");
-                return BadRequest("Incorrect JSON");
+                return BadRequest($"Incorrect JSON");
             }
+
+            if (company1C.company_id_1C is null)
+                return BadRequest("Incorrect company_id_1C");
+
+            if (string.IsNullOrEmpty(company1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(company1C.phone) &&
+                string.IsNullOrEmpty(company1C.email))
+                return BadRequest("Incorrect contacts");
+
+            if (company1C.amo_ids is not null &&
+                company1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
 
             List<Amo_id> result = new();
 
@@ -225,6 +271,14 @@ namespace MZPO.Controllers
 
             Lead1C lead1C = new();
 
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/lead ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
             try
             {
                 JsonConvert.PopulateObject(WebUtility.UrlDecode(request), lead1C);
@@ -232,8 +286,29 @@ namespace MZPO.Controllers
             catch (Exception e)
             {
                 _log.Add($"Unable to parse JSON to lead1C: {e}");
-                return BadRequest("Incorrect JSON");
+                return BadRequest($"Incorrect JSON");
             }
+
+            if (lead1C.lead_id_1C is null)
+                return BadRequest("Incorrect lead_id_1C");
+
+            if (lead1C.client_id_1C == default)
+                return BadRequest("Incorrect client_id_1C");
+
+            if (lead1C.product_id_1C == default)
+                return BadRequest("Incorrect product_id_1C");
+
+            if (string.IsNullOrEmpty(lead1C.organization))
+                return BadRequest("Incorrect organization");
+
+            if (lead1C.is_corporate &&
+                (lead1C.company_id_1C is null))
+                return BadRequest("Incorrect company_id_1C");
+
+            if (lead1C.amo_ids is not null &&
+                lead1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
 
             List<Amo_id> result = new();
 
@@ -256,6 +331,14 @@ namespace MZPO.Controllers
 
             Course1C course1C = new();
 
+            #region Adding to log
+            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} integration/1c/course ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
             try
             {
                 JsonConvert.PopulateObject(WebUtility.UrlDecode(request), course1C);
@@ -263,8 +346,22 @@ namespace MZPO.Controllers
             catch (Exception e)
             {
                 _log.Add($"Unable to parse JSON to course1C: {e}");
-                return BadRequest("Incorrect JSON");
+                return BadRequest($"Incorrect JSON");
             }
+
+            if (course1C.product_id_1C is null)
+                return BadRequest("Incorrect product_id_1C");
+
+            if (string.IsNullOrEmpty(course1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(course1C.short_name))
+                return BadRequest("Incorrect short_name");
+
+            if (course1C.amo_ids is not null &&
+                course1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+            #endregion
 
             List<Amo_id> result = new();
 

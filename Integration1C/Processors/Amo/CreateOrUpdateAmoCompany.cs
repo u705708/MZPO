@@ -59,13 +59,12 @@ namespace Integration1C
         {
             foreach (var p in company1C.GetType().GetProperties())
                 if (FieldLists.Companies[amo_acc].ContainsKey(p.Name) &&
-                    p.GetValue(company1C) is not null &&
-                    (string)p.GetValue(company1C) != "") //В зависимости от политики передачи пустых полей
+                    p.GetValue(company1C) is not null)
                 {
                     company.custom_fields_values.Add(new Company.Custom_fields_value()
                     {
                         field_id = FieldLists.Companies[amo_acc][p.Name],
-                        values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = (string)p.GetValue(company1C) } }
+                        values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = p.GetValue(company1C) } }
                     });
                 }
         }
@@ -107,9 +106,9 @@ namespace Integration1C
 
             try
             {
-                var result = compRepo.AddNewComplex(company);
+                var result = compRepo.AddNew(company);
                 if (result.Any())
-                    return result.First();
+                    return result.First().id;
                 else throw new Exception("Amo returned no company Ids.");
             }
             catch (Exception e)

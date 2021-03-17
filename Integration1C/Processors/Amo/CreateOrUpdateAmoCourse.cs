@@ -38,13 +38,12 @@ namespace Integration1C
         {
             foreach (var p in course.GetType().GetProperties())
                 if (FieldLists.Courses[acc_id].ContainsKey(p.Name) &&
-                    p.GetValue(course) is not null &&
-                    (string)p.GetValue(course) != "") //В зависимости от политики передачи пустых полей
+                    p.GetValue(course) is not null)
                 {
                     ce.custom_fields.Add(new CatalogElement.Custom_fields()
                     {
                         id = FieldLists.Courses[acc_id][p.Name],
-                        values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = (string)p.GetValue(course) } }
+                        values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = p.GetValue(course).ToString() } }
                     });
                 }
         }
@@ -100,7 +99,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update company in amo from 1C: {e}");
+                _log.Add($"Unable to update course in amo from 1C: {e}");
             }
 
             return _course1C.amo_ids;

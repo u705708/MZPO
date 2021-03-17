@@ -52,7 +52,7 @@ namespace Integration1C
         {
             contact.custom_fields_values.Add(new Contact.Custom_fields_value()
             {
-                field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
+                field_id = FieldLists.Contacts[acc_id]["client_id_1C"],
                 values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.Value.ToString("D") } }
             });
         }
@@ -61,13 +61,18 @@ namespace Integration1C
         {
             foreach (var p in client1C.GetType().GetProperties())
                 if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
-                    p.GetValue(client1C) is not null &&
-                    (string)p.GetValue(client1C) != "") //В зависимости от политики передачи пустых полей
+                    p.GetValue(client1C) is not null)
                 {
+                    var value = p.GetValue(client1C);
+                    if (p.Name == "dob")
+                    {
+                        DateTime dob = (DateTime)p.GetValue(client1C);
+                        value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
+                    }
                     contact.custom_fields_values.Add(new Contact.Custom_fields_value()
                     {
                         field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = (string)p.GetValue(client1C) } }
+                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = value } }
                     });
                 }
         }
@@ -109,9 +114,9 @@ namespace Integration1C
 
             try
             {
-                var result = contRepo.AddNewComplex(contact);
+                var result = contRepo.AddNew(contact);
                 if (result.Any())
-                    return result.First();
+                    return (int)result.First().id;
                 else throw new Exception("Amo returned no contact Ids.");
             }
             catch (Exception e)
@@ -178,7 +183,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update company in amo from 1C: {e}");
+                _log.Add($"Unable to update contact in amo from 1C: {e}");
             }
 
             return _client1C.amo_ids;

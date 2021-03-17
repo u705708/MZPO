@@ -201,10 +201,10 @@ namespace MZPO.LeadProcessors
                 for (int i = 1; i <= 30; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
+                    if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
+                    UpdateLeadFromAmo();                                                                                //Загружаем сделку
                     try { Task.Delay((int)TimeSpan.FromSeconds(60).TotalMilliseconds, _token).Wait(); }
                     catch { _log.Add($"LeadProcessor {_leadNumber}: Task cancelled."); }
-                    UpdateLeadFromAmo();                                                                                //Загружаем сделку
-                    if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
                 }
             }
             return;
