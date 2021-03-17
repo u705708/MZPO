@@ -71,8 +71,8 @@ namespace MZPO.Controllers
         public IActionResult Get()
         {
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
-            var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-            var leadRepo = _amo.GetAccountById(28395871).GetRepo<Lead>();
+            //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
+            //var leadRepo = _amo.GetAccountById(28395871).GetRepo<Lead>();
             //Contact contact = new();
 
             //var oldContact = contRepo.GetById(33261063);
