@@ -27,7 +27,7 @@ namespace Integration1C
             lead.custom_fields_values.Add(new Lead.Custom_fields_value()
             {
                 field_id = FieldLists.Leads[acc_id]["lead_id_1C"],
-                values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = lead1C.lead_id_1C.ToString("D") } }
+                values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = lead1C.lead_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -69,7 +69,7 @@ namespace Integration1C
             }
         }
 
-        public void Run()
+        public List<Amo_id> Run()
         {
             try
             {
@@ -85,6 +85,8 @@ namespace Integration1C
             {
                 _log.Add($"Unable to update lead {_lead1C.lead_id_1C} in amo: {e}");
             }
+
+            return _lead1C.amo_ids;
         }
     }
 }

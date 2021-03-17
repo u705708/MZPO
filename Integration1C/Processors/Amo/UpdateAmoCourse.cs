@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Integration1C
 {
-    class UpdateAmoCourse
+    public class UpdateAmoCourse
     {
         private readonly Amo _amo;
         private readonly Log _log;
@@ -24,7 +24,7 @@ namespace Integration1C
             ce.custom_fields.Add(new CatalogElement.Custom_fields()
             {
                 id = FieldLists.Courses[acc_id]["product_id_1C"],
-                values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.product_id_1C.ToString("D") } }
+                values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.product_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -59,7 +59,7 @@ namespace Integration1C
             leadRepo.UpdateCEs(ce);
         }
 
-        public void Run()
+        public List<Amo_id> Run()
         {
             try
             {
@@ -73,6 +73,8 @@ namespace Integration1C
             {
                 _log.Add($"Unable to update course in amo: {e}");
             }
+
+            return _course1C.amo_ids;
         }
     }
 }

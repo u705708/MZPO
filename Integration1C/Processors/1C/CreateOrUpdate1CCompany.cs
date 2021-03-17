@@ -56,18 +56,19 @@ namespace Integration1C
             PopulateCFs(company, amo_acc, company1C);
 
             var result = new CompanyRepository().AddCompany(company1C);
-            return result.company_id_1C;
+            if (result == default)
+                throw new Exception($"Unable to create company in 1C: returned empty guid.");
+            return result;
         }
 
-        public void Run()
+        public Guid Run()
         {
             try
             {
-                var leadRepo = _amo.GetAccountById(_amo_acc).GetRepo<Lead>();
                 var compRepo = _amo.GetAccountById(_amo_acc).GetRepo<Company>();
 
                 #region Retrieving company
-                Lead lead = leadRepo.GetById(_leadId);
+                Lead lead = _amo.GetAccountById(_amo_acc).GetRepo<Lead>().GetById(_leadId);
 
                 if (lead._embedded is null ||
                     lead._embedded.companies is null ||
@@ -86,7 +87,7 @@ namespace Integration1C
                 {
                     UpdateCompanyIn1C(company, company_id_1C, _amo_acc);
                     _log.Add($"Updated company in 1C {company_id_1C}.");
-                    return;
+                    return company_id_1C;
                 }
                 #endregion
 
@@ -108,10 +109,13 @@ namespace Integration1C
                 #endregion
 
                 compRepo.Save(updatedCompany);
+
+                return result;
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to create or update company from lead {_leadId} in 1C: {e}");
+                return default;
             }
         }
     }

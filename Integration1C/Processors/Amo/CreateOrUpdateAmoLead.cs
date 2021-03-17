@@ -25,7 +25,7 @@ namespace Integration1C
             lead.custom_fields_values.Add(new Lead.Custom_fields_value()
             {
                 field_id = FieldLists.Leads[acc_id]["lead_id_1C"],
-                values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = lead1C.lead_id_1C.ToString("D") } }
+                values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = lead1C.lead_id_1C.Value.ToString("D") } }
             });
         }
 

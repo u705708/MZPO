@@ -9,7 +9,7 @@ namespace Integration1C
     public class Lead1C
     {
 #pragma warning disable IDE1006 // Naming Styles
-        public Guid lead_id_1C { get; set; }
+        public Guid? lead_id_1C { get; set; }
         public List<Amo_id> amo_ids { get; set; }
         public Guid client_id_1C { get; set; }
         public Guid product_id_1C { get; set; }

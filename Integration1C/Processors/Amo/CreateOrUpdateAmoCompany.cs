@@ -51,7 +51,7 @@ namespace Integration1C
             company.custom_fields_values.Add(new Company.Custom_fields_value()
             {
                 field_id = FieldLists.Companies[amo_acc]["company_id_1C"],
-                values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = company1C.company_id_1C.ToString("D") } }
+                values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = company1C.company_id_1C.Value.ToString("D") } }
             });
         }
 

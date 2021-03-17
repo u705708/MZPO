@@ -32,8 +32,8 @@ namespace Integration1C
         {
             HttpResponseMessage response;
 
-            using HttpClient httpClient = new HttpClient();
-            using HttpRequestMessage request = new HttpRequestMessage(_httpMethod, _uri);
+            using HttpClient httpClient = new();
+            using HttpRequestMessage request = new(_httpMethod, _uri);
 
             string username = "";
             string pwd = "";

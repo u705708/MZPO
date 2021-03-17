@@ -20,7 +20,7 @@ namespace Integration1C
             _client1C = client1C;
         }
 
-        List<int> amo_accounts = new()
+        private readonly List<int> amo_accounts = new()
         {
             19453687,
             28395871
@@ -53,7 +53,7 @@ namespace Integration1C
             contact.custom_fields_values.Add(new Contact.Custom_fields_value()
             {
                 field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
-                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.ToString("D") } }
+                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.Value.ToString("D") } }
             });
         }
 

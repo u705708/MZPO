@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Integration1C
 {
-    class CreateOrUpdateAmoCourse
+    public class CreateOrUpdateAmoCourse
     {
         private readonly Amo _amo;
         private readonly Log _log;
@@ -19,7 +19,7 @@ namespace Integration1C
             _course1C = course1C;
         }
 
-        List<int> amo_accounts = new()
+        private readonly List<int> amo_accounts = new()
         {
             19453687,
             28395871
@@ -30,7 +30,7 @@ namespace Integration1C
             ce.custom_fields.Add(new CatalogElement.Custom_fields()
             {
                 id = FieldLists.Courses[acc_id]["product_id_1C"],
-                values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.product_id_1C.ToString("D") } }
+                values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.product_id_1C.Value.ToString("D") } }
             });
         }
 

@@ -1,6 +1,7 @@
 ﻿using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
+using System.Collections.Generic;
 
 namespace Integration1C
 {
@@ -22,7 +23,7 @@ namespace Integration1C
             contact.custom_fields_values.Add(new Contact.Custom_fields_value()
             {
                 field_id = FieldLists.Contacts[acc_id]["company_id_1C"],
-                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.ToString("D") } }
+                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -65,7 +66,7 @@ namespace Integration1C
             }
         }
 
-        public void Run()
+        public List<Amo_id> Run()
         {
             try
             {
@@ -77,6 +78,8 @@ namespace Integration1C
             {
                 _log.Add($"Unable to update company in amo from 1C: {e}");
             }
+
+            return _client1C.amo_ids;
         }
     }
 }
