@@ -18,7 +18,7 @@ namespace Integration1C
 
         internal Lead1C GetLead(Guid lead_id)
         {
-            string method = $"http://94.230.11.182:50080/uuc/hs/courses/EditApplication?id={lead_id:D}";
+            string method = $"EditApplication?id={lead_id:D}";
             Request1C request = new("GET", method, _cred1C);
             
             Lead1C result = new();
@@ -32,7 +32,7 @@ namespace Integration1C
                 lead.lead_id_1C == default)
                 throw new Exception("Unable to update 1C lead, no UID.");
 
-            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditApplication";
+            string method = "EditApplication";
             string content = JsonConvert.SerializeObject(lead, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("PATCH", method, content, _cred1C);
 
@@ -49,7 +49,7 @@ namespace Integration1C
 
             lead.lead_id_1C = null;
 
-            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditApplication";
+            string method = "EditApplication";
             string content = JsonConvert.SerializeObject(lead, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("POST", method, content, _cred1C);
 

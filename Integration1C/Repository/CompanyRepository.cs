@@ -18,7 +18,7 @@ namespace Integration1C
 
         internal Company1C GetCompany(Guid company_id)
         {
-            string method = $"http://94.230.11.182:50080/uuc/hs/courses/EditPartner?id={company_id:D}";
+            string method = $"EditPartner?id={company_id:D}";
             Request1C request = new("GET", method, _cred1C);
             
             Company1C result = new();
@@ -32,7 +32,7 @@ namespace Integration1C
                 company.company_id_1C == default)
                 throw new Exception("Unable to update 1C client, no UID.");
 
-            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditPartner";
+            string method = "EditPartner";
             string content = JsonConvert.SerializeObject(company, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("PATCH", method, content, _cred1C);
 
@@ -49,7 +49,7 @@ namespace Integration1C
 
             company.company_id_1C = null;
 
-            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditPartner";
+            string method = "EditPartner";
             string content = JsonConvert.SerializeObject(company, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("POST", method, content, _cred1C);
 

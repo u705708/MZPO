@@ -36,7 +36,7 @@ namespace Integration1C
 
         internal Client1C GetClient(Guid client_id)
         {
-            string method = $"http://94.230.11.182:50080/uuc/hs/courses/getStudentInfo?id={client_id:D}";
+            string method = $"getStudentInfo?id={client_id:D}";
             Request1C request = new("GET", method, _cred1C);
 
             StudentDTO student = new();
@@ -61,7 +61,7 @@ namespace Integration1C
                 client.client_id_1C == default)
                 throw new Exception("Unable to update 1C client, no UID.");
             
-            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
+            string method = "EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("POST", method, content, _cred1C);
 
@@ -78,7 +78,7 @@ namespace Integration1C
 
             client.client_id_1C = null;
 
-            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
+            string method = "EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
             Request1C request = new("POST", method, content, _cred1C);
 

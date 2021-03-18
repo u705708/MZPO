@@ -19,7 +19,7 @@ namespace Integration1C
 
         internal Course1C GetCourse(Guid course_id)
         {
-            string method = $"http://94.230.11.182:50080/uuc/hs/courses/EditApplication?id={course_id:D}";
+            string method = $"EditApplication?id={course_id:D}";
             Request1C request = new("GET", method, _cred1C);
             Course1C result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
