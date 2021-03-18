@@ -16,6 +16,7 @@ namespace MZPO.LeadProcessors
         public string form_name_site { get; set; }
         public string site { get; set; }
         public string page_url { get; set; }
+        public string page_title { get; set; }
         public string roistat_marker { get; set; }
         public string roistat_visit { get; set; }
         public string city_name { get; set; }
@@ -24,6 +25,11 @@ namespace MZPO.LeadProcessors
         public string _ym_uid { get; set; }
         public string _ya_uid { get; set; }
         public string clid { get; set; }
+        public string utm_source { get; set; }
+        public string utm_medium { get; set; }
+        public string utm_term { get; set; }
+        public string utm_content { get; set; }
+        public string utm_campaign { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

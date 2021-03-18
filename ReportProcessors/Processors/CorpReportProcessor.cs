@@ -20,7 +20,7 @@ namespace MZPO.ReportProcessors
         {
         }
 
-        private readonly List<(int, string)> managers = new List<(int, string)>
+        private readonly List<(int, string)> managers = new()
         {
             (2375116, "Киреева Светлана"),
             (2375122, "Васина Елена"),

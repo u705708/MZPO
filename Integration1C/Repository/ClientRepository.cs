@@ -1,12 +1,19 @@
-﻿using Newtonsoft.Json;
+﻿using MZPO.Services;
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Net;
 
 namespace Integration1C
 {
     internal class ClientRepository
     {
+        private readonly Cred1C _cred1C;
+
+        public ClientRepository(Cred1C cred1C)
+        {
+            _cred1C = cred1C;
+        }
+
         public class StudentDTO
         {
             public string name;
@@ -29,8 +36,8 @@ namespace Integration1C
 
         internal Client1C GetClient(Guid client_id)
         {
-            string uri = $"http://94.230.11.182:50080/uuc/hs/courses/getStudentInfo?id={client_id:D}";
-            Request1C request = new("GET", uri);
+            string method = $"http://94.230.11.182:50080/uuc/hs/courses/getStudentInfo?id={client_id:D}";
+            Request1C request = new("GET", method, _cred1C);
 
             StudentDTO student = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), student);
@@ -54,9 +61,9 @@ namespace Integration1C
                 client.client_id_1C == default)
                 throw new Exception("Unable to update 1C client, no UID.");
             
-            string uri = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
+            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
-            Request1C request = new("POST", uri, content);
+            Request1C request = new("POST", method, content, _cred1C);
 
             Guid result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
@@ -71,9 +78,9 @@ namespace Integration1C
 
             client.client_id_1C = null;
 
-            string uri = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
+            string method = "http://94.230.11.182:50080/uuc/hs/courses/EditStudent";
             string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
-            Request1C request = new("POST", uri, content);
+            Request1C request = new("POST", method, content, _cred1C);
 
             Guid result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);

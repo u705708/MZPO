@@ -15,7 +15,7 @@ namespace MZPO.LeadProcessors
         public InitialLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token) 
             : base(leadNumber, acc, processQueue, log, token) { }
 
-        private readonly List<string> sites = new List<string>
+        private readonly List<string> sites = new()
         {
             "mirk.msk.ru",
             "mzpo-s.ru",
@@ -37,7 +37,7 @@ namespace MZPO.LeadProcessors
             "mirk.vrach.kosmetolog",
             "ucheba.ru"
         };                                                      //Список сайтов компании
-        private readonly List<(string, string)> wz = new List<(string, string)>
+        private readonly List<(string, string)> wz = new()
         {
             ( "WZ (mirk.msk_WA)", "mirk.msk.ru" ),
             ( "WZ (mzpo-s.ru_WA)", "mzpo-s.ru" ),
@@ -156,7 +156,7 @@ namespace MZPO.LeadProcessors
             {
                 string[] words = applicationType.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                StringBuilder sb = new StringBuilder(applicationType.Length - 5);
+                StringBuilder sb = new(applicationType.Length - 5);
 
                 foreach (var word in words)
                 {

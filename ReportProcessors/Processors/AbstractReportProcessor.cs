@@ -68,7 +68,7 @@ namespace MZPO.ReportProcessors
         /// <returns>Время ответа клиенту в секундах</returns>
         protected static int GetLeadResponseTime(Lead lead, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
         {
-            List<int> replyTimestamps = new List<int>();
+            List<int> replyTimestamps = new();
 
             int timeOfReference = (int)lead.created_at;
 
@@ -174,7 +174,7 @@ namespace MZPO.ReportProcessors
         /// <returns>Среднее время ответа клиенту в секундах</returns>
         protected static double GetAverageResponseTime(IEnumerable<Lead> leads, List<(int?, int, int, int?)> longAnsweredLeads, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
         {
-            List<int> responseTimes = new List<int>();
+            List<int> responseTimes = new();
 
             Parallel.ForEach(leads, x => {
                 var rTime = GetLeadResponseTime(x, leadRepo, contRepo);
@@ -201,7 +201,7 @@ namespace MZPO.ReportProcessors
         /// <returns>Среднее время ответа клиенту в секундах</returns>
         protected static double GetAverageResponseTime(IEnumerable<Lead> leads, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
         {
-            List<int> responseTimes = new List<int>();
+            List<int> responseTimes = new();
 
             Parallel.ForEach(leads, x => {
                 var rTime = GetLeadResponseTime(x, leadRepo, contRepo);

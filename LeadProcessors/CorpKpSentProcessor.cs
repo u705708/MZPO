@@ -33,7 +33,7 @@ namespace MZPO.LeadProcessors
             _spreadsheetId = "1xuxd7RfHTTCtalfbXfyJbx2BuNb5RflxwqgtlBamQFM";
         }
 
-        private readonly List<(int, string)> managers = new List<(int, string)>
+        private readonly List<(int, string)> managers = new()
         {
             (2375116, "Киреева Светлана"),
             (2375122, "Васина Елена"),

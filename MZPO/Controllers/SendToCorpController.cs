@@ -31,7 +31,7 @@ namespace MZPO.Controllers
             Lazy<ILeadProcessor> leadProcessor;
             Task task;
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
 
             if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");

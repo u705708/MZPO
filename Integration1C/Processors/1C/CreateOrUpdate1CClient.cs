@@ -13,13 +13,15 @@ namespace Integration1C
         private readonly Log _log;
         private readonly int _leadId;
         private readonly int _amo_acc;
+        private readonly ClientRepository _repo1C;
 
-        public CreateOrUpdate1CClient(Amo amo, Log log, int leadId, int amo_acc)
+        public CreateOrUpdate1CClient(Amo amo, Log log, int leadId, int amo_acc, Cred1C cred1C)
         {
             _amo = amo;
             _log = log;
             _leadId = leadId;
             _amo_acc = amo_acc;
+            _repo1C = new(cred1C);
         }
 
         private readonly List<int> amo_accounts = new()
@@ -54,14 +56,18 @@ namespace Integration1C
         {
             foreach (var p in client1C.GetType().GetProperties())
                 if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
-                    p.GetValue(client1C) is not null &&
-                    (string)p.GetValue(client1C) != "") //В зависимости от политики передачи пустых полей
+                    p.GetValue(client1C) is not null) //В зависимости от политики передачи пустых полей
                 {
-                    if (contact.custom_fields_values is null) contact.custom_fields_values = new();
+                    var value = p.GetValue(client1C);
+                    if (p.Name == "dob")
+                    {
+                        DateTime dob = (DateTime)p.GetValue(client1C);
+                        value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
+                    }
                     contact.custom_fields_values.Add(new Contact.Custom_fields_value()
                     {
                         field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = (string)p.GetValue(client1C) } }
+                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = value } }
                     });
                 }
         }
@@ -126,9 +132,8 @@ namespace Integration1C
             }
         }
 
-        private static void UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, Amo amo, Log log)
+        private static void UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, Amo amo, Log log, ClientRepository repo1C)
         {
-            var repo1C = new ClientRepository();
             var client1C = repo1C.GetClient(client_id_1C);
             if (client1C == default) throw new Exception($"Unable to add client to 1C. 1C returned no client {client_id_1C}.");
 
@@ -139,9 +144,9 @@ namespace Integration1C
             new UpdateAmoContact(client1C, amo, log).Run();
         }
 
-        private static void CreateClientIn1C(Client1C client1C)
+        private static void CreateClientIn1C(Client1C client1C, ClientRepository repo1C)
         {
-            var result = new ClientRepository().AddClient(client1C);
+            var result = repo1C.AddClient(client1C);
             if (result == default) throw new Exception("Unable to add client to 1C. 1C returned no amo_ids.");
             client1C.client_id_1C = result;
         }
@@ -192,7 +197,7 @@ namespace Integration1C
                     if (c.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]) &&
                         Guid.TryParse((string)c.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out Guid client_id_1C))
                     {
-                        UpdateClientIn1C(client_id_1C, c, _amo_acc, _amo, _log);
+                        UpdateClientIn1C(client_id_1C, c, _amo_acc, _amo, _log, _repo1C);
                         return client_id_1C;
                     }
                 #endregion
@@ -234,7 +239,7 @@ namespace Integration1C
                         if (c.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]) &&
                             Guid.TryParse((string)c.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out Guid client_id_1C))
                         {
-                            UpdateClientIn1C(client_id_1C, contact, a, _amo, _log);
+                            UpdateClientIn1C(client_id_1C, contact, a, _amo, _log, _repo1C);
                             return client_id_1C;
                         }
                     #endregion
@@ -263,7 +268,7 @@ namespace Integration1C
                     #endregion
                 }
 
-                CreateClientIn1C(client1C);
+                CreateClientIn1C(client1C, _repo1C);
 
                 foreach (var a in amo_accounts)
                     UpdateAmoEntities(_amo.GetAccountById(a).GetRepo<Contact>(), client1C.amo_ids.First(x => x.account_id == a), (Guid)client1C.client_id_1C);

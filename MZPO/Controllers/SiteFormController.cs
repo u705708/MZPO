@@ -46,7 +46,7 @@ namespace MZPO.Controllers
             #endregion
 
             #region Adding to log
-            using StreamWriter sw = new StreamWriter($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} siteform/retail ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(col)));
             sw.WriteLine("-----");
@@ -54,7 +54,7 @@ namespace MZPO.Controllers
             sw.WriteLine();
             #endregion
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
 
             var leadProcessor = new Lazy<ILeadProcessor>(() =>
@@ -85,7 +85,7 @@ namespace MZPO.Controllers
             #endregion
 
             #region Adding to log
-            using StreamWriter sw = new StreamWriter($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} siteform/corp ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(col)));
             sw.WriteLine("-----");
@@ -93,7 +93,7 @@ namespace MZPO.Controllers
             sw.WriteLine();
             #endregion
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
 
             var leadProcessor = new Lazy<ILeadProcessor>(() =>
@@ -123,10 +123,10 @@ namespace MZPO.Controllers
 
             if (leadNumber == 0) return Ok();
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
 
-            Lazy<ILeadProcessor> leadProcessor = new Lazy<ILeadProcessor>(() =>
+            Lazy<ILeadProcessor> leadProcessor = new(() =>
                    new CorpKpSentProcessor(leadNumber, _amo, _gSheets, _processQueue, _log, token));
 
             Task task = Task.Run(() => leadProcessor.Value.Run());

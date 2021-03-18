@@ -30,9 +30,9 @@ namespace MZPO.Controllers
 
             Task task;
             var acc = _amo.GetAccountById(28395871);
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
-            Lazy<ILeadProcessor> leadProcessor = new Lazy<ILeadProcessor>(() =>                                                                 //Создаём экземпляр процессора сделки
+            Lazy<ILeadProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
                                new InitialLeadProcessor(leadNumber, acc, _processQueue, _log, token));
 
             task = Task.Run(() => leadProcessor.Value.Run());
@@ -51,7 +51,7 @@ namespace MZPO.Controllers
             Lazy<ILeadProcessor> leadProcessor;
             Task task;
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
 
             if(!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");

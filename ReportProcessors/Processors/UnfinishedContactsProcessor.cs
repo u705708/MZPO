@@ -18,7 +18,7 @@ namespace MZPO.ReportProcessors
         internal UnfinishedContactsProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token) { }
 
-        private readonly List<(int, string)> managers = new List<(int, string)>
+        private readonly List<(int, string)> managers = new()
         {
             (2375122, "Васина Елена"),
             (2375116, "Киреева Светлана"),
@@ -236,7 +236,7 @@ namespace MZPO.ReportProcessors
             List<Request> requestContainer = new();
 
             #region Preparing criteria for amo requests
-            List<string> criteria = new List<string>()
+            List<string> criteria = new()
                 {
                     $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=142&filter[responsible_user_id]={m.Item1}&with=companies,contacts",
                     $"filter[statuses][0][pipeline_id]=1121263&filter[statuses][0][status_id]=19529785&filter[responsible_user_id]={m.Item1}&with=companies,contacts",

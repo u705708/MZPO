@@ -54,7 +54,7 @@ namespace MZPO.ReportProcessors
             var reportParams = ReportParameters[rep];
             var acc = amo.GetAccountById(reportParams.AmoAccount);
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
             Lazy<IReportProcessor> reportProcessor = new(() => ReportFactory(reportParams, acc, processQueue, gSheets, dateFrom, dateTo, token));
 

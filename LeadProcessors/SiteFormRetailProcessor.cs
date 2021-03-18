@@ -29,15 +29,22 @@ namespace MZPO.LeadProcessors
             _token = token;
         }
 
-        private Dictionary<string, int> fieldIds = new() {
+        private readonly Dictionary<string, int> fieldIds = new() {
             { "form_name_site", 639075 },
             { "site", 639081 },
             { "page_url", 639083 },
+            { "page_title", 647653 },
             { "roistat_marker", 639085 },
             { "roistat_visit", 639073 },
             { "city_name", 639087 },
             { "_ym_uid", 715049 },
+            { "_ya_uid", 715049 },
             { "clid", 643439 },
+            { "utm_source", 640697 },
+            { "utm_medium", 640699 },
+            { "utm_term", 640703 },
+            { "utm_content", 643437 },
+            { "utm_campaign", 640701 },
         };
 
         public Task Run()

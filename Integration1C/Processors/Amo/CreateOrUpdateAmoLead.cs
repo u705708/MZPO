@@ -13,12 +13,14 @@ namespace Integration1C
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly Lead1C _lead1C;
+        private readonly Cred1C _cred1C;
 
-        public CreateOrUpdateAmoLead(Lead1C lead1C, Amo amo, Log log)
+        public CreateOrUpdateAmoLead(Lead1C lead1C, Amo amo, Log log, Cred1C cred1C)
         {
             _amo = amo;
             _log = log;
             _lead1C = lead1C;
+            _cred1C = cred1C;
         }
         private static void AddUIDToEntity(Lead1C lead1C, int acc_id, Lead lead)
         {
@@ -129,10 +131,10 @@ namespace Integration1C
                 #endregion
 
                 #region Getting connected entitites ids
-                Client1C client1C = new ClientRepository().GetClient(_lead1C.client_id_1C);
-                Course1C course1C = new CourseRepository().GetCourse(_lead1C.product_id_1C);
+                Client1C client1C = new ClientRepository(_cred1C).GetClient(_lead1C.client_id_1C);
+                Course1C course1C = new CourseRepository(_cred1C).GetCourse(_lead1C.product_id_1C);
                 Company1C company1C = null;
-                if (_lead1C.is_corporate) company1C = new CompanyRepository().GetCompany((Guid)_lead1C.company_id_1C);
+                if (_lead1C.is_corporate) company1C = new CompanyRepository(_cred1C).GetCompany((Guid)_lead1C.company_id_1C);
 
                 var contact_id = 0;
                 var course_id = 0;

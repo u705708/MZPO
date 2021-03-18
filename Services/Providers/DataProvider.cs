@@ -155,7 +155,7 @@ namespace MZPO.Services
 
         public List<AmoRepo.Tag> GetTagList(AmoAccount account)
         {
-            List<AmoRepo.Tag> result = new List<AmoRepo.Tag>(); 
+            List<AmoRepo.Tag> result = new(); 
             using (var scope = scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
@@ -240,7 +240,7 @@ namespace MZPO.Services
 
         public List<CustomField> GetCFList(AmoAccount acc)
         {
-            List<CustomField> result = new List<CustomField>();
+            List<CustomField> result = new();
             using (var scope = scopeFactory.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();

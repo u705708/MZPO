@@ -33,7 +33,6 @@ namespace MZPO.Controllers
             _log = log;
         }
 
-
         public class Entry
         {
             public int payment_received;
@@ -72,30 +71,8 @@ namespace MZPO.Controllers
         {
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-            //var leadRepo = _amo.GetAccountById(28395871).GetRepo<Lead>();
-            //Contact contact = new();
-
-            //var oldContact = contRepo.GetById(33261063);
-
-            //contact.custom_fields_values = oldContact.custom_fields_values;
-            //contact.responsible_user_id = oldContact.responsible_user_id;
-            //contact.name = "New test";
-
-            //var result = contRepo.AddNew(contact);
-
-            //var notes = contRepo.GetEntityNotes(33261063);
-
-            //int? id = result.First().id;
-
-            //contRepo.AddNotes(notes.Select(x => new Note() { 
-            //                                    entity_id = id,
-            //                                    note_type = x.note_type,
-            //                                    parameters = x.parameters})
-            //                       .Where(x => x.note_type != "amomail_message"));
-
-            //return Ok(contRepo.GetEntityNotes(33295199));
             
-            return Ok("𓅮 𓃟 ne tovarisch");
+            return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
             #region CorpParse
             //var _spreadsheetId = "1NuP1qpKDuWlQAje0mIA4i73KgfTH6TGi5iLvzMY46pU";
@@ -273,10 +250,10 @@ namespace MZPO.Controllers
         [HttpPost]
         public IActionResult Post()
         {
-            using StreamReader sr = new StreamReader(Request.Body);
+            using StreamReader sr = new(Request.Body);
             var hook = sr.ReadToEndAsync().Result;
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new("hook.txt", true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now}----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(hook));
             sw.WriteLine();

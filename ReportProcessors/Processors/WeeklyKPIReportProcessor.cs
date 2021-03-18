@@ -30,7 +30,7 @@ namespace MZPO.ReportProcessors
 
         private readonly List<(int, int)> dataRanges;
 
-        private readonly List<(int, string)> managers = new List<(int, string)>
+        private readonly List<(int, string)> managers = new()
         {
             (2375107, "Кристина Гребенникова"),
             (2375143, "Екатерина Белоусова"),
@@ -46,7 +46,7 @@ namespace MZPO.ReportProcessors
             (6729241, "Серик Айбасов")
         };
 
-        private readonly List<int> pipelines = new List<int>
+        private readonly List<int> pipelines = new()
         {
             3198184,
             3566374,
@@ -55,7 +55,7 @@ namespace MZPO.ReportProcessors
             3558922
         };
 
-        private readonly Dictionary<string, CellFormat> columnsFormat = new Dictionary<string, CellFormat>()
+        private readonly Dictionary<string, CellFormat> columnsFormat = new()
         {
             { "A", new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
             { "B",  new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###" } } },
@@ -286,7 +286,7 @@ namespace MZPO.ReportProcessors
             //Список новых сделок в воронках из pipelines
             _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
 
-            List<Lead> newLeads = new List<Lead>();
+            List<Lead> newLeads = new();
 
             Parallel.ForEach(pipelines, p => {
                 var range = _leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");

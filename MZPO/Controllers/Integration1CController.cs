@@ -18,12 +18,14 @@ namespace MZPO.Controllers
         private readonly TaskList _processQueue;
         private readonly Amo _amo;
         private readonly Log _log;
+        private readonly Cred1C _cred1C;
 
-        public Integration1CController(Amo amo, TaskList processQueue, Log log)
+        public Integration1CController(Amo amo, TaskList processQueue, Log log, Cred1C cred1C)
         {
             _amo = amo;
             _processQueue = processQueue;
             _log = log;
+            _cred1C = cred1C;
         }
         
         // POST: integration/1c/saveclient
@@ -38,7 +40,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CClient(_amo, _log, leadNumber, accNumber).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CClient(_amo, _log, leadNumber, accNumber, _cred1C).Run());
 
             return Ok();
         }
@@ -50,6 +52,9 @@ namespace MZPO.Controllers
         {
             var col = Request.Form;
 
+            if (!col.Any(x => x.Value.ToString() == "client_id_1C"))
+                return Ok();
+
             AmoAccount acc;
 
             if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
@@ -60,7 +65,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("contacts[update][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["contacts[update][0][id]"], out int contactNumber)) return BadRequest("Incorrect contact number.");
 
-            var task = Task.Run(() => new Update1CClient(_amo, _log, contactNumber, accNumber).Run());
+            var task = Task.Run(() => new Update1CClient(_amo, _log, contactNumber, accNumber, _cred1C).Run());
 
             return Ok();
         }
@@ -76,7 +81,7 @@ namespace MZPO.Controllers
             Client1C client1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} integration/1c/client ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -136,7 +141,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CCompany(_amo, _log, leadNumber).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CCompany(_amo, _log, leadNumber, _cred1C).Run());
 
             return Ok();
         }
@@ -148,6 +153,9 @@ namespace MZPO.Controllers
         {
             var col = Request.Form;
 
+            if (!col.Any(x => x.Value.ToString() == "company_id_1C"))
+                return Ok();
+
             AmoAccount acc;
 
             if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
@@ -158,7 +166,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("contacts[update][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["contacts[update][0][id]"], out int companyNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new Update1CCompany(_amo, _log, companyNumber).Run());
+            var task = Task.Run(() => new Update1CCompany(_amo, _log, companyNumber, _cred1C).Run());
 
             return Ok();
         }
@@ -174,7 +182,7 @@ namespace MZPO.Controllers
             Company1C company1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} integration/1c/company ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -234,7 +242,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CLead(_amo, _log, leadNumber, accNumber).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CLead(_amo, _log, leadNumber, accNumber, _cred1C).Run());
 
             return Ok();
         }
@@ -246,6 +254,9 @@ namespace MZPO.Controllers
         {
             var col = Request.Form;
 
+            if (!col.Any(x => x.Value.ToString() == "lead_id_1C"))
+                return Ok();
+
             AmoAccount acc;
 
             if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
@@ -256,7 +267,7 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new Update1CLead(_amo, _log, leadNumber, accNumber).Run());
+            var task = Task.Run(() => new Update1CLead(_amo, _log, leadNumber, accNumber, _cred1C).Run());
 
             return Ok();
         }
@@ -272,7 +283,7 @@ namespace MZPO.Controllers
             Lead1C lead1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} integration/1c/lead ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -314,7 +325,7 @@ namespace MZPO.Controllers
 
             if (lead1C.amo_ids is null ||
                 !lead1C.amo_ids.Any())
-                result.AddRange(new CreateOrUpdateAmoLead(lead1C, _amo, _log).Run());
+                result.AddRange(new CreateOrUpdateAmoLead(lead1C, _amo, _log, _cred1C).Run());
             else
                 result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
 
@@ -332,7 +343,7 @@ namespace MZPO.Controllers
             Course1C course1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new StreamWriter($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} integration/1c/course ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -379,10 +390,10 @@ namespace MZPO.Controllers
         [ActionName("PaymentReceived")]
         public IActionResult ProcessPayment()
         {
-            using StreamReader sr = new StreamReader(Request.Body);
+            using StreamReader sr = new(Request.Body);
             var hook = sr.ReadToEndAsync().Result;
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new("hook.txt", true, System.Text.Encoding.Default);
             sw.WriteLine("POST: integration/1c/paymentreceived");
             sw.WriteLine(WebUtility.UrlDecode(hook));
             sw.WriteLine("--**--**--");
@@ -395,10 +406,10 @@ namespace MZPO.Controllers
         [ActionName("CourseEnded")]
         public IActionResult FinishCourse()
         {
-            using StreamReader sr = new StreamReader(Request.Body);
+            using StreamReader sr = new(Request.Body);
             var hook = sr.ReadToEndAsync().Result;
 
-            using StreamWriter sw = new StreamWriter("hook.txt", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new("hook.txt", true, System.Text.Encoding.Default);
             sw.WriteLine("POST: integration/1c/courseended");
             sw.WriteLine(WebUtility.UrlDecode(hook));
             sw.WriteLine("--**--**--");
