@@ -28,7 +28,17 @@ namespace Integration1C
                 foreach (var p in company1C.GetType().GetProperties())
                     if (FieldLists.Companies[amo_acc].ContainsKey(p.Name) &&
                         company.custom_fields_values.Any(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]))
-                        p.SetValue(company1C, company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]).values[0].value);
+                    {
+                        var value = company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]).values[0].value;
+                        if (p.PropertyType == typeof(Guid?) &&
+                            Guid.TryParse((string)value, out Guid guidValue))
+                        {
+                            p.SetValue(company1C, guidValue);
+                            continue;
+                        }
+
+                        p.SetValue(company1C, value);
+                    }
         }
 
         private static void UpdateCompanyIn1C(Company company, Guid company_id_1C, int amo_acc, CompanyRepository repo1C)

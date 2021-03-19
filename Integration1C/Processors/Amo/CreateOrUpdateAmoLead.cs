@@ -45,17 +45,14 @@ namespace Integration1C
                 }
         }
 
-        private static void PopulateConnectedEntities(int contact_id, int course_id, int company_id, Lead lead)
+        private static void PopulateConnectedEntities(int contact_id, int company_id, Lead lead)
         {
             if (contact_id > 0)
                 lead._embedded.contacts = new() { new() { id = contact_id } };
-            if (course_id > 0)
-                lead._embedded.catalog_elements = new() { new() { id = course_id } }; //Возможно надо добавлять после создания сущности через связывание
             if (company_id > 0)
                 lead._embedded.companies = new() { new() { id = company_id } };
 
             if (lead._embedded.contacts is null &&
-                lead._embedded.catalog_elements is null &&
                 lead._embedded.companies is null) throw new Exception("Unable to add entities to lead.");
         }
 
@@ -96,13 +93,25 @@ namespace Integration1C
 
             PopulateCFs(lead1C, acc_id, lead);
 
-            PopulateConnectedEntities(contact_id, course_id, company_id, lead);
+            PopulateConnectedEntities(contact_id, company_id, lead);
 
             try
             {
                 var result = leadRepo.AddNewComplex(lead);
                 if (result.Any())
+                {
+                    EntityLink link = new()
+                    {
+                        to_entity_id = course_id,
+                        to_entity_type = "catalog_elements",
+                        metadata = new() {
+                            quantity = 1,
+                            catalog_id = acc_id == 19453687 ? 5111 : 12463
+                        } };
+
+                    leadRepo.LinkEntity(result.First(), link);
                     return result.First();
+                }
                 else throw new Exception("Amo returned no lead Ids.");
             }
             catch (Exception e)
@@ -146,12 +155,12 @@ namespace Integration1C
 
                 if (course1C.amo_ids is not null &&
                     course1C.amo_ids.Any(x => x.account_id == amo_acc))
-                    contact_id = course1C.amo_ids.First(x => x.account_id == amo_acc).entity_id;
+                    course_id = course1C.amo_ids.First(x => x.account_id == amo_acc).entity_id;
 
                 if (company1C is not null &&
                     company1C.amo_ids is not null &&
                     company1C.amo_ids.Any(x => x.account_id == amo_acc))
-                    contact_id = company1C.amo_ids.First(x => x.account_id == amo_acc).entity_id;
+                    company_id = company1C.amo_ids.First(x => x.account_id == amo_acc).entity_id;
                 #endregion
 
                 #region Creating new lead

@@ -245,6 +245,31 @@ namespace MZPO.AmoRepo
         public IEnumerable<CatalogElement> DeleteCEs(CatalogElement element);
 
         /// <summary>
+        /// Связывает в amoCRM различные сущности. Принимает список запросов на связь. Возвращает список связанных элементов.
+        /// </summary>
+        /// <param name="entity_id">Id сущности, к которой осуществляется привязка.</param>
+        /// <param name="payload">Список запросов на связывание сущностей.</param>
+        /// <returns>Список содержащий связанные элементы.</returns>
+        public IEnumerable<EntityLink> LinkEntity(int entity_id, IEnumerable<EntityLink> payload);
+
+        /// <summary>
+        /// Связывает в amoCRM различные сущности. Принимает запрос на связь. Возвращает список связанных элементов.
+        /// </summary>
+        /// <param name="entity_id">Id сущности, к которой осуществляется привязка.</param>
+        /// <param name="payload">Запрос на связывание сущностей.</param>
+        /// <returns>Список содержащий связанные элементы.</returns>
+        public IEnumerable<EntityLink> LinkEntity(int entity_id, EntityLink entityLink);
+
+        /// <summary>
+        /// Связывает в amoCRM различные сущности. Принимает параметры связываемых сущностей. Возвращает список связанных элементов.
+        /// </summary>
+        /// <param name="entity_id">Id сущности, к которой осуществляется привязка.</param>
+        /// <param name="to_entity_id">Id привязываемой сущности.</param>
+        /// <param name="to_entity_type">Тип привязываемой сущности.</param>
+        /// <returns>Список содержащий связанные элементы.</returns>
+        public IEnumerable<EntityLink> LinkEntity(int entity_id, int to_entity_id, string to_entity_type);
+
+        /// <summary>
         /// Принимает в amoCRM Неразобранное по идентификатору.
         /// </summary>
         /// <param name="uid">Идентификатор Неразобранного в amoCRM.</param>

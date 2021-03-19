@@ -300,7 +300,7 @@ namespace MZPO.AmoRepo
         public IEnumerable<CustomField> AddField(string fieldName) => AddField(new CustomField() { name = fieldName, type = "text" });
         public CatalogElement GetCEById(int id)
         {
-            var catalog_id = 12463;
+            int catalog_id = GetCatalogId();
             var uri = $"{_apiAddress[0..^3]}v2/catalog_elements?catalog_id={catalog_id}&id={id}";
 
             var result = GetList(uri);
@@ -380,6 +380,20 @@ namespace MZPO.AmoRepo
             return new List<CatalogElement>();
         }
         public IEnumerable<CatalogElement> DeleteCEs(CatalogElement element) => DeleteCEs(new List<CatalogElement>() { element });
+        public IEnumerable<EntityLink> LinkEntity(int entity_id, IEnumerable<EntityLink> payload)
+        {
+            var uri = $"{_apiAddress}{_entityLink}/{entity_id}/link";
+
+            var content = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            AmoRequest request = new("POST", uri, content, _auth);
+            EntityList list = new();
+            var result = GetResult(request, list);
+            if (result._embedded is not null && result._embedded.links is not null)
+                return result._embedded.links.ToList();
+            return new List<EntityLink>();
+        }
+        public IEnumerable<EntityLink> LinkEntity(int entity_id, EntityLink entityLink) => LinkEntity(entity_id, new List<EntityLink>() { entityLink });
+        public IEnumerable<EntityLink> LinkEntity(int entity_id, int to_entity_id, string to_entity_type) => LinkEntity(entity_id, new EntityLink() { to_entity_id = to_entity_id, to_entity_type = to_entity_type });
 
         public void AcceptUnsorted(string uid)
         {

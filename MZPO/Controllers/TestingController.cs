@@ -1,4 +1,5 @@
 ﻿using Google.Apis.Sheets.v4;
+using Integration1C;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,13 +25,15 @@ namespace MZPO.Controllers
         private readonly Amo _amo;
         private readonly GSheets _gSheets;
         private readonly Log _log;
+        private readonly Cred1C _cred1C;
 
-        public TestingController(Amo amo, TaskList processQueue, GSheets gSheets, Log log)
+        public TestingController(Amo amo, TaskList processQueue, GSheets gSheets, Log log, Cred1C cred1C)
         {
             _amo = amo;
             _processQueue = processQueue;
             _gSheets = gSheets;
             _log = log;
+            _cred1C = cred1C;
         }
 
         public class Entry

@@ -28,7 +28,17 @@ namespace Integration1C
                 foreach (var p in company1C.GetType().GetProperties())
                     if (FieldLists.Companies[amo_acc].ContainsKey(p.Name) &&
                         company.custom_fields_values.Any(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]))
-                        p.SetValue(company1C, company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]).values[0].value);
+                    {
+                        var value = company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[amo_acc][p.Name]).values[0].value;
+                        if (p.PropertyType == typeof(Guid?) &&
+                            Guid.TryParse((string)value, out Guid guidValue))
+                        {
+                            p.SetValue(company1C, guidValue);
+                            continue;
+                        }
+
+                        p.SetValue(company1C, value);
+                    }
         }
 
         private static void UpdateCompanyIn1C(Company company, Guid company_id_1C, int amo_acc, CompanyRepository repo1C)
@@ -46,27 +56,32 @@ namespace Integration1C
             repo1C.UpdateCompany(company1C);
         }
 
-        public void Run()
+        public Guid Run()
         {
             try
             {
                 var compRepo = _amo.GetAccountById(_amo_acc).GetRepo<Company>();
 
                 #region Checking if company exists in 1C and updating if possible
+                Guid company_id_1C = default;
+
                 Company company = compRepo.GetById(_companyId);
 
                 if (company.custom_fields_values is not null &&
                     company.custom_fields_values.Any(x => x.field_id == FieldLists.Companies[_amo_acc]["company_id_1C"]) &&
-                    Guid.TryParse((string)company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[_amo_acc]["company_id_1C"]).values[0].value, out Guid company_id_1C))
+                    Guid.TryParse((string)company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[_amo_acc]["company_id_1C"]).values[0].value, out company_id_1C))
                 {
                     UpdateCompanyIn1C(company, company_id_1C, _amo_acc, _repo1C);
                     _log.Add($"Updated company in 1C {company_id_1C}.");
                 }
                 #endregion
+
+                return company_id_1C;
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to update company {_companyId} in 1C: {e}");
+                return default;
             }
         }
     }

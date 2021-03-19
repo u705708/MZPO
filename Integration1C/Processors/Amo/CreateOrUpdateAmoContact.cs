@@ -69,6 +69,9 @@ namespace Integration1C
                         DateTime dob = (DateTime)p.GetValue(client1C);
                         value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
                     }
+
+                    if (contact.custom_fields_values is null) contact.custom_fields_values = new();
+
                     contact.custom_fields_values.Add(new Contact.Custom_fields_value()
                     {
                         field_id = FieldLists.Contacts[acc_id][p.Name],

@@ -28,7 +28,18 @@ namespace Integration1C
                 foreach (var p in lead1C.GetType().GetProperties())
                     if (FieldLists.Leads[amo_acc].ContainsKey(p.Name) &&
                         lead.custom_fields_values.Any(x => x.field_id == FieldLists.Leads[amo_acc][p.Name]))
-                        p.SetValue(lead1C, lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[amo_acc][p.Name]).values[0].value);
+                    {
+                        var value = lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[amo_acc][p.Name]).values[0].value;
+                        if ((p.PropertyType == typeof(Guid?) ||
+                            p.PropertyType == typeof(Guid)) &&
+                            Guid.TryParse((string)value, out Guid guidValue))
+                        {
+                            p.SetValue(lead1C, guidValue);
+                            continue;
+                        }
+
+                        p.SetValue(lead1C, value);
+                    }
         }
 
         private static void GetConnectedEntities(Amo amo, Log log, Lead lead, int amo_acc, Lead1C lead1C, Cred1C cred1C)
@@ -53,7 +64,7 @@ namespace Integration1C
 
             if (course is not null &&
                 course.custom_fields is not null &&
-                !course.custom_fields.Any(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]) &&
+                course.custom_fields.Any(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]) &&
                 Guid.TryParse(course.custom_fields.First(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]).values[0].value, out Guid product_id_1C))
                 lead1C.product_id_1C = product_id_1C;
             else
@@ -114,7 +125,7 @@ namespace Integration1C
 
             GetConnectedEntities(amo, log, lead, amo_acc, lead1C, cred1C);
 
-            return new LeadRepository(cred1C).UpdateLead(lead1C);
+            return new LeadRepository(cred1C).AddLead(lead1C);
         }
 
         private static void UpdateLeadInAmoWithUID(IAmoRepo<Lead> leadRepo, int amo_acc, int leadId, Guid uid)

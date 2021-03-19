@@ -26,6 +26,7 @@ namespace MZPO.AmoRepo
                 public IEnumerable<Tag> tags;
                 public IEnumerable<CustomField> custom_fields;
                 public IEnumerable<CatalogElement> items;
+                public IEnumerable<EntityLink> links;
             }
         }
     }

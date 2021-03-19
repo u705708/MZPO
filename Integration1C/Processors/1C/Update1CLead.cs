@@ -28,7 +28,18 @@ namespace Integration1C
                 foreach (var p in lead1C.GetType().GetProperties())
                     if (FieldLists.Leads[amo_acc].ContainsKey(p.Name) &&
                         lead.custom_fields_values.Any(x => x.field_id == FieldLists.Leads[amo_acc][p.Name]))
-                        p.SetValue(lead1C, lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[amo_acc][p.Name]).values[0].value);
+                    {
+                        var value = lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[amo_acc][p.Name]).values[0].value;
+                        if ((p.PropertyType == typeof(Guid?) ||
+                            p.PropertyType == typeof(Guid)) &&
+                            Guid.TryParse((string)value, out Guid guidValue))
+                        {
+                            p.SetValue(lead1C, guidValue);
+                            continue;
+                        }
+
+                        p.SetValue(lead1C, value);
+                    }
         }
 
         private static void GetConnectedEntities(Amo amo, Log log, Lead lead, int amo_acc, Lead1C lead1C, Cred1C cred1C)
@@ -53,7 +64,7 @@ namespace Integration1C
 
             if (course is not null &&
                 course.custom_fields is not null &&
-                !course.custom_fields.Any(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]) &&
+                course.custom_fields.Any(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]) &&
                 Guid.TryParse(course.custom_fields.First(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]).values[0].value, out Guid product_id_1C))
                 lead1C.product_id_1C = product_id_1C;
             else
@@ -104,7 +115,7 @@ namespace Integration1C
             new LeadRepository(cred1C).UpdateLead(lead1C);
         }
 
-        public void Run()
+        public Guid Run()
         {
             try
             {
@@ -116,14 +127,19 @@ namespace Integration1C
                     lead == default)
                     throw new Exception("No lead returned from amo.");
 
+                Guid lead_id_1C = default;
+
                 if (lead.custom_fields_values is not null &&
                     lead.custom_fields_values.Any(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]) &&
-                    Guid.TryParse((string)lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]).values[0].value, out Guid lead_id_1C))
+                    Guid.TryParse((string)lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]).values[0].value, out lead_id_1C))
                     UpdateLeadIn1C(_amo, _log, lead, lead_id_1C, _amo_acc, _cred1C);
+
+                return lead_id_1C;
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to update lead {_leadId} in 1C: {e}");
+                return default;
             }
         }
     }

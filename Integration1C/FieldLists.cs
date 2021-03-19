@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Integration1C
 {
@@ -18,7 +14,7 @@ namespace Integration1C
                                 { "dob", 644285 },
                                 { "pass_serie", 715535 },
                                 { "pass_number", 715537 },
-                                { "pass_issued_by", 650839 },
+                                { "pass_issued_by", 650841 },
                                 { "pass_issued_at", 715539 },
                                 { "pass_dpt_code", 710419 },
                             }
@@ -31,7 +27,7 @@ namespace Integration1C
                                 { "dob", 68819 },
                                 { "pass_serie", 748393 },
                                 { "pass_number", 748395 },
-                                { "pass_issued_by", 748397 },
+                                { "pass_issued_by", 748399 },
                                 { "pass_issued_at", 751223 },
                                 { "pass_dpt_code", 748401 },
                             }
@@ -79,7 +75,7 @@ namespace Integration1C
             { 28395871, new()
                             {
                                 { "lead_id_1C", 710399 },
-                                { "organization", 65965 },
+                                { "organization", 645965 },
                                 { "marketing_channel", 639075 },
                                 { "marketing_source", 639085 },
                             }

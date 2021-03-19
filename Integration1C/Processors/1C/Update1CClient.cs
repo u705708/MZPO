@@ -28,7 +28,23 @@ namespace Integration1C
                 foreach (var p in client1C.GetType().GetProperties())
                     if (FieldLists.Contacts[amo_acc].ContainsKey(p.Name) &&
                         contact.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[amo_acc][p.Name]))
-                        p.SetValue(client1C, contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[amo_acc][p.Name]).values[0].value);
+                    {
+                        var value = contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[amo_acc][p.Name]).values[0].value;
+                        if (p.PropertyType == typeof(Guid?) &&
+                            Guid.TryParse((string)value, out Guid guidValue))
+                        {
+                            p.SetValue(client1C, guidValue);
+                            continue;
+                        }
+
+                        if (p.PropertyType == typeof(DateTime?))
+                        {
+                            p.SetValue(client1C, DateTimeOffset.FromUnixTimeSeconds((long)value).UtcDateTime.AddHours(3));
+                            continue;
+                        }
+
+                        p.SetValue(client1C, value);
+                    }
         }
 
         private static void UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, Amo amo, Log log, ClientRepository repo1C)
@@ -43,7 +59,7 @@ namespace Integration1C
             new UpdateAmoContact(client1C, amo, log).Run();
         }
 
-        public void Run()
+        public Guid Run()
         {
             try
             {
@@ -57,16 +73,21 @@ namespace Integration1C
                 #endregion
 
                 #region Check for UIDs
+                Guid client_id_1C = default;
+
                 if (contact.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]) &&
-                    Guid.TryParse((string)contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out Guid client_id_1C))
+                    Guid.TryParse((string)contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out client_id_1C))
                 {
                     UpdateClientIn1C(client_id_1C, contact, _amo_acc, _amo, _log, _repo1C);
                 }
                 #endregion
+
+                return client_id_1C;
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to create or updae contact in 1C from lead {_contactId}: {e}");
+                return default;
             }
         }
     }

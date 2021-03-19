@@ -56,7 +56,7 @@ namespace Integration1C
         {
             foreach (var p in client1C.GetType().GetProperties())
                 if (FieldLists.Contacts[acc_id].ContainsKey(p.Name) &&
-                    p.GetValue(client1C) is not null) //В зависимости от политики передачи пустых полей
+                    p.GetValue(client1C) is not null)
                 {
                     var value = p.GetValue(client1C);
                     if (p.Name == "dob")
@@ -64,6 +64,9 @@ namespace Integration1C
                         DateTime dob = (DateTime)p.GetValue(client1C);
                         value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
                     }
+
+                    if (contact.custom_fields_values is null) contact.custom_fields_values = new();
+
                     contact.custom_fields_values.Add(new Contact.Custom_fields_value()
                     {
                         field_id = FieldLists.Contacts[acc_id][p.Name],
@@ -78,7 +81,23 @@ namespace Integration1C
                 foreach (var p in client1C.GetType().GetProperties())
                     if (FieldLists.Contacts[amo_acc].ContainsKey(p.Name) &&
                         contact.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[amo_acc][p.Name]))
-                        p.SetValue(client1C, contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[amo_acc][p.Name]).values[0].value);
+                    {
+                        var value = contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[amo_acc][p.Name]).values[0].value;
+                        if (p.PropertyType == typeof(Guid?) &&
+                            Guid.TryParse((string)value, out Guid guidValue))
+                        {
+                            p.SetValue(client1C, guidValue);
+                            continue;
+                        }
+
+                        if (p.PropertyType == typeof(DateTime?))
+                        {
+                            p.SetValue(client1C, DateTimeOffset.FromUnixTimeSeconds((long)value).UtcDateTime.AddHours(3));
+                            continue;
+                        }
+
+                        p.SetValue(client1C, value);
+                    }
         }
 
         private static Client1C CreateClient(Contact contact, int amo_acc)
@@ -156,7 +175,7 @@ namespace Integration1C
             Contact contact = new() {
                 id = amo_id.entity_id,
                 custom_fields_values = new() { new Contact.Custom_fields_value() {
-                        field_id = FieldLists.Contacts[amo_id.account_id]["company_id_1C"],
+                        field_id = FieldLists.Contacts[amo_id.account_id]["client_id_1C"],
                         values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = uid.ToString("D") } }
             } } };
 
@@ -210,6 +229,7 @@ namespace Integration1C
 
                 foreach (var a in amo_accounts)
                 {
+                    if (client1C.amo_ids is null) client1C.amo_ids = new();
                     if (a == _amo_acc)
                     {
                         client1C.amo_ids.Add(new()
@@ -220,15 +240,17 @@ namespace Integration1C
                         continue;
                     }
 
+                    var anotherContRepo = _amo.GetAccountById(a).GetRepo<Contact>();
+
                     #region Checking contact
                     List<Contact> similarContacts = new();
                     if (client1C.phone is not null &&
                         client1C.phone != "")
-                        similarContacts.AddRange(contRepo.GetByCriteria($"query={client1C.phone}"));
+                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.phone}"));
 
                     if (client1C.email is not null &&
                         client1C.email != "")
-                        similarContacts.AddRange(contRepo.GetByCriteria($"query={client1C.email}"));
+                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.email}"));
 
                     if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
                         _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()), Formatting.Indented)}");
@@ -247,7 +269,7 @@ namespace Integration1C
                     #region Updating found contact
                     if (similarContacts.Any())
                     {
-                        UpdateContactInAmo(client1C, contRepo, (int)similarContacts.First().id, a);
+                        UpdateContactInAmo(client1C, anotherContRepo, (int)similarContacts.First().id, a);
                         client1C.amo_ids.Add(new()
                         {
                             account_id = a,
