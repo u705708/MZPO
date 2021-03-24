@@ -14,6 +14,11 @@ namespace Integration1C
             _cred1C = cred1C;
         }
 
+        public class Result
+        {
+            public Guid company_id_1C { get; set; }
+        }
+
         private readonly Guid _mockGuid = new Guid("f4369528-14ba-4968-8a9c-6e8a3126378c");
         private readonly Company1C _mockCompany = new Company1C()
         {
@@ -44,7 +49,7 @@ namespace Integration1C
 
         internal Company1C GetCompany(Guid company_id)
         {
-            string method = $"EditPartner?id={company_id:D}";
+            string method = $"EditPartner?uid={company_id:D}";
             Request1C request = new("GET", method, _cred1C);
             
             Company1C result = new();
@@ -59,12 +64,13 @@ namespace Integration1C
                 throw new Exception("Unable to update 1C client, no UID.");
 
             string method = "EditPartner";
-            string content = JsonConvert.SerializeObject(company, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
+            string content = JsonConvert.SerializeObject(company, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }); ;
             Request1C request = new("PATCH", method, content, _cred1C);
 
-            Guid result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
-            return result;
+            Result result = new();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }
+            catch (Exception e) { return default; }
+            return result.company_id_1C;
         }
 
         internal Guid AddCompany(Company1C company)
@@ -76,12 +82,13 @@ namespace Integration1C
             company.company_id_1C = null;
 
             string method = "EditPartner";
-            string content = JsonConvert.SerializeObject(company, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
+            string content = JsonConvert.SerializeObject(company, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }); ;
             Request1C request = new("POST", method, content, _cred1C);
 
-            Guid result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
-            return result;
+            Result result = new();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }
+            catch (Exception e) { return default; }
+            return result.company_id_1C;
         }
     }
 }

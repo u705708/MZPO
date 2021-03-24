@@ -5,6 +5,8 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MZPO.Services
 {
@@ -16,6 +18,7 @@ namespace MZPO.Services
         private string _authToken;
         private string _refrToken;
         private DateTime _validity;
+        private readonly SemaphoreSlim _ss;
 
         public AuthProvider(AmoAccountAuth acc, AmoProvider prov)
         {
@@ -24,6 +27,7 @@ namespace MZPO.Services
             _authToken = acc.authToken;
             _refrToken = acc.refrToken;
             _validity = acc.validity;
+            _ss = new(4, 4);
         }
         #endregion
 
@@ -122,14 +126,18 @@ namespace MZPO.Services
         #region Realization
         public string GetToken()
         {
-            if (IsValid()) return _authToken;
-            Refresh();
+            if (!IsValid()) Refresh();
             return _authToken;
         }
 
         public int GetAccountId()
         {
             return _amoAccountAuth.id;
+        }
+
+        public SemaphoreSlim GetSemaphoreSlim()
+        {
+            return _ss;
         }
         #endregion
     }

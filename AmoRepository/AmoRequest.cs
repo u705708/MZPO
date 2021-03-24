@@ -1,6 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MZPO.AmoRepo
 {
@@ -31,13 +34,13 @@ namespace MZPO.AmoRepo
         #endregion
 
         #region Realization
-        internal string GetResponse()
+        internal async Task<string> GetResponseAsync()
         {
             HttpResponseMessage response;
             
             using HttpClient httpClient = new();
             using HttpRequestMessage request = new(_httpMethod, _uri);
-            
+
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _auth.GetToken());
             request.Headers.TryAddWithoutValidation("User-Agent", "mzpo2amo-client/1.1");
             
@@ -46,11 +49,23 @@ namespace MZPO.AmoRepo
                 request.Content = _content;
                 request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
             }
-            
-            response = httpClient.SendAsync(request).Result;
+
+            var ss = _auth.GetSemaphoreSlim();
+
+            await ss.WaitAsync();
+
+            var getResponse = httpClient.SendAsync(request);
+
+            await Task.WhenAll(
+                Task.Delay(1000),
+                getResponse);
+
+            ss.Release();
+
+            response = getResponse.Result;
 
             if (!response.IsSuccessStatusCode) throw new Exception($"Bad response: {response.Content.ReadAsStringAsync().Result} -- Request: {content}");
-            return response.Content.ReadAsStringAsync().Result;
+            return await response.Content.ReadAsStringAsync();
         }
         #endregion
     }

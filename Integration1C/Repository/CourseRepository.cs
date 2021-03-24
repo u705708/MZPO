@@ -46,7 +46,7 @@ namespace Integration1C
 
         internal Course1C GetCourse(Guid course_id)
         {
-            string method = $"EditApplication?id={course_id:D}";
+            string method = $"EditApplication?uid={course_id:D}";
             Request1C request = new("GET", method, _cred1C);
             Course1C result = new();
             JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
@@ -55,6 +55,8 @@ namespace Integration1C
 
         internal IEnumerable<Course1C> GetAllCourses()
         {
+            throw new NotImplementedException();
+
             string method = "";
             Request1C request = new("GET", method, _cred1C);
             List<Course1C> result = new();

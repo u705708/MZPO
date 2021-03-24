@@ -249,7 +249,10 @@ namespace MZPO.ReportProcessors
 
             List<Lead> allLeads = new();
 
-            Parallel.ForEach(criteria, cr => { 
+            Parallel.ForEach(
+                criteria,
+                new ParallelOptions { MaxDegreeOfParallelism = 4 },
+                cr => { 
                 var range = _leadRepo.GetByCriteria(cr);
                 lock (allLeads)
                 {

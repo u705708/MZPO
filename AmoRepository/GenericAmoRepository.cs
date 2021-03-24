@@ -42,7 +42,7 @@ namespace MZPO.AmoRepo
         {
             try 
             {
-                var response = request.GetResponse();
+                var response = request.GetResponseAsync().Result;
                 if (response == "") return o;
                 JsonConvert.PopulateObject(WebUtility.UrlDecode(response), o); 
             }
@@ -61,8 +61,8 @@ namespace MZPO.AmoRepo
                 string response;
 
                 var next = entityList._links["next"].href;
-                try { response = request.GetResponse(); }
-                catch { response = ""; }
+                try { response = request.GetResponseAsync().Result; }
+                catch(Exception e) { throw new Exception($"Unable to get response from amo {e}"); }
                 
                 if (response == "") break;
                 
@@ -395,13 +395,13 @@ namespace MZPO.AmoRepo
         public IEnumerable<EntityLink> LinkEntity(int entity_id, EntityLink entityLink) => LinkEntity(entity_id, new List<EntityLink>() { entityLink });
         public IEnumerable<EntityLink> LinkEntity(int entity_id, int to_entity_id, string to_entity_type) => LinkEntity(entity_id, new EntityLink() { to_entity_id = to_entity_id, to_entity_type = to_entity_type });
 
-        public void AcceptUnsorted(string uid)
+        public async void AcceptUnsorted(string uid)
         {
             var uri = $"{_apiAddress}leads/unsorted/{uid}/accept";
             AmoRequest request = new("POST", uri, _auth);
             try 
             { 
-                request.GetResponse(); 
+                await request.GetResponseAsync(); 
             }
             catch (Exception e) 
             { 

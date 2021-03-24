@@ -74,7 +74,8 @@ namespace MZPO.LeadProcessors
 
         protected string SetFieldValue(int fieldId, string fieldValue)
         {
-            if (fieldValue.Length > 255) fieldValue = fieldValue.Remove(255);
+            if (fieldValue is not null &&
+                fieldValue.Length > 255) fieldValue = fieldValue.Remove(255);
             
             if (custom_fields_values.Any(x => x.field_id == fieldId))
                 custom_fields_values.First(x => x.field_id == fieldId).values[0].value = fieldValue;

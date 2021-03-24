@@ -109,7 +109,7 @@ namespace MZPO.ReportProcessors
 
             #region Собираем данные из контактов
             if (lead._embedded.contacts is not null)
-                Parallel.ForEach(lead._embedded.contacts, contact =>
+                foreach(var contact in lead._embedded.contacts)
                 {
                     var events = contRepo.GetEntityEvents((int)contact.id);
                     lock (allEvents)
@@ -121,7 +121,7 @@ namespace MZPO.ReportProcessors
                     {
                         allNotes.AddRange(notes);
                     }
-                });
+                }
             #endregion
 
             #region Cообщения в чат
@@ -176,7 +176,10 @@ namespace MZPO.ReportProcessors
         {
             List<int> responseTimes = new();
 
-            Parallel.ForEach(leads, x => {
+            Parallel.ForEach(
+                leads,
+                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                x => {
                 var rTime = GetLeadResponseTime(x, leadRepo, contRepo);
                 responseTimes.Add(rTime);
 
@@ -203,7 +206,10 @@ namespace MZPO.ReportProcessors
         {
             List<int> responseTimes = new();
 
-            Parallel.ForEach(leads, x => {
+            Parallel.ForEach(
+                leads,
+                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                x => {
                 var rTime = GetLeadResponseTime(x, leadRepo, contRepo);
                 responseTimes.Add(rTime);
             });

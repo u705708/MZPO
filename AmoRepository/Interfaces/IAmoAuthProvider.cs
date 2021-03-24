@@ -1,4 +1,7 @@
-﻿namespace MZPO.AmoRepo
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace MZPO.AmoRepo
 {
     /// <summary>
     /// Interface of an amoCRM authentication provider.
@@ -14,5 +17,10 @@
         /// Returns amoCRM account id.
         /// </summary>
         public int GetAccountId();
+
+        /// <summary>
+        /// Returns semaphore to ratelimit outgoing requests.
+        /// </summary>
+        public SemaphoreSlim GetSemaphoreSlim();
     }
 }

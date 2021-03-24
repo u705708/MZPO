@@ -14,6 +14,11 @@ namespace Integration1C
             _cred1C = cred1C;
         }
 
+        public class Result
+        {
+            public Guid lead_id_1C { get; set; }
+        }
+
         private readonly Guid _mockGuid = new Guid("628c57d5-3338-4366-9691-942774e8323f");
         private readonly Lead1C _mockLeadCorp = new Lead1C()
         {
@@ -84,7 +89,7 @@ namespace Integration1C
 
         internal Lead1C GetLead(Guid lead_id)
         {
-            string method = $"EditApplication?id={lead_id:D}";
+            string method = $"EditApplication?uid={lead_id:D}";
             Request1C request = new("GET", method, _cred1C);
             
             Lead1C result = new();
@@ -99,12 +104,13 @@ namespace Integration1C
                 throw new Exception("Unable to update 1C lead, no UID.");
 
             string method = "EditApplication";
-            string content = JsonConvert.SerializeObject(lead, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
+            string content = JsonConvert.SerializeObject(lead, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }); ;
             Request1C request = new("PATCH", method, content, _cred1C);
 
-            Guid result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
-            return result;
+            Result result = new();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }
+            catch (Exception e) { return default; }
+            return result.lead_id_1C;
         }
 
         internal Guid AddLead(Lead1C lead)
@@ -116,12 +122,13 @@ namespace Integration1C
             lead.lead_id_1C = null;
 
             string method = "EditApplication";
-            string content = JsonConvert.SerializeObject(lead, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
+            string content = JsonConvert.SerializeObject(lead, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }); ;
             Request1C request = new("POST", method, content, _cred1C);
 
-            Guid result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
-            return result;
+            Result result = new();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }
+            catch (Exception e) { return default; }
+            return result.lead_id_1C;
         }
     }
 }

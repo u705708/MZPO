@@ -342,4 +342,4 @@ healthchecksdb
 /MZPO/hook.txt
 /MZPO/client_secret.json
 /MZPO/1c_cred.json
-/MZPO/Controllers/Testing.cs
+/MZPO/Controllers/TestingController.cs

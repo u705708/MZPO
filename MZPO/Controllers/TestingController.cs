@@ -9,6 +9,7 @@ using MZPO.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -74,7 +75,27 @@ namespace MZPO.Controllers
         {
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-            
+
+            //var leadRepo = _amo.GetAccountById(28395871).GetRepo<Lead>();
+
+            //return Ok(leadRepo.GetById(23889501));
+
+            //List<int> ids = new()
+            //{
+            //    23889501,
+            //    23889499,
+            //    23889469,
+            //    23889475,
+            //    23889419,
+            //    23889383,
+            //    23889343,
+            //};
+
+            //List<Lead> leads = new();
+            //Parallel.ForEach(ids, i =>  leads.Add(leadRepo.GetById(i)) );
+
+            //return Ok(leads);
+
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
             #region CorpParse
@@ -179,8 +200,6 @@ namespace MZPO.Controllers
             #region DupeCheck
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
 
-            ////return Ok(JsonConvert.SerializeObject(contRepo.GetById(32858435), Formatting.Indented));
-
             ////var dates = (1559336400, 1567285199);
             ////var dates = (1567285200, 1569877199);
             ////var dates = (1569877200, 1572555599); //01-31.10.2019
@@ -189,9 +208,9 @@ namespace MZPO.Controllers
             ////var dates = (1577826000, 1580504399);
             ////var dates = (1580504400, 1583009999);
             ////var dates = (1583010000, 1585688399);
-            //var dates = (1585688400, 1588280399);
-            ////var dates = (1588280400, 1590958799);
-            ////var dates = (1590958800, 1593550799);
+            ////var dates = (1585688400, 1588280399);
+            ////var dates = (1588280400, 1590958799);//++
+            //var dates = (1590958800, 1593550799);
             ////var dates = (1593550800, 1596229199);
             ////var dates = (1596229200, 1598907599);
             ////var dates = (1598907600, 1601499599);
@@ -208,7 +227,10 @@ namespace MZPO.Controllers
 
             //List<(int, string)> doubleContacts = new();
 
-            //Parallel.ForEach(contacts, c =>
+            //Parallel.ForEach(
+            //    contacts,
+            //    new ParallelOptions { MaxDegreeOfParallelism = 5 }, 
+            //    c =>
             //{
             //    List<Contact> contactsWithSimilarPhone = new();
             //    List<Contact> contactsWithSimilarMail = new();
@@ -219,14 +241,19 @@ namespace MZPO.Controllers
             //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264911).values)
             //            if ((string)v.value != "" &&
             //                (string)v.value != "0")
-            //                contactsWithSimilarPhone.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264911).values[0].value}"));
-
+            //                Task.WhenAll(
+            //                    Task.Delay(1000),
+            //                    Task.Run(() => contactsWithSimilarPhone.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264911).values[0].value}")))
+            //                    ).Wait();
 
             //    if (c.custom_fields_values.Any(x => x.field_id == 264913))
             //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264913).values)
             //            if ((string)v.value != "" &&
             //                (string)v.value != "0")
-            //                contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264913).values[0].value}"));
+            //                Task.WhenAll(
+            //                    Task.Delay(1000),
+            //                    Task.Run(() => contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264913).values[0].value}")))
+            //                    ).Wait();
 
             //    if (contactsWithSimilarPhone.Distinct(new ContactsComparer()).Count() > 1)
             //        doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264911).values[0].value));

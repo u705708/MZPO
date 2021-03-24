@@ -34,10 +34,10 @@ namespace MZPO.Controllers.Example
                 pass_number = "556677",
                 pass_issued_by = "some text",
                 pass_issued_at = "Date as string",
-                pass_dpt_code = "123132"
+                //pass_dpt_code = "123132"
             };
 
-            return Content(JsonConvert.SerializeObject(payload), "application/json");
+            return Content(JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }), "application/json");
         }
 
         // GET example/company
@@ -58,13 +58,13 @@ namespace MZPO.Controllers.Example
                 OGRN = "13223131326",
                 INN = "5465454654",
                 acc_no = "4654654654654654",
-                KPP = "546546465",
+                //KPP = "546546465",
                 BIK = "45654654",
                 address = "ул. Пушкина, 10",
                 post_address = "ул. Колотушкина, 11"
             };
 
-            return Content(JsonConvert.SerializeObject(payload), "application/json");
+            return Content(JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }), "application/json");
         }
 
         // GET example/course
@@ -88,13 +88,13 @@ namespace MZPO.Controllers.Example
                 price = 10000,
                 duration = 144,
                 format = "Очный",
-                program_id = "",
-                group = "",
+                //program_id = "",
+                //group = "",
                 requirements = "Нет",
                 supplementary_info = "Проверка"
             };
 
-            return Content(JsonConvert.SerializeObject(payload), "application/json");
+            return Content(JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }), "application/json");
         }
 
         // GET example/lead
@@ -114,8 +114,8 @@ namespace MZPO.Controllers.Example
                 price = 10000,
                 is_corporate = true,
                 lead_status = "",
-                marketing_channel = "",
-                marketing_source = "",
+                //marketing_channel = "",
+                //marketing_source = "",
                 author = "",
                 responsible_user = "",
                 payments = new() { new() { 
@@ -125,7 +125,7 @@ namespace MZPO.Controllers.Example
                 } }
             };
 
-            return Content(JsonConvert.SerializeObject(payload), "application/json");
+            return Content(JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }), "application/json");
         }
 
         // GET example/diploma
@@ -144,7 +144,7 @@ namespace MZPO.Controllers.Example
                 client_Id_1C = default
             };
 
-            return Content(JsonConvert.SerializeObject(payload), "application/json");
+            return Content(JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }), "application/json");
         }
     }
 }

@@ -310,7 +310,10 @@ namespace MZPO.ReportProcessors
             _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"CorpReport: total leads {leads.Count()}");
             List<Request> requestContainer = new();
 
-            Parallel.ForEach(leads, l => {
+            Parallel.ForEach(
+                leads,
+                new ParallelOptions { MaxDegreeOfParallelism = 4 },
+                l => {
                 requestContainer.Add(GetProcessedLeadRequest(l, manager.Item1));
             });
             #endregion

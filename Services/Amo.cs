@@ -42,13 +42,13 @@ namespace MZPO.Services
         #region Realization
         public AmoAccount GetAccountById(int id)
         {
-            if (_accounts.Any(x => x.id == id)) return _accounts.SingleOrDefault(x => x.id == id);
+            if (_accounts.Any(x => x.id == id)) return _accounts.Single(x => x.id == id);
             else throw new Exception($"Error: No such amo account: {id}");
         }
 
         public AmoAccount GetAccountByName(string name)
         {
-            if (_accounts.Any(x => x.name == name)) return _accounts.SingleOrDefault(x => x.name == name);
+            if (_accounts.Any(x => x.name == name)) return _accounts.Single(x => x.name == name);
             else throw new Exception($"Error: No such amo account: {name}");
         }
 

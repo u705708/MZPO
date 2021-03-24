@@ -42,6 +42,11 @@ namespace Integration1C
             pass_dpt_code = "123132"
         };
 
+        public class Result
+        {
+            public Guid client_id_1C { get; set; }
+        }
+
         public class StudentDTO
         {
             public string name;
@@ -64,23 +69,30 @@ namespace Integration1C
 
         internal Client1C GetClient(Guid client_id)
         {
-            string method = $"getStudentInfo?id={client_id:D}";
+            //string method = $"getStudentInfo?id={client_id:D}";
+            //Request1C request = new("GET", method, _cred1C);
+
+            //StudentDTO student = new();
+            //JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), student);
+
+            //return new() { 
+            //    name = student.name,
+            //    client_id_1C = student.uid,
+            //    phone = student.Telephone,
+            //    email = student.Mail,
+            //    pass_number = student.Pasport.Number,
+            //    pass_serie = student.Pasport.Series,
+            //    pass_issued_by = student.Pasport.Issued,
+            //    pass_dpt_code = student.Pasport.DivisionCode,
+            //    pass_issued_at = student.Pasport.DateOfIssued.ToShortDateString()
+            //};
+
+            string method = $"EditStudent?uid={client_id:D}";
             Request1C request = new("GET", method, _cred1C);
 
-            StudentDTO student = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), student);
-
-            return new() { 
-                name = student.name,
-                client_id_1C = student.uid,
-                phone = student.Telephone,
-                email = student.Mail,
-                pass_number = student.Pasport.Number,
-                pass_serie = student.Pasport.Series,
-                pass_issued_by = student.Pasport.Issued,
-                pass_dpt_code = student.Pasport.DivisionCode,
-                pass_issued_at = student.Pasport.DateOfIssued.ToShortDateString()
-            };
+            Client1C result = new();
+            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
+            return result;
         }
 
         internal Guid UpdateClient(Client1C client)
@@ -90,12 +102,13 @@ namespace Integration1C
                 throw new Exception("Unable to update 1C client, no UID.");
 
             string method = "EditStudent";
-            string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include });
             Request1C request = new("POST", method, content, _cred1C);
 
-            Guid result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
-            return result;
+            Result result = new();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }
+            catch (Exception e) { return default; }
+            return result.client_id_1C;
         }
 
         internal Guid AddClient(Client1C client)
@@ -107,12 +120,13 @@ namespace Integration1C
             client.client_id_1C = null;
 
             string method = "EditStudent";
-            string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }); ;
+            string content = JsonConvert.SerializeObject(client, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }); ;
             Request1C request = new("POST", method, content, _cred1C);
 
-            Guid result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
-            return result;
+            Result result = new();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }
+            catch (Exception e) { return default; }
+            return result.client_id_1C;
         }
     }
 }

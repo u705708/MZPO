@@ -38,12 +38,13 @@ namespace MZPO.ReportProcessors
             (3835801, "Наталья Кубышина"),
             (6158035, "Анастасия Матюк"),
             (6769426, "Рюмина Наталья"),
+            (6872548, "Оксана Полукеева"),
             (2375152, "Карен Оганисян"),
             (3813670, "Федорова Александра"),
             (6102562, "Валерия Лукьянова"),
             (6410290, "Вероника Бармина"),
-            (6699043, "Татьяна Ганоу"),
-            (6729241, "Серик Айбасов")
+            (6729241, "Серик Айбасов"),
+            (6890059, "Аскер Абулгазинов"),
         };
 
         private readonly List<int> pipelines = new()
@@ -288,7 +289,10 @@ namespace MZPO.ReportProcessors
 
             List<Lead> newLeads = new();
 
-            Parallel.ForEach(pipelines, p => {
+            Parallel.ForEach(
+                pipelines,
+                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                p => {
                 var range = _leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
                 lock (newLeads)
                 {
@@ -334,7 +338,10 @@ namespace MZPO.ReportProcessors
             foreach (var e in calls.inCalls)
                 callIdList.Add(e.value_after[0].note.id);
 
-            foreach (var n in _contRepo.BulkGetNotesById(callIdList))
+            Parallel.ForEach(
+                _contRepo.BulkGetNotesById(callIdList),
+                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                n =>
             {
                 int duration = -1;
 
@@ -342,7 +349,7 @@ namespace MZPO.ReportProcessors
                     duration = (int)n.parameters.duration;
 
                 if (duration == 0) missedCallsCount++;
-            }
+            });
 
             //Всего продаж
             int totalSales = allLeads.Where(x => x.status_id == 142).Sum(n => (int)n.price);

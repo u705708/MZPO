@@ -68,6 +68,7 @@ namespace MZPO.LeadProcessors
                     _formRequest.phone == ""))
                 {
                     _log.Add("Request without contacts");
+                    _processQueue.Remove($"FormSiteCorp");
                     return Task.CompletedTask;
                 }
 
@@ -254,7 +255,8 @@ namespace MZPO.LeadProcessors
                     _log.Add($"POST: {JsonConvert.SerializeObject(_formRequest, Formatting.Indented)}");
                     throw;
                 }
-
+                
+                _processQueue.Remove($"FormSiteCorp");
                 return Task.CompletedTask;
             }
             catch (Exception e)
