@@ -20,23 +20,6 @@ namespace MZPO.ReportProcessors
         {
         }
 
-        private readonly List<(int, string)> managers = new()
-        {
-            (2375107, "Кристина Гребенникова"),
-            (2375143, "Екатерина Белоусова"),
-            (2976226, "Вера Гладкова"),
-            (3835801, "Наталья Кубышина"),
-            (6158035, "Анастасия Матюк"),
-            (6769426, "Рюмина Наталья"),
-            (6872548, "Оксана Полукеева"),
-            (2375152, "Карен Оганисян"),
-            (3813670, "Федорова Александра"),
-            (6102562, "Валерия Лукьянова"),
-            (6410290, "Вероника Бармина"),
-            (6729241, "Серик Айбасов"),
-            (6890059, "Аскер Абулгазинов"),
-        };
-
         private readonly List<(int, int)> dataRanges = new()
         {
             (1601499600,1604177999),    //октябрь
@@ -46,15 +29,6 @@ namespace MZPO.ReportProcessors
             (1612126800,1614545999),    //февраль
             (1614546000,1617224399),    //март
             (1617224400,1619816399),    //апрель
-        };
-
-        private readonly List<int> pipelines = new()
-        {
-            3198184,
-            3566374,
-            3558964,
-            3558991,
-            3558922
         };
 
         private readonly Dictionary<string, CellFormat> columns = new()
@@ -258,7 +232,7 @@ namespace MZPO.ReportProcessors
             requestContainer.AddRange(GetHeaderRequests(0));
             #endregion
 
-            foreach (var m in managers)
+            foreach (var m in managersRet)
             {
                 #region Adding sheet
                 requestContainer.Add(new Request()
@@ -300,7 +274,7 @@ namespace MZPO.ReportProcessors
             List<Lead> newLeads = new();
 
             Parallel.ForEach(
-                pipelines,
+                pipelinesRet,
                 new ParallelOptions { MaxDegreeOfParallelism = 3 },
                 p => {
                 var range = _leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
@@ -383,7 +357,7 @@ namespace MZPO.ReportProcessors
         {
             List<Request> requestContainer = new();
 
-            foreach (var m in managers)
+            foreach (var m in managersRet)
             {
                 #region Prepare data
                 var rows = new List<RowData>
@@ -480,7 +454,7 @@ namespace MZPO.ReportProcessors
         {
             List<Request> requestContainer = new();
 
-            foreach (var m in managers)
+            foreach (var m in managersRet)
             {
                 #region Prepare data
                 var rows = new List<RowData>
@@ -552,7 +526,7 @@ namespace MZPO.ReportProcessors
                 {
                     BandedRange = new BandedRange()
                     {
-                        Range = new GridRange() { SheetId = 0, StartRowIndex = 1, EndRowIndex = managers.Count + 1 },
+                        Range = new GridRange() { SheetId = 0, StartRowIndex = 1, EndRowIndex = managersRet.Count + 1 },
                         BandedRangeId = 0,
                         RowProperties = new BandingProperties()
                         {
@@ -585,7 +559,7 @@ namespace MZPO.ReportProcessors
                 _longAnsweredLeads = new();
                 List<Task> tasks = new();
 
-                foreach (var manager in managers)
+                foreach (var manager in managersRet)
                 {
                     if (_token.IsCancellationRequested) break;
                     var m = manager;

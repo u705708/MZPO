@@ -6,13 +6,15 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MZPO.Services
 {
     public class AuthProvider : IAmoAuthProvider
     {
         #region Definition
+
+        private const int _concurrentRequestsAmount = 1;
+
         private readonly AmoProvider _amoProvider;
         private AmoAccountAuth _amoAccountAuth;
         private string _authToken;
@@ -27,7 +29,7 @@ namespace MZPO.Services
             _authToken = acc.authToken;
             _refrToken = acc.refrToken;
             _validity = acc.validity;
-            _ss = new(4, 4);
+            _ss = new(_concurrentRequestsAmount, _concurrentRequestsAmount);
         }
         #endregion
 

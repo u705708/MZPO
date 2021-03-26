@@ -15,26 +15,26 @@ namespace MZPO.Controllers.Example
         public IActionResult Client()
         {
             var payload = new Integration1C.Client1C() { 
-                client_id_1C = new Guid("2da8d74a-a672-45b8-8f90-cfd076392b40"),
+                client_id_1C = new Guid("29421f71-8b5c-11eb-891f-20040ffb909d"),
                 amo_ids = new() {
                     new() {
                         account_id = 19453687,
-                        entity_id = 46776565
+                        entity_id = 46781093
                     },
                     new() {
                         account_id = 28395871,
-                        entity_id = 33336001
+                        entity_id = 33346793
                     }
                 },
                 email = "no@email.test.test",
                 phone = "+79001112233",
-                name = "Тестовый контакт",
+                name = "Александров Александр Иванович",
                 dob = DateTime.Now,
-                pass_serie = "1234",
-                pass_number = "556677",
-                pass_issued_by = "some text",
-                pass_issued_at = "Date as string",
-                //pass_dpt_code = "123132"
+                pass_serie = "7202",
+                pass_number = "331004",
+                pass_issued_by = "АТП-3",
+                pass_issued_at = "05.08.2010 0:00:00",
+                //pass_dpt_code = "741-441"
             };
 
             return Content(JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }), "application/json");
@@ -45,7 +45,7 @@ namespace MZPO.Controllers.Example
         public IActionResult Company()
         {
             var payload = new Integration1C.Company1C() { 
-                company_id_1C = new Guid("f4369528-14ba-4968-8a9c-6e8a3126378c"),
+                company_id_1C = new Guid("5c269475-8ca2-11eb-891f-20040ffb909d"),
                 amo_ids = new() { new() { 
                     account_id = 19453687,
                     entity_id = 46776835
@@ -56,10 +56,10 @@ namespace MZPO.Controllers.Example
                 signee = "Подписант",
                 LPR_name = "Иван Иванов",
                 OGRN = "13223131326",
-                INN = "5465454654",
-                acc_no = "4654654654654654",
-                //KPP = "546546465",
-                BIK = "45654654",
+                INN = "7714829999",
+                acc_no = "30301810000006000001",
+                //KPP = "771401001",
+                BIK = "044525225",
                 address = "ул. Пушкина, 10",
                 post_address = "ул. Колотушкина, 11"
             };
@@ -72,7 +72,7 @@ namespace MZPO.Controllers.Example
         public IActionResult Course()
         {
             var payload = new Integration1C.Course1C() {
-                product_id_1C = new Guid("1205f8a9-0a5a-47d1-99e2-30a2d2823948"),
+                product_id_1C = new Guid("d96704d3-5821-11eb-86f0-82172a65f31e"),
                 amo_ids = new() {
                     new() {
                         account_id = 19453687,
@@ -85,12 +85,16 @@ namespace MZPO.Controllers.Example
                 },
                 name = "Тестовый курс",
                 short_name = "Тест",
-                price = 10000,
+                price = new() { new() { 
+                    Price = 10000,
+                    UID = new Guid("5bba5dc3-580c-11eb-86f0-82172a65d31e"),
+                    PriceType = "Основная цена"
+                } },
                 duration = 144,
                 format = "Очный",
                 //program_id = "",
                 //group = "",
-                requirements = "Нет",
+                //requirements = "Нет",
                 supplementary_info = "Проверка"
             };
 
@@ -107,9 +111,9 @@ namespace MZPO.Controllers.Example
                     account_id = 19453687,
                     entity_id = 1795667
                 } },
-                client_id_1C = new Guid("2da8d74a-a672-45b8-8f90-cfd076392b40"),
-                product_id_1C = new Guid("1205f8a9-0a5a-47d1-99e2-30a2d2823948"),
-                company_id_1C = new Guid("f4369528-14ba-4968-8a9c-6e8a3126378c"),
+                client_id_1C = new Guid("29421f71-8b5c-11eb-891f-20040ffb909d"),
+                product_id_1C = new Guid("d96704d3-5821-11eb-86f0-82172a65f31e"),
+                company_id_1C = new Guid("5c269475-8ca2-11eb-891f-20040ffb909d"),
                 organization = "МЦПО",
                 price = 10000,
                 is_corporate = true,

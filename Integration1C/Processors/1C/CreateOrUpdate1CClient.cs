@@ -140,9 +140,9 @@ namespace Integration1C
 
             try
             {
-                var result = contRepo.AddNewComplex(contact);
+                var result = contRepo.AddNew(contact);
                 if (result.Any())
-                    return result.First();
+                    return (int)result.First().id;
                 else throw new Exception("Amo returned no contact Ids.");
             }
             catch (Exception e)
@@ -258,8 +258,8 @@ namespace Integration1C
 
                     #region Check for UIDs
                     foreach (var c in similarContacts)
-                        if (c.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]) &&
-                            Guid.TryParse((string)c.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out Guid client_id_1C))
+                        if (c.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[a]["client_id_1C"]) &&
+                            Guid.TryParse((string)c.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[a]["client_id_1C"]).values[0].value, out Guid client_id_1C))
                         {
                             UpdateClientIn1C(client_id_1C, contact, a, _amo, _log, _repo1C);
                             return client_id_1C;
@@ -280,7 +280,7 @@ namespace Integration1C
                     #endregion
 
                     #region Creating new contact
-                    var compId = CreateContactInAmo(client1C, contRepo, a);
+                    var compId = CreateContactInAmo(client1C, anotherContRepo, a);
 
                     client1C.amo_ids.Add(new()
                     {

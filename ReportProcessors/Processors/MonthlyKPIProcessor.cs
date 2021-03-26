@@ -18,42 +18,13 @@ namespace MZPO.ReportProcessors
         internal MonthlyKPIProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
+            dataRanges = new() { ((int)dateFrom, (int)dateTo) };
         }
 
-        private readonly List<(int, string)> managers = new()
-        {
-            (2375107, "Кристина Гребенникова"),
-            (2375143, "Екатерина Белоусова"),
-            (2976226, "Вера Гладкова"),
-            (3835801, "Наталья Кубышина"),
-            (6158035, "Анастасия Матюк"),
-            (6769426, "Рюмина Наталья"),
-            (6872548, "Оксана Полукеева"),
-            (2375152, "Карен Оганисян"),
-            (3813670, "Федорова Александра"),
-            (6102562, "Валерия Лукьянова"),
-            (6410290, "Вероника Бармина"),
-            (6729241, "Серик Айбасов"),
-            (6890059, "Аскер Абулгазинов"),
-        };
+        private readonly List<(int, int)> dataRanges;
 
-        private readonly List<(int, int)> dataRanges = new()
-        {
-            (1601499600, 1604177999),    //октябрь
-            (1604178000, 1606769999),    //ноябрь
-            (1606770000, 1609448399),    //декабрь
-            (1609448400, 1612126799),    //январь
-            (1612126800, 1614545999)     //февраль
-        };
-
-        private readonly List<int> pipelines = new()
-        {
-            3198184,
-            3566374,
-            3558964,
-            3558991,
-            3558922
-        };
+        private readonly List<(int, string)> _specials = new();
+        private readonly List<(int, string)> _newProducts = new();
 
         private readonly Dictionary<string, CellFormat> columns = new()
         {
@@ -72,6 +43,28 @@ namespace MZPO.ReportProcessors
             { "M", new CellFormat() { HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###" } } }
         };
         #endregion
+
+        class LeadComparer : IEqualityComparer<Lead>
+        {
+            public bool Equals(Lead x, Lead y)
+            {
+                if (Object.ReferenceEquals(x, y)) return true;
+
+                if (x is null || y is null)
+                    return false;
+
+                return x.id == y.id;
+            }
+
+            public int GetHashCode(Lead c)
+            {
+                if (c is null) return 0;
+
+                int hashProductCode = c.id.GetHashCode();
+
+                return hashProductCode;
+            }
+        }
 
         #region Supplementary methods
         private static List<Request> GetHeaderRequests(int? sheetId)
@@ -120,7 +113,7 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Adjusting column width
-            var width = new List<int>() { 168, 120, 84, 72, 108, 96, 120, 108, 144, 120, 108, 108, 108 };
+            var width = new List<int>() { 156, 156, 132, 144, 96, 156, 144, 72, 240, 132, 228, 60, 144 };
             int i = 0;
 
             foreach (var c in width)
@@ -202,7 +195,7 @@ namespace MZPO.ReportProcessors
             }
             #endregion
 
-            foreach (var m in managers)
+            foreach (var m in managersRet)
             {
                 #region Adding sheet
                 requestContainer.Add(new Request()
@@ -234,36 +227,58 @@ namespace MZPO.ReportProcessors
             //Даты
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
-            //Список новых сделок в воронках из pipelines
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, new leads");
-
-            List<Lead> newLeads = new();
-
-            Parallel.ForEach(pipelines, p => {
-                var range = _leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
-                lock (newLeads)
-                {
-                    newLeads.AddRange(range);
-                }
-            });
-
-            int totalNewLeads = newLeads.Count;
-
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, new leads: {totalNewLeads}");
-
-            double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
-            int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
-
             //Список закрытых сделок
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, closed leads");
+            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, closed leads");
 
-            var allLeads = _leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
+            List<Lead> allLeads = new();
 
-            //Количество закрытых сделок
-            int finishedLeads = allLeads.Where(x => (x.status_id == 142) || (x.status_id == 143)).Count();
+            allLeads.AddRange(_leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts"));
 
-            //Количество успешных сделок
-            int successLeads = allLeads.Where(x => x.status_id == 142).Count();
+            //Всего продаж
+            int totalSales = allLeads.Where(x => x.status_id == 142)
+                                     .Sum(x => (int)x.price);
+
+            //Продаж очных сделок
+            int fulltimeSales = allLeads.Where(x => x.status_id == 142)
+                                        .Where(x => x.custom_fields_values is not null &&
+                                                    x.custom_fields_values.Any(y => y.field_id == 643207))
+                                        .Where(x => (string)x.custom_fields_values.First(y => y.field_id == 643207).values[0].value == "Очная" ||
+                                                    (string)x.custom_fields_values.First(y => y.field_id == 643207).values[0].value == "ОчноЗаочная" ||
+                                                    (string)x.custom_fields_values.First(y => y.field_id == 643207).values[0].value == "ОчноДистанционная")
+                                        .Sum(x => (int)x.price);
+
+            //Продаж дистанционных сделок
+            int distantSales = allLeads.Where(x => x.status_id == 142)
+                                       .Where(x => x.custom_fields_values is not null &&
+                                                   x.custom_fields_values.Any(y => y.field_id == 643207))
+                                       .Where(x => (string)x.custom_fields_values.First(y => y.field_id == 643207).values[0].value == "Дистанционная" ||
+                                                   (string)x.custom_fields_values.First(y => y.field_id == 643207).values[0].value == "Вебинар онлайн")
+                                       .Sum(x => (int)x.price);
+
+            //Кол-во повторных продаж
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, recurrent leads");
+
+            int recurrentLeads = 0;
+            
+            foreach (var l in allLeads.Where(x => x.status_id == 142))
+            {
+                if (l._embedded is not null &&
+                    l._embedded.contacts is not null)
+                {
+                    List<Lead> connectedContactsLeads = new();
+
+                    foreach (var c in l._embedded.contacts)
+                    {
+                        var contact = _contRepo.GetById((int)c.id);
+                        if (contact._embedded is not null &&
+                            contact._embedded.leads is not null)
+                            connectedContactsLeads.AddRange(contact._embedded.leads);
+                    }
+
+                    if (connectedContactsLeads.Distinct(new LeadComparer()).Count() > 1)
+                        recurrentLeads++;
+                }
+            }
 
             //Список звонков
             _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
@@ -272,41 +287,72 @@ namespace MZPO.ReportProcessors
             //Количество исходящих вызовов
             int outCallsCount = calls.outCalls.Count();
 
-            //Количество входящих вызовов
-            int inCallsCount = calls.inCalls.Count();
-
-            //Количество пропущенных вызовов
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, missed calls");
-
-            int missedCallsCount = 0;
+            //Длительность исходящих вызовов
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, calls duration");
 
             var callIdList = new List<int>();
 
-            foreach (var e in calls.inCalls)
+            foreach (var e in calls.outCalls)
                 callIdList.Add(e.value_after[0].note.id);
 
-            foreach (var n in _contRepo.BulkGetNotesById(callIdList))
-            {
-                int duration = -1;
+            var callNotes = _contRepo.BulkGetNotesById(callIdList);
 
-                if (n.parameters is not null)
-                    duration = (int)n.parameters.duration;
+            int callsDuration = callNotes.Where(x => x.parameters is not null)
+                                         .Sum(x => (int)x.parameters.duration);
 
-                if (duration == 0) missedCallsCount++;
-            }
+            //Количество первых вызовов
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, first calls");
 
-            //Всего продаж
-            int totalSales = allLeads.Where(x => x.status_id == 142).Sum(n => (int)n.price);
+            int firstCallsCount = 0; //------------
 
-            //Время сделки
-            double averageTime = 0;
-            if (finishedLeads > 0)
-                averageTime = allLeads.AsParallel()
-                    .Where(x => (x.status_id == 142) || (x.status_id == 143))
-                    .Select(x => (int)x.closed_at - (int)x.created_at).Average() / 86400;
+            Parallel.ForEach(
+                calls.outCalls,
+                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                c => {
+                    var allContactCalls = _contRepo.GetEntityEvents((int)c.entity_id);
+                    if (allContactCalls.Any(x => x.type == "outgoing_call") &&
+                        allContactCalls.Where(x => x.type == "outgoing_call").OrderBy(x => x.created_at).First().id == c.id)
+                        firstCallsCount++;
+            });
 
+            //Отправлено КП
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, KP sent");
+
+            var criteria = $"filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[created_by][]={manager.Item1}&filter[entity][]=lead&filter[type][]=lead_status_changed&filter[value_after][leads_statuses][0][pipeline_id]=3198184&filter[value_after][leads_statuses][0][status_id]=32532886";
+            List<Event> sentKPEvents = new();
+            sentKPEvents.AddRange(_leadRepo.GetEventsByCriteria(criteria));
+            int sentKPCount = sentKPEvents.Count;
+
+            //Переведено из актуализации
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, Actualization");
+
+            criteria = $"filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[created_by][]={manager.Item1}&filter[entity][]=lead&filter[type][]=lead_status_changed&filter[value_before][leads_statuses][0][pipeline_id]=3558922&filter[value_before][leads_statuses][0][status_id]=35002129";
+            List<Event> actualizationCheckEvents = new();
+            actualizationCheckEvents.AddRange(_leadRepo.GetEventsByCriteria(criteria));
+            int actualizationCheckCount = actualizationCheckEvents.Count;
+
+            //Акции
+            var specialsLeads = allLeads.Where(x => x.status_id == 142)
+                                       .Where(x => x.custom_fields_values is not null &&
+                                                   x.custom_fields_values.Any(y => y.field_id == 709753))
+                                       .ToList();
+            int specialsLeadsCount = specialsLeads.Count;
+
+            _specials.AddRange(specialsLeads.Select(x => (manager.Item1, (string)x.custom_fields_values.First(x => x.field_id == 709753).values[0].value)));
+
+            //Новые продукты
+            var newProductLeads = allLeads.Where(x => x.status_id == 142)
+                                          .Where(x => x.custom_fields_values is not null &&
+                                                      x.custom_fields_values.Any(y => y.field_id == 709755))
+                                          .ToList();
+            int newProductLeadsCount = newProductLeads.Count;
+
+            _newProducts.AddRange(newProductLeads.Select(x => (manager.Item1, (string)x.custom_fields_values.First(x => x.field_id == 709755).values[0].value)));
+
+
+            //Сохраняем результаты
             List<Request> requestContainer = new();
-            requestContainer.Add(GetRowRequest(manager.Item1, GetCellData(dates, totalNewLeads, finishedLeads, successLeads, totalSales, 0, (int)averageTime, (int)responseTime, longLeads, inCallsCount, outCallsCount, missedCallsCount)));
+            requestContainer.Add(GetRowRequest(manager.Item1, GetCellData(dates, totalSales, fulltimeSales, distantSales, recurrentLeads, outCallsCount, firstCallsCount, callsDuration, sentKPCount, actualizationCheckCount, specialsLeadsCount, newProductLeadsCount)));
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
@@ -317,31 +363,61 @@ namespace MZPO.ReportProcessors
         {
             List<Request> requestContainer = new();
 
-            foreach (var m in managers)
+            foreach (var m in managersRet)
             {
                 #region Prepare Data
-                List<(int?, int, int, int?)> leads = new();
-                if (_longAnsweredLeads.Any(x => x.Item1 == m.Item1))
-                    leads.AddRange(_longAnsweredLeads.Where(x => x.Item1 == m.Item1));
                 var rows = new List<RowData>();
 
                 #region Header
                 rows.Add(new RowData()
                 {
                     Values = new List<CellData>(){
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Сделка" } },
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Время ответа, сек" } }
-                        }
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Акция" } },
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Количество" } },
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                    }
                 });
                 #endregion
 
-                foreach (var l in leads)
+                var specials = _specials.Where(x => x.Item1 == m.Item1).GroupBy(x => x.Item2).Select(g => new { Item = g.Key, Count = g.Count() }); 
+
+                foreach (var s in specials)
                 {
                     rows.Add(new RowData()
                     {
                         Values = new List<CellData>(){
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ FormulaValue = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{l.Item2}"", ""{l.Item2}"")" } },
-                         new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{l.Item3}" } }
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{s.Item}" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ NumberValue = s.Count } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                        }
+                    });
+                }
+
+                #region Header
+                rows.Add(new RowData()
+                {
+                    Values = new List<CellData>(){
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Новые продукты" } },
+                        new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "Количество" } },
+                    }
+                });
+                #endregion
+
+                var newProducts = _newProducts.Where(x => x.Item1 == m.Item1).GroupBy(x => x.Item2).Select(g => new { Item = g.Key, Count = g.Count() });
+
+                foreach (var n in newProducts)
+                {
+                    rows.Add(new RowData()
+                    {
+                        Values = new List<CellData>(){
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = "" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ StringValue = $"{n.Item}" } },
+                            new CellData(){ UserEnteredValue = new ExtendedValue(){ NumberValue = n.Count } },
                         }
                     });
                 }
@@ -360,121 +436,12 @@ namespace MZPO.ReportProcessors
                             StartRowIndex = dataRanges.Count + 3,
                             EndRowIndex = dataRanges.Count + 3 + rows.Count,
                             StartColumnIndex = 0,
-                            EndColumnIndex = 2
-                        }
-                    }
-                });
-                #endregion
-
-                #region Add banding
-                requestContainer.Add(new Request()
-                {
-                    AddBanding = new AddBandingRequest()
-                    {
-                        BandedRange = new BandedRange()
-                        {
-                            Range = new GridRange() { SheetId = m.Item1, StartRowIndex = 1, EndRowIndex = dataRanges.Count + 1 },
-                            RowProperties = new BandingProperties()
-                            {
-                                FirstBandColor = new Color() { Red = 217f / 255, Green = 234f / 255, Blue = 211f / 255 },
-                                SecondBandColor = new Color() { Red = 182f / 255, Green = 215f / 255, Blue = 168f / 255 },
-                            }
+                            EndColumnIndex = 4
                         }
                     }
                 });
                 #endregion
             }
-
-            await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
-        }
-
-        private async Task FinalizeTotals()
-        {
-            List<Request> requestContainer = new();
-
-            foreach (var m in managers)
-            {
-                #region Prepare data
-                var rows = new List<RowData>
-                {
-                    new RowData()
-                    {
-                        Values = new List<CellData>(){
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ StringValue = $"{m.Item2}"},
-                             UserEnteredFormat = columns["A"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!B{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["B"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!C{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["C"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!D{dataRanges.Count + 2}"},
-                             UserEnteredFormat = columns["D"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!E{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["E"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!F{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["F"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!G{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["G"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!H{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["H"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!I{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["I"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!J{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["J"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!K{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["K"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!L{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["L"] },
-                         new CellData(){
-                             UserEnteredValue = new ExtendedValue(){ FormulaValue = $"='{m.Item2}'!M{dataRanges.Count + 2}" },
-                             UserEnteredFormat = columns["M"] },
-                }
-                    }
-                };
-                #endregion
-
-                #region Add request
-                requestContainer.Add(new Request()
-                {
-                    AppendCells = new AppendCellsRequest()
-                    {
-                        Fields = '*',
-                        Rows = rows,
-                        SheetId = 0
-                    }
-                });
-                #endregion            
-            }
-
-            #region Add banding
-            requestContainer.Add(new Request()
-            {
-                AddBanding = new AddBandingRequest()
-                {
-                    BandedRange = new BandedRange()
-                    {
-                        Range = new GridRange() { SheetId = 0, StartRowIndex = 1, EndRowIndex = managers.Count + 1 },
-                        BandedRangeId = 0,
-                        RowProperties = new BandingProperties()
-                        {
-                            FirstBandColor = new Color() { Red = 217f / 255, Green = 234f / 255, Blue = 211f / 255 },
-                            SecondBandColor = new Color() { Red = 182f / 255, Green = 215f / 255, Blue = 168f / 255 },
-                        }
-                    }
-                }
-            });
-            #endregion
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
@@ -497,7 +464,7 @@ namespace MZPO.ReportProcessors
                 _longAnsweredLeads = new();
                 List<Task> tasks = new();
 
-                foreach (var manager in managers)
+                foreach (var manager in managersRet)
                 {
                     if (_token.IsCancellationRequested) break;
                     var m = manager;
@@ -508,7 +475,6 @@ namespace MZPO.ReportProcessors
             }
 
             await FinalizeManagers();
-            await FinalizeTotals();
 
             _processQueue.Remove(_taskName);
         }

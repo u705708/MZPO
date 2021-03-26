@@ -95,6 +95,8 @@ namespace Integration1C
             {
                 lead_id_1C = lead_id_1C,
                 price = (int)lead.price,
+                author = UserList.Get1CUser(lead.responsible_user_id),
+                responsible_user = UserList.Get1CUser(lead.responsible_user_id),
                 amo_ids = new()
                 {
                     new()

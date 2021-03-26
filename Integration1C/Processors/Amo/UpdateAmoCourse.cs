@@ -2,6 +2,7 @@
 using MZPO.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Integration1C
 {
@@ -33,12 +34,23 @@ namespace Integration1C
                 if (FieldLists.Courses[acc_id].ContainsKey(p.Name) &&
                     p.GetValue(course) is not null)
                 {
+                    if (p.Name == "price")
+                        continue;
+
                     ce.custom_fields.Add(new CatalogElement.Custom_fields()
                     {
                         id = FieldLists.Courses[acc_id][p.Name],
                         values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = p.GetValue(course).ToString() } }
                     });
                 }
+
+            if (course.price is not null &&
+                course.price.Any())
+                ce.custom_fields.Add(new CatalogElement.Custom_fields()
+                {
+                    id = FieldLists.Courses[acc_id]["price"],
+                    values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.price.First().Price.ToString() } }
+                });
         }
 
         private static void UpdateCourseInAmo(Course1C course, IAmoRepo<Lead> leadRepo, int ce_id, int acc_id)

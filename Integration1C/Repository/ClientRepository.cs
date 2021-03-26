@@ -47,46 +47,10 @@ namespace Integration1C
             public Guid client_id_1C { get; set; }
         }
 
-        public class StudentDTO
-        {
-            public string name;
-            public Guid uid;
-            public string Telephone;
-            public string Mail;
-            public Pass Pasport;
-
-            public class Pass
-            {
-                public string Series;
-                public string Number;
-                public string Issued;
-                public string DivisionCode;
-                public DateTime DateOfIssued;
-            }
-        }
-        
         internal Client1C GetClient(Client1C client) => GetClient((Guid)client.client_id_1C);
 
         internal Client1C GetClient(Guid client_id)
         {
-            //string method = $"getStudentInfo?id={client_id:D}";
-            //Request1C request = new("GET", method, _cred1C);
-
-            //StudentDTO student = new();
-            //JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), student);
-
-            //return new() { 
-            //    name = student.name,
-            //    client_id_1C = student.uid,
-            //    phone = student.Telephone,
-            //    email = student.Mail,
-            //    pass_number = student.Pasport.Number,
-            //    pass_serie = student.Pasport.Series,
-            //    pass_issued_by = student.Pasport.Issued,
-            //    pass_dpt_code = student.Pasport.DivisionCode,
-            //    pass_issued_at = student.Pasport.DateOfIssued.ToShortDateString()
-            //};
-
             string method = $"EditStudent?uid={client_id:D}";
             Request1C request = new("GET", method, _cred1C);
 

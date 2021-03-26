@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MZPO.AmoRepo
 {
@@ -62,7 +63,7 @@ namespace MZPO.AmoRepo
 
                 var next = entityList._links["next"].href;
                 try { response = request.GetResponseAsync().Result; }
-                catch(Exception e) { throw new Exception($"Unable to get response from amo {e}"); }
+                catch(Exception e) { /*throw new Exception($"Unable to get response from amo: {e}");*/ break; }
                 
                 if (response == "") break;
                 
@@ -120,13 +121,15 @@ namespace MZPO.AmoRepo
             int i = 0;
             StringBuilder criteria = new("");
 
+            List<string> allCriteria = new();
+
             foreach (var id in ids.Distinct())
             {
                 criteria.Append($"filter[id][{i++}]={id}&");
                 if (i % 10 == 0)
                 {
                     criteria.Append($"with=companies,contacts,leads,catalog_elements");
-                    result.AddRange(GetByCriteria(criteria.ToString()));
+                    allCriteria.Add(criteria.ToString());
                     criteria = new("");
                     i = 0;
                 }
@@ -135,8 +138,16 @@ namespace MZPO.AmoRepo
             if (criteria.ToString() != "")
             {
                 criteria.Append($"with=companies,contacts,leads,catalog_elements");
-                result.AddRange(GetByCriteria(criteria.ToString()));
+                allCriteria.Add(criteria.ToString());
             }
+
+            Parallel.ForEach(
+                allCriteria,
+                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                c => {
+                    var entities = GetByCriteria(c);
+                    lock (result) result.AddRange(entities);
+                } );
 
             return result;
         }
@@ -213,19 +224,29 @@ namespace MZPO.AmoRepo
             int i = 0;
             StringBuilder criteria = new("");
 
+            List<string> allCriteria = new();
+
             foreach (var id in ids.Distinct())
             {
                 criteria.Append($"filter[id][{i++}]={id}&");
                 if (i % 10 == 0)
                 {
-                    result.AddRange(GetNotesByCriteria(criteria.ToString()));
+                    allCriteria.Add(criteria.ToString());
                     criteria = new("");
                     i = 0;
                 }
             }
 
             if (criteria.ToString() != "")
-                result.AddRange(GetNotesByCriteria(criteria.ToString()));
+                allCriteria.Add(criteria.ToString());
+
+            Parallel.ForEach(
+                allCriteria,
+                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                c => {
+                    var notes = GetNotesByCriteria(c);
+                    lock (result) result.AddRange(notes);
+                } );
 
             return result;
         }

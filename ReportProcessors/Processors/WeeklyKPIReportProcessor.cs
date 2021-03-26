@@ -30,32 +30,6 @@ namespace MZPO.ReportProcessors
 
         private readonly List<(int, int)> dataRanges;
 
-        private readonly List<(int, string)> managers = new()
-        {
-            (2375107, "Кристина Гребенникова"),
-            (2375143, "Екатерина Белоусова"),
-            (2976226, "Вера Гладкова"),
-            (3835801, "Наталья Кубышина"),
-            (6158035, "Анастасия Матюк"),
-            (6769426, "Рюмина Наталья"),
-            (6872548, "Оксана Полукеева"),
-            (2375152, "Карен Оганисян"),
-            (3813670, "Федорова Александра"),
-            (6102562, "Валерия Лукьянова"),
-            (6410290, "Вероника Бармина"),
-            (6729241, "Серик Айбасов"),
-            (6890059, "Аскер Абулгазинов"),
-        };
-
-        private readonly List<int> pipelines = new()
-        {
-            3198184,
-            3566374,
-            3558964,
-            3558991,
-            3558922
-        };
-
         private readonly Dictionary<string, CellFormat> columnsFormat = new()
         {
             { "A", new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
@@ -218,7 +192,7 @@ namespace MZPO.ReportProcessors
             }
             #endregion
 
-            foreach (var m in managers)
+            foreach (var m in managersRet)
             {
                 #region Adding sheet
                 requestContainer.Add(new Request()
@@ -257,7 +231,7 @@ namespace MZPO.ReportProcessors
             if (values is not null)
                 foreach (var row in values)
                 {
-                    if (managers.Any(x => x.Item2 == (string)row[0]))
+                    if (managersRet.Any(x => x.Item2 == (string)row[0]))
                     {
                         string A = "Средние в % от мес";
                         var B = (int)(Convert.ToDouble(row[1]) * monthRatio);
@@ -271,7 +245,7 @@ namespace MZPO.ReportProcessors
                         var L = (int)(Convert.ToDouble(row[11]) * monthRatio);
                         var M = (int)(Convert.ToDouble(row[12]) * monthRatio);
 
-                        int sheetId = managers.First(x => x.Item2 == (string)row[0]).Item1;
+                        int sheetId = managersRet.First(x => x.Item2 == (string)row[0]).Item1;
 
                         requestContainer.Add(GetRowRequest(sheetId, GetCellData(A, B, C, D, E, H, I, J, K, L, M)));
                     }
@@ -290,7 +264,7 @@ namespace MZPO.ReportProcessors
             List<Lead> newLeads = new();
 
             Parallel.ForEach(
-                pipelines,
+                pipelinesRet,
                 new ParallelOptions { MaxDegreeOfParallelism = 3 },
                 p => {
                 var range = _leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
@@ -338,10 +312,7 @@ namespace MZPO.ReportProcessors
             foreach (var e in calls.inCalls)
                 callIdList.Add(e.value_after[0].note.id);
 
-            Parallel.ForEach(
-                _contRepo.BulkGetNotesById(callIdList),
-                new ParallelOptions { MaxDegreeOfParallelism = 3 },
-                n =>
+            foreach(var n in _contRepo.BulkGetNotesById(callIdList))
             {
                 int duration = -1;
 
@@ -349,7 +320,7 @@ namespace MZPO.ReportProcessors
                     duration = (int)n.parameters.duration;
 
                 if (duration == 0) missedCallsCount++;
-            });
+            };
 
             //Всего продаж
             int totalSales = allLeads.Where(x => x.status_id == 142).Sum(n => (int)n.price);
@@ -374,7 +345,7 @@ namespace MZPO.ReportProcessors
         {
             List<Request> requestContainer = new();
 
-            foreach (var m in managers)
+            foreach (var m in managersRet)
             {
                 #region Prepare Data
                 List<(int?, int, int, int?)> leads = new();
@@ -468,7 +439,7 @@ namespace MZPO.ReportProcessors
                 _longAnsweredLeads = new();
                 List<Task> tasks = new();
 
-                foreach (var manager in managers)
+                foreach (var manager in managersRet)
                 {
                     if (_token.IsCancellationRequested) break;
                     var m = manager;

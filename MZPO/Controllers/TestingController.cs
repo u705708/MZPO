@@ -76,26 +76,6 @@ namespace MZPO.Controllers
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
 
-            //var leadRepo = _amo.GetAccountById(28395871).GetRepo<Lead>();
-
-            //return Ok(leadRepo.GetById(23889501));
-
-            //List<int> ids = new()
-            //{
-            //    23889501,
-            //    23889499,
-            //    23889469,
-            //    23889475,
-            //    23889419,
-            //    23889383,
-            //    23889343,
-            //};
-
-            //List<Lead> leads = new();
-            //Parallel.ForEach(ids, i =>  leads.Add(leadRepo.GetById(i)) );
-
-            //return Ok(leads);
-
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
             #region CorpParse
@@ -229,7 +209,7 @@ namespace MZPO.Controllers
 
             //Parallel.ForEach(
             //    contacts,
-            //    new ParallelOptions { MaxDegreeOfParallelism = 5 }, 
+            //    new ParallelOptions { MaxDegreeOfParallelism = 4 },
             //    c =>
             //{
             //    List<Contact> contactsWithSimilarPhone = new();
@@ -241,19 +221,13 @@ namespace MZPO.Controllers
             //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264911).values)
             //            if ((string)v.value != "" &&
             //                (string)v.value != "0")
-            //                Task.WhenAll(
-            //                    Task.Delay(1000),
-            //                    Task.Run(() => contactsWithSimilarPhone.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264911).values[0].value}")))
-            //                    ).Wait();
+            //                contactsWithSimilarPhone.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264911).values[0].value}"));
 
             //    if (c.custom_fields_values.Any(x => x.field_id == 264913))
             //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264913).values)
             //            if ((string)v.value != "" &&
             //                (string)v.value != "0")
-            //                Task.WhenAll(
-            //                    Task.Delay(1000),
-            //                    Task.Run(() => contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264913).values[0].value}")))
-            //                    ).Wait();
+            //                contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264913).values[0].value}"));
 
             //    if (contactsWithSimilarPhone.Distinct(new ContactsComparer()).Count() > 1)
             //        doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264911).values[0].value));
@@ -270,6 +244,38 @@ namespace MZPO.Controllers
             //{
             //    sw1.WriteLine($"{c.cid};{c.cont}");
             //}
+
+            //return Ok();
+            #endregion
+
+            #region AddCourses
+            //using StreamReader sr = new("courses.json");
+            //List<Guid> course_ids = new();
+            //JsonConvert.PopulateObject(sr.ReadToEnd(), course_ids);
+
+            //int i = 0;
+            //List<Course1C> processesCourses = new();
+            //List<(Guid, string)> errorList = new();
+
+            //foreach (var c in course_ids)
+            //{
+            //    i++;
+            //    try
+            //    {
+            //        processesCourses.Add(new PopulateCourses(_amo, _log, _cred1C).Run(c));
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        errorList.Add((c, e.Message));
+            //    }
+            //}
+
+            //using StreamWriter sw1 = new StreamWriter("processed_courses.json", false, System.Text.Encoding.Default);
+            //sw1.WriteLine(JsonConvert.SerializeObject(course_ids));
+
+            //using StreamWriter sw2 = new StreamWriter("errors.csv", false, System.Text.Encoding.Default);
+            //foreach (var e in errorList)
+            //sw2.WriteLine($"{e.Item1};{e.Item2}");
 
             //return Ok();
             #endregion

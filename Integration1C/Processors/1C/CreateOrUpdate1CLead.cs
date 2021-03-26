@@ -94,6 +94,8 @@ namespace Integration1C
             Lead1C lead1C = new() {
                 lead_id_1C = lead_id_1C,
                 price = (int)lead.price,
+                author = UserList.Get1CUser(lead.responsible_user_id),
+                responsible_user = UserList.Get1CUser(lead.responsible_user_id),
                 amo_ids = new() { new() {
                         account_id = amo_acc,
                         entity_id = lead.id
@@ -113,12 +115,16 @@ namespace Integration1C
         {
             Lead1C lead1C = new() {
                 price = (int)lead.price,
+                author = UserList.Get1CUser(lead.responsible_user_id),
+                responsible_user = UserList.Get1CUser(lead.responsible_user_id),
                 amo_ids = new() { new() {
                         account_id = amo_acc,
                         entity_id = lead.id
             } } };
 
             PopulateCFs(lead, amo_acc, lead1C);
+
+            lead1C.lead_status = "ВРаботе";
 
             if (amo_acc == 19453687)
                 lead1C.is_corporate = true;

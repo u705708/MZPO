@@ -51,6 +51,7 @@ namespace Integration1C
             {
                 id = lead_id,
                 price = lead1C.price,
+                responsible_user_id = UserList.GetAmoUser(lead1C.responsible_user),
                 custom_fields_values = new(),
             };
 

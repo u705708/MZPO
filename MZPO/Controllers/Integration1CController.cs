@@ -37,8 +37,12 @@ namespace MZPO.Controllers
 
             if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
 
-            if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
-            if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
+            int leadNumber = 0;
+
+            if (!col.ContainsKey("leads[status][0][id]") &&
+                !col.ContainsKey("leads[add][0][id]")) return BadRequest("Unexpected request.");
+            if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
+                !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
 
             var task = Task.Run(() => new CreateOrUpdate1CClient(_amo, _log, leadNumber, accNumber, _cred1C).Run());
 
@@ -138,8 +142,12 @@ namespace MZPO.Controllers
             try { acc = _amo.GetAccountById(accNumber); }
             catch (Exception e) { _log.Add(e.Message); return Ok(); }
 
-            if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
-            if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
+            int leadNumber = 0;
+
+            if (!col.ContainsKey("leads[status][0][id]") &&
+                !col.ContainsKey("leads[add][0][id]")) return BadRequest("Unexpected request.");
+            if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
+                !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
 
             var task = Task.Run(() => new CreateOrUpdate1CCompany(_amo, _log, leadNumber, _cred1C).Run());
 
@@ -239,8 +247,12 @@ namespace MZPO.Controllers
             try { acc = _amo.GetAccountById(accNumber); }
             catch (Exception e) { _log.Add(e.Message); return Ok(); }
 
-            if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
-            if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
+            int leadNumber = 0;
+
+            if (!col.ContainsKey("leads[status][0][id]") &&
+                !col.ContainsKey("leads[add][0][id]")) return BadRequest("Unexpected request.");
+            if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
+                !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
 
             var task = Task.Run(() => new CreateOrUpdate1CLead(_amo, _log, leadNumber, accNumber, _cred1C).Run());
 
@@ -264,8 +276,12 @@ namespace MZPO.Controllers
             try { acc = _amo.GetAccountById(accNumber); }
             catch (Exception e) { _log.Add(e.Message); return Ok(); }
 
-            if (!col.ContainsKey("leads[status][0][id]")) return BadRequest("Unexpected request.");
-            if (!Int32.TryParse(col["leads[add][0][id]"], out int leadNumber)) return BadRequest("Incorrect lead number.");
+            int leadNumber = 0;
+
+            if (!col.ContainsKey("leads[status][0][id]") &&
+                !col.ContainsKey("leads[add][0][id]")) return BadRequest("Unexpected request.");
+            if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
+                !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
 
             var task = Task.Run(() => new Update1CLead(_amo, _log, leadNumber, accNumber, _cred1C).Run());
 

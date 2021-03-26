@@ -105,7 +105,7 @@ namespace Integration1C
 
             string method = "EditApplication";
             string content = JsonConvert.SerializeObject(lead, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Include }); ;
-            Request1C request = new("PATCH", method, content, _cred1C);
+            Request1C request = new("POST", method, content, _cred1C);
 
             Result result = new();
             try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }

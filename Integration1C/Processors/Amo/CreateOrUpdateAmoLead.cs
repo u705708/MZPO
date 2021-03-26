@@ -62,6 +62,7 @@ namespace Integration1C
             {
                 id = lead_id,
                 price = lead1C.price,
+                responsible_user_id = UserList.GetAmoUser(lead1C.responsible_user),
                 custom_fields_values = new(),
             };
 
@@ -85,6 +86,7 @@ namespace Integration1C
             {
                 name = "Новая сделка",
                 price = lead1C.price,
+                responsible_user_id = UserList.GetAmoUser(lead1C.responsible_user),
                 custom_fields_values = new(),
                 _embedded = new()
             };

@@ -195,8 +195,11 @@ namespace MZPO.LeadProcessors
         private void CallResultWaiter()                                                                                 //Метод проверяет, была ли сделка из телефонии, если да, то ждёт полчаса
         {
             var source = GetFieldValue(639085);
+            var application = GetFieldValue(639075);
             if (source is null) return;
-            if (source.Contains("Прямой") || source.Contains("Коллтрекинг") || source.Contains("instagram"))
+            if (source.Contains("Прямой") ||
+                source.Contains("Коллтрекинг") ||
+                (source.Contains("instagram") && (application is null || !application.Contains("instagram"))))
             {
                 for (int i = 1; i <= 30; i++)
                 {

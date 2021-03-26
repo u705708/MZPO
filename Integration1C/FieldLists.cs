@@ -99,8 +99,8 @@ namespace Integration1C
                                 { "price", 647997 },
                                 { "duration", 715507 },
                                 { "format", 715509 },
-                                { "group", 647999 },
-                                { "requirements", 650253 },
+                                //{ "group", 647999 },
+                                //{ "requirements", 650253 },
                                 { "supplementary_info", 647995 },
                             }
             },
@@ -111,8 +111,8 @@ namespace Integration1C
                                 { "price", 751169 },
                                 { "duration", 751185 },
                                 { "format", 751187 },
-                                { "group", 751171 },
-                                { "requirements", 751189 },
+                                //{ "group", 751171 },
+                                //{ "requirements", 751189 },
                                 { "supplementary_info", 751167 },
                             }
             },
