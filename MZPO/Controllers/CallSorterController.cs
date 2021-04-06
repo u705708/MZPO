@@ -8,9 +8,9 @@ namespace MZPO.Controllers
     [ApiController]
     public class CallSorterController : ControllerBase
     {
-        private readonly CallSorter _callSorter;
+        private readonly LeadsSorter _callSorter;
 
-        public CallSorterController(CallSorter callSorter)
+        public CallSorterController(LeadsSorter callSorter)
         {
             _callSorter = callSorter;
         }
@@ -28,7 +28,7 @@ namespace MZPO.Controllers
             var remoteIp = HttpContext.Connection.RemoteIpAddress.ToString();
 
             if (remoteIp == "212.193.100.155" || remoteIp == "46.48.56.153")
-                return Ok(new { choice = _callSorter.GetChoice() });
+                return Ok(new { choice = _callSorter.GetCallChoice() });
             return Unauthorized();
         }
     }

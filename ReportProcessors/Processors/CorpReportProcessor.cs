@@ -303,7 +303,7 @@ namespace MZPO.ReportProcessors
                 (x.custom_fields_values.Any(y => y.field_id == 118675)) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value >= _dateFrom) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)
-                );
+                ).ToList();
             #endregion
 
             #region Processing
@@ -314,7 +314,8 @@ namespace MZPO.ReportProcessors
                 leads,
                 new ParallelOptions { MaxDegreeOfParallelism = 4 },
                 l => {
-                requestContainer.Add(GetProcessedLeadRequest(l, manager.Item1));
+                    var request = GetProcessedLeadRequest(l, manager.Item1);
+                    lock (requestContainer) requestContainer.Add(request);
             });
             #endregion
 
@@ -344,7 +345,7 @@ namespace MZPO.ReportProcessors
                 if (_token.IsCancellationRequested) break;
 
                 var m = manager;
-                tasks.Add(Task.Run(() => ProcessManager(m), _token));
+                tasks.Add(Task.Run(() => ProcessManager(m)));
             }
 
             await Task.WhenAll(tasks);

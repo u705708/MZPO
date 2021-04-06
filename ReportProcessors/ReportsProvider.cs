@@ -26,7 +26,7 @@ namespace MZPO.ReportProcessors
             { Reports.LongLeads, new("1EtpEiq5meigVrY9-n3phHxQRVO3iHgpF6V0-wpJ5Yg4", "LongLeads", "report_long", 28395871) },
             { Reports.UnfinishedCompanies, new("1JTAzCS89hLxI9fA3MWxiE9BSzZro3nPhyfy8931rZTk", "UnfinishedCompanies", "report_corp_unfinished", 19453687) },
             { Reports.WeeklyReport, new("1HDZALGgRt_HsLyNf45_R52ngo1ggvy02IxiOLGg02hA", "WeeklyReport", "report_retail", 28395871) },
-            { Reports.KPI_monthly, new("1NuP1qpKDuWlQAje0mIA4i73KgfTH6TGi5iLvzMY46pU", "KPI_monthly", "report_kpi_monthly", 28395871) },
+            { Reports.KPI_monthly, new("1JMmNMIz7PDbwycBBk7VdU26dbEpCwmQd-NOpY1vVMvE", "KPI_monthly", "report_kpi_monthly", 28395871) },
         };
 
         //private static readonly Dictionary<Reports, ReportParams> ReportParameters = new()

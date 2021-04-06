@@ -103,6 +103,9 @@ namespace Integration1C
 
             PopulateCFs(lead, amo_acc, lead1C);
 
+            if (string.IsNullOrEmpty(lead1C.lead_status))
+                lead1C.lead_status = "ВРаботе";
+
             if (amo_acc == 19453687)
                 lead1C.is_corporate = true;
 
@@ -181,7 +184,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to create or upadate lead {_leadId} in 1C: {e}");
+                _log.Add($"Unable to create or update lead {_leadId} in 1C: {e}");
                 return default;
             }
         }

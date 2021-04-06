@@ -20,6 +20,7 @@ namespace MZPO.LeadProcessors
         public string roistat_marker { get; set; }
         public string roistat_visit { get; set; }
         public string city_name { get; set; }
+        public string course { get; set; }
         public string status { get; set; }
         public string pipeline { get; set; }
         public string _ym_uid { get; set; }

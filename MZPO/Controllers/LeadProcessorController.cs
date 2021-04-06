@@ -14,12 +14,14 @@ namespace MZPO.Controllers
         private readonly TaskList _processQueue;
         private readonly Amo _amo;
         private readonly Log _log;
+        private readonly LeadsSorter _sorter;
 
-        public LeadProcessorController(Amo amo, TaskList processQueue, Log log)
+        public LeadProcessorController(Amo amo, TaskList processQueue, Log log, LeadsSorter sorter)
         {
             _amo = amo;
             _processQueue = processQueue;
             _log = log;
+            _sorter = sorter;
         }
 
         // GET wh/leadprocessor/5
@@ -33,7 +35,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
             Lazy<ILeadProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
-                               new InitialLeadProcessor(leadNumber, acc, _processQueue, _log, token));
+                               new InitialLeadProcessor(leadNumber, acc, _processQueue, _log, token, _sorter));
 
             task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, leadNumber.ToString(), acc.name, "LeadProcessor");                                                 //Запускаем и добавляем в очередь
@@ -83,7 +85,7 @@ namespace MZPO.Controllers
             #endregion
 
             leadProcessor = new Lazy<ILeadProcessor>( () =>                                                                                     //Создаём экземпляр процессора сделки
-                                new InitialLeadProcessor(leadNumber, acc, _processQueue, _log, token));
+                                new InitialLeadProcessor(leadNumber, acc, _processQueue, _log, token, _sorter));
 
             task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, leadNumber.ToString(), acc.name, "LeadProcessor");                                                 //Запускаем и добавляем в очередь

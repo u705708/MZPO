@@ -23,6 +23,10 @@ namespace Integration1C
         public Course1C Run(Guid course_id)
         {
             var course1C = _repo1C.GetCourse(course_id);
+
+            if (course1C.amo_ids is not null &&
+                course1C.amo_ids.Count == 2) return course1C;
+
             List<Amo_id> amo_ids = new();
 
             try 

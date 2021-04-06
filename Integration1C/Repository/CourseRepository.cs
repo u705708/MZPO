@@ -33,7 +33,7 @@ namespace Integration1C
             },
             name = "Тестовый курс",
             short_name = "Тест",
-            price = new() { new() { 
+            ItemPrices = new() { new() { 
                 Price = 10000,
                 UID = new Guid("5bba5dc3-580c-11eb-86f0-82172a65d31e"),
                 PriceType = "Основная цена"

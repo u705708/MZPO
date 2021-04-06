@@ -10,7 +10,7 @@ namespace Integration1C
         public List<Amo_id> amo_ids { get; set; }
         public string name { get; set; }
         public string short_name { get; set; }
-        public List<PriceItem> price { get; set; }
+        public List<PriceItem> ItemPrices { get; set; }
         public int duration { get; set; }
         public string format { get; set; }
         //public string program_id { get; set; }

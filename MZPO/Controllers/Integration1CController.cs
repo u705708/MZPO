@@ -86,7 +86,7 @@ namespace MZPO.Controllers
 
             #region Adding to log
             using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
-            sw.WriteLine($"--{DateTime.Now} integration/1c/client ----------------------------");
+            sw.WriteLine($"--{DateTime.Now} POST integration/1c/client ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
             #endregion
@@ -124,6 +124,60 @@ namespace MZPO.Controllers
                 result.AddRange(new CreateOrUpdateAmoContact(client1C, _amo, _log).Run());
             else
                 result.AddRange(new UpdateAmoContact(client1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+        }
+
+        // PATCH: integration/1c/client
+        [HttpPatch]
+        [ActionName("Client")]
+        public IActionResult UpdateClientAmo()
+        {
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
+
+            Client1C client1C = new();
+
+            #region Adding to log
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/client ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), client1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to client1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
+
+            if (client1C.client_id_1C is null)
+                return BadRequest("Incorrect client_id_1C");
+
+            if (string.IsNullOrEmpty(client1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(client1C.phone) &&
+                string.IsNullOrEmpty(client1C.email))
+                return BadRequest("Incorrect contacts");
+
+            if (client1C.amo_ids is not null &&
+                client1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+
+            if (client1C.amo_ids is null ||
+                !client1C.amo_ids.Any())
+                return Ok(new List<Amo_id>());
+            #endregion
+
+            List<Amo_id> result = new();
+
+            result.AddRange(new UpdateAmoContact(client1C, _amo, _log).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
@@ -191,7 +245,7 @@ namespace MZPO.Controllers
 
             #region Adding to log
             using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
-            sw.WriteLine($"--{DateTime.Now} integration/1c/company ----------------------------");
+            sw.WriteLine($"--{DateTime.Now} POST integration/1c/company ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
             #endregion
@@ -229,6 +283,60 @@ namespace MZPO.Controllers
                 result.AddRange(new CreateOrUpdateAmoCompany(company1C, _amo, _log).Run());
             else
                 result.AddRange(new UpdateAmoCompany(company1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+        }
+
+        // PATCH: integration/1c/company
+        [HttpPatch]
+        [ActionName("Company")]
+        public IActionResult UpdateCompanyAmo()
+        {
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
+
+            Company1C company1C = new();
+
+            #region Adding to log
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/company ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), company1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to company1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
+
+            if (company1C.company_id_1C is null)
+                return BadRequest("Incorrect company_id_1C");
+
+            if (string.IsNullOrEmpty(company1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(company1C.phone) &&
+                string.IsNullOrEmpty(company1C.email))
+                return BadRequest("Incorrect contacts");
+
+            if (company1C.amo_ids is not null &&
+                company1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+
+            if (company1C.amo_ids is null ||
+                !company1C.amo_ids.Any())
+                return Ok(new List<Amo_id>());
+            #endregion
+
+            List<Amo_id> result = new();
+
+            result.AddRange(new UpdateAmoCompany(company1C, _amo, _log).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
@@ -300,7 +408,7 @@ namespace MZPO.Controllers
 
             #region Adding to log
             using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
-            sw.WriteLine($"--{DateTime.Now} integration/1c/lead ----------------------------");
+            sw.WriteLine($"--{DateTime.Now} POST integration/1c/lead ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
             #endregion
@@ -348,6 +456,66 @@ namespace MZPO.Controllers
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
 
+        // PATCH: integration/1c/lead
+        [HttpPatch]
+        [ActionName("Lead")]
+        public IActionResult UpdateLeadAmo()
+        {
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
+
+            Lead1C lead1C = new();
+
+            #region Adding to log
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/lead ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), lead1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to lead1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
+
+            if (lead1C.lead_id_1C is null)
+                return BadRequest("Incorrect lead_id_1C");
+
+            if (lead1C.client_id_1C == default)
+                return BadRequest("Incorrect client_id_1C");
+
+            if (lead1C.product_id_1C == default)
+                return BadRequest("Incorrect product_id_1C");
+
+            if (string.IsNullOrEmpty(lead1C.organization))
+                return BadRequest("Incorrect organization");
+
+            if (lead1C.is_corporate &&
+                (lead1C.company_id_1C is null))
+                return BadRequest("Incorrect company_id_1C");
+
+            if (lead1C.amo_ids is not null &&
+                lead1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+
+            if (lead1C.amo_ids is null ||
+                !lead1C.amo_ids.Any())
+                return Ok(new List<Amo_id>());
+            #endregion
+
+            List<Amo_id> result = new();
+
+            result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+        }
+
         // POST: integration/1c/course
         [HttpPost]
         [ActionName("Course")]
@@ -360,7 +528,7 @@ namespace MZPO.Controllers
 
             #region Adding to log
             using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
-            sw.WriteLine($"--{DateTime.Now} integration/1c/course ----------------------------");
+            sw.WriteLine($"--{DateTime.Now} POST integration/1c/course ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
             #endregion
@@ -397,6 +565,59 @@ namespace MZPO.Controllers
                 result.AddRange(new CreateOrUpdateAmoCourse(course1C, _amo, _log).Run());
             else
                 result.AddRange(new UpdateAmoCourse(course1C, _amo, _log).Run());
+
+            return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+        }
+
+        // PATCH: integration/1c/course
+        [HttpPatch]
+        [ActionName("Course")]
+        public IActionResult UpdateCourseAmo()
+        {
+            using StreamReader sr = new(Request.Body);
+            var request = sr.ReadToEndAsync().Result;
+
+            Course1C course1C = new();
+
+            #region Adding to log
+            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/course ----------------------------");
+            sw.WriteLine(WebUtility.UrlDecode(request));
+            sw.WriteLine();
+            #endregion
+
+            #region Parsing request
+            try
+            {
+                JsonConvert.PopulateObject(WebUtility.UrlDecode(request), course1C);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Unable to parse JSON to course1C: {e}");
+                return BadRequest($"Incorrect JSON");
+            }
+
+            if (course1C.product_id_1C is null)
+                return BadRequest("Incorrect product_id_1C");
+
+            if (string.IsNullOrEmpty(course1C.name))
+                return BadRequest("Incorrect name");
+
+            if (string.IsNullOrEmpty(course1C.short_name))
+                return BadRequest("Incorrect short_name");
+
+            if (course1C.amo_ids is not null &&
+                course1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
+                return BadRequest("amo_id values cannot be 0");
+
+            if (course1C.amo_ids is null ||
+                !course1C.amo_ids.Any())
+                return Ok(new List<Amo_id>());
+            #endregion
+
+            List<Amo_id> result = new();
+
+            result.AddRange(new UpdateAmoCourse(course1C, _amo, _log).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }

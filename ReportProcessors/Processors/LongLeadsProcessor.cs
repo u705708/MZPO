@@ -382,7 +382,7 @@ namespace MZPO.ReportProcessors
                 {
                     if (_token.IsCancellationRequested) break;
                     var m = manager;
-                    tasks.Add(Task.Run(() => ProcessManager(m, d), _token));
+                    tasks.Add(Task.Run(() => ProcessManager(m, d)));
                 }
 
                 await Task.WhenAll(tasks);

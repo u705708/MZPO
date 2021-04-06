@@ -54,7 +54,6 @@ namespace MZPO.Controllers.Example
                 email = "test@email.com",
                 phone = "+79001112233",
                 signee = "Подписант",
-                LPR_name = "Иван Иванов",
                 OGRN = "13223131326",
                 INN = "7714829999",
                 acc_no = "30301810000006000001",
@@ -85,7 +84,7 @@ namespace MZPO.Controllers.Example
                 },
                 name = "Тестовый курс",
                 short_name = "Тест",
-                price = new() { new() { 
+                ItemPrices = new() { new() { 
                     Price = 10000,
                     UID = new Guid("5bba5dc3-580c-11eb-86f0-82172a65d31e"),
                     PriceType = "Основная цена"

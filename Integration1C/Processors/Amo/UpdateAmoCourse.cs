@@ -44,12 +44,12 @@ namespace Integration1C
                     });
                 }
 
-            if (course.price is not null &&
-                course.price.Any())
+            if (course.ItemPrices is not null &&
+                course.ItemPrices.Any())
                 ce.custom_fields.Add(new CatalogElement.Custom_fields()
                 {
                     id = FieldLists.Courses[acc_id]["price"],
-                    values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.price.First().Price.ToString() } }
+                    values = new CatalogElement.Custom_fields.Values[] { new CatalogElement.Custom_fields.Values() { value = course.ItemPrices.First().Price.ToString() } }
                 });
         }
 

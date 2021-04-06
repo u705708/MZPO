@@ -18,7 +18,6 @@ namespace Integration1C
         public string KPP { get; set; }
         public string BIK { get; set; }
         public string address { get; set; }
-        public string LPR_name { get; set; }
         public string post_address { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
     }

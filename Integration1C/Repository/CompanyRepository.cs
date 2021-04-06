@@ -35,7 +35,6 @@ namespace Integration1C
             email = "test@email.com",
             phone = "+79001112233",
             signee = "Подписант",
-            LPR_name = "Иван Иванов",
             OGRN = "13223131326",
             INN = "5465454654",
             acc_no = "4654654654654654",

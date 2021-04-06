@@ -37,6 +37,7 @@ namespace MZPO.LeadProcessors
             { "roistat_marker", 639085 },
             { "roistat_visit", 639073 },
             { "city_name", 639087 },
+            { "course", 357005 },
             { "_ym_uid", 715049 },
             { "_ya_uid", 715049 },
             { "clid", 643439 },

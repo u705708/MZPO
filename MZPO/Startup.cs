@@ -53,7 +53,7 @@ namespace MZPO
 
             services.AddSingleton<Amo>();
             services.AddSingleton<TaskList>();
-            services.AddSingleton<CallSorter>();
+            services.AddSingleton<LeadsSorter>();
             services.AddSingleton<Cred1C>();
             services.AddSingleton<Log>();
             services.AddTransient<GSheets>();

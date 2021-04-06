@@ -36,15 +36,16 @@ namespace MZPO.LeadProcessors
         private readonly List<(int, string)> managers = new()
         {
             (2375116, "Киреева Светлана"),
-            (2375122, "Васина Елена"),
             (2375131, "Алферова Лилия"),
+            (6904255, "Виктория Корчагина"),
+            (6909061, "Оксана Строганова"),
             (2884132, "Ирина Сорокина"),
             (6028753, "Алена Федосова"),
             (6630727, "Елена Зубатых"),
             (6697522, "Наталья Филатова"),
-            //(3770773, "Шталева Лидия"),
-            //(6200629, "Харшиладзе Леван"),
-            //(6346882, "Мусихина Юлия")
+            (3770773, "Шталева Лидия"),
+            (6200629, "Харшиладзе Леван"),
+            (6346882, "Мусихина Юлия")
         };
 
         public async Task Run()
@@ -70,7 +71,7 @@ namespace MZPO.LeadProcessors
                 var date = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.AddHours(-2).ToShortTimeString()}";
 
                 if (!managers.Any(x => x.Item1 == lead.responsible_user_id))
-                    return;
+                    throw new Exception($"Unknown manager: {lead.responsible_user_id}");
 
                 string companyName;
                 try { companyName = _compRepo.GetById(lead._embedded.companies.First().id).name; }

@@ -310,8 +310,8 @@ namespace MZPO.ReportProcessors
                 new ParallelOptions { MaxDegreeOfParallelism = 3 },
                 c => {
                     var allContactCalls = _contRepo.GetEntityEvents((int)c.entity_id);
-                    if (allContactCalls.Any(x => x.type == "outgoing_call") &&
-                        allContactCalls.Where(x => x.type == "outgoing_call").OrderBy(x => x.created_at).First().id == c.id)
+                    if (allContactCalls.Any(x => x.type == "outgoing_call" || x.type == "incoming_call") &&
+                        allContactCalls.Where(x => x.type == "outgoing_call" || x.type == "incoming_call").OrderBy(x => x.created_at).First().id == c.id)
                         firstCallsCount++;
             });
 
@@ -468,7 +468,7 @@ namespace MZPO.ReportProcessors
                 {
                     if (_token.IsCancellationRequested) break;
                     var m = manager;
-                    tasks.Add(Task.Run(() => ProcessManager(m, d), _token));
+                    tasks.Add(Task.Run(() => ProcessManager(m, d)));
                 }
 
                 await Task.WhenAll(tasks);

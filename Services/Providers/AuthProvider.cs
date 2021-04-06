@@ -13,7 +13,7 @@ namespace MZPO.Services
     {
         #region Definition
 
-        private const int _concurrentRequestsAmount = 1;
+        private const int _concurrentRequestsAmount = 6;
 
         private readonly AmoProvider _amoProvider;
         private AmoAccountAuth _amoAccountAuth;

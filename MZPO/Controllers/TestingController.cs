@@ -180,36 +180,48 @@ namespace MZPO.Controllers
             #region DupeCheck
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
 
-            ////var dates = (1559336400, 1567285199);
-            ////var dates = (1567285200, 1569877199);
-            ////var dates = (1569877200, 1572555599); //01-31.10.2019
-            ////var dates = (1572555600, 1575147599); //01-30.11.2019 ---
-            ////var dates = (1575147600, 1577825999); //01-31.12.2019
-            ////var dates = (1577826000, 1580504399);
-            ////var dates = (1580504400, 1583009999);
-            ////var dates = (1583010000, 1585688399);
-            ////var dates = (1585688400, 1588280399);
-            ////var dates = (1588280400, 1590958799);//++
-            //var dates = (1590958800, 1593550799);
-            ////var dates = (1593550800, 1596229199);
-            ////var dates = (1596229200, 1598907599);
-            ////var dates = (1598907600, 1601499599);
-            ////var dates = (1601499600, 1604177999);
-            ////var dates = (1604178000, 1606769999);
-            ////var dates = (1606770000, 1609448399);
-            ////var dates = (1609448400, 1612126799);
-            ////var dates = (1612126800, 1614545999);
-            ////var dates = (1614546000, 1617224399);
+            //List<(int, int)> dataRanges = new()
+            //{
+            //    (1559336400, 1567285199),
+            //    (1567285200, 1569877199),
+            //    (1569877200, 1572555599),
+            //    (1572555600, 1575147599), //01-30.11.2019 ---
+            //    (1575147600, 1577825999),
+            //    (1577826000, 1580504399),
+            //    (1580504400, 1583009999),
+            //    (1583010000, 1585688399),
+            //    (1585688400, 1588280399),
+            //    (1588280400, 1590958799),
+            //    (1590958800, 1593550799),
+            //    (1593550800, 1596229199),
+            //    (1596229200, 1598907599),
+            //    (1598907600, 1601499599),
+            //    (1601499600, 1604177999),
+            //    (1604178000, 1606769999),
+            //    (1606770000, 1609448399),
+            //    (1609448400, 1612126799),
+            //    (1612126800, 1614545999),
+            //    (1614546000, 1617224399)
+            //};
 
-            //var criteria = $"filter[created_at][from]={dates.Item1}&filter[created_at][to]={dates.Item2}";
+            //List<Contact> contacts = new();
 
-            //var contacts = contRepo.GetByCriteria(criteria);
+            //Parallel.ForEach(
+            //    dataRanges,
+            //    new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            //    d =>
+            //    {
+            //        var criteria = $"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}";
+
+            //        lock (contacts) contacts.AddRange(contRepo.GetByCriteria(criteria));
+            //    }
+            //    );
 
             //List<(int, string)> doubleContacts = new();
 
             //Parallel.ForEach(
             //    contacts,
-            //    new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            //    new ParallelOptions { MaxDegreeOfParallelism = 6 },
             //    c =>
             //{
             //    List<Contact> contactsWithSimilarPhone = new();
@@ -221,13 +233,13 @@ namespace MZPO.Controllers
             //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264911).values)
             //            if ((string)v.value != "" &&
             //                (string)v.value != "0")
-            //                contactsWithSimilarPhone.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264911).values[0].value}"));
+            //                contactsWithSimilarPhone.AddRange(contRepo.GetByCriteria($"query={v.value}"));
 
             //    if (c.custom_fields_values.Any(x => x.field_id == 264913))
             //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264913).values)
             //            if ((string)v.value != "" &&
             //                (string)v.value != "0")
-            //                contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={c.custom_fields_values.First(x => x.field_id == 264913).values[0].value}"));
+            //                contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={v.value}"));
 
             //    if (contactsWithSimilarPhone.Distinct(new ContactsComparer()).Count() > 1)
             //        doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264911).values[0].value));
@@ -238,7 +250,7 @@ namespace MZPO.Controllers
             //var l1 = doubleContacts.GroupBy(x => x.Item1).Select(g => new { cid = g.Key, cont = g.First().Item2 }).ToList();
             //var l2 = l1.GroupBy(x => x.cont).Select(g => new { cid = g.First().cid, cont = g.Key }).ToList();
 
-            //using StreamWriter sw1 = new StreamWriter("ContactsWithDoubles.v2.csv", false, System.Text.Encoding.Default);
+            //using StreamWriter sw1 = new StreamWriter("ContactsWithDoubles.csv", false, System.Text.Encoding.Default);
             //sw1.WriteLine($"cid;contact");
             //foreach (var c in l2)
             //{
@@ -254,7 +266,7 @@ namespace MZPO.Controllers
             //JsonConvert.PopulateObject(sr.ReadToEnd(), course_ids);
 
             //int i = 0;
-            //List<Course1C> processesCourses = new();
+            //List<Course1C> processedCourses = new();
             //List<(Guid, string)> errorList = new();
 
             //foreach (var c in course_ids)
@@ -262,7 +274,7 @@ namespace MZPO.Controllers
             //    i++;
             //    try
             //    {
-            //        processesCourses.Add(new PopulateCourses(_amo, _log, _cred1C).Run(c));
+            //        processedCourses.Add(new PopulateCourses(_amo, _log, _cred1C).Run(c));
             //    }
             //    catch (Exception e)
             //    {
@@ -271,11 +283,11 @@ namespace MZPO.Controllers
             //}
 
             //using StreamWriter sw1 = new StreamWriter("processed_courses.json", false, System.Text.Encoding.Default);
-            //sw1.WriteLine(JsonConvert.SerializeObject(course_ids));
+            //sw1.WriteLine(JsonConvert.SerializeObject(processedCourses));
 
             //using StreamWriter sw2 = new StreamWriter("errors.csv", false, System.Text.Encoding.Default);
             //foreach (var e in errorList)
-            //sw2.WriteLine($"{e.Item1};{e.Item2}");
+            //    sw2.WriteLine($"{e.Item1};{e.Item2}");
 
             //return Ok();
             #endregion
