@@ -43,6 +43,9 @@ namespace Integration1C
                     if (p.Name == "price")
                         continue;
 
+                    try { if ((string)p.GetValue(course) == "") continue; }
+                    catch { }
+
                     ce.custom_fields.Add(new CatalogElement.Custom_fields()
                     {
                         id = FieldLists.Courses[acc_id][p.Name],
@@ -104,9 +107,21 @@ namespace Integration1C
                 foreach (var a in amo_accounts)
                 {
                     if (_course1C.amo_ids.Any(x => x.account_id == a))
-                        UpdateCourseInAmo(_course1C, _amo.GetAccountById(a).GetRepo<Lead>(), _course1C.amo_ids.First(x => x.account_id == a).entity_id, a);
-                    else
-                        _course1C.amo_ids.Add(CreateCourseInAmo(_course1C, _amo.GetAccountById(a).GetRepo<Lead>(), a));
+                        try 
+                        { 
+                            UpdateCourseInAmo(_course1C, _amo.GetAccountById(a).GetRepo<Lead>(), _course1C.amo_ids.First(x => x.account_id == a).entity_id, a);
+
+                            _log.Add($"Updated course {_course1C.short_name} in amo {a}.");
+
+                            continue;
+                        }
+                        catch (Exception e) 
+                        { 
+                            _log.Add($"Unable to update course {_course1C.amo_ids.First(x => x.account_id == a).entity_id} in amo. Creating new. {e}"); 
+                        }
+                    _course1C.amo_ids.Add(CreateCourseInAmo(_course1C, _amo.GetAccountById(a).GetRepo<Lead>(), a));
+
+                    _log.Add($"Created course {_course1C.short_name} in amo {a}.");
                 }
             }
             catch (Exception e)

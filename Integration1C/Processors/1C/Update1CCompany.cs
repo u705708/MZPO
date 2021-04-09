@@ -43,13 +43,9 @@ namespace Integration1C
 
         private static void UpdateCompanyIn1C(Company company, Guid company_id_1C, int amo_acc, CompanyRepository repo1C)
         {
-            Company1C company1C = new() {
-                name = company.name,
-                company_id_1C = company_id_1C,
-                amo_ids = new() { new() {
-                        account_id = amo_acc,
-                        entity_id = company.id
-            } } };
+            Company1C company1C = repo1C.GetCompany(company_id_1C);
+
+            if (company1C == default) throw new Exception($"Unable to update company in 1C. 1C returned no company {company_id_1C}.");
 
             PopulateCFs(company, amo_acc, company1C);
 

@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	<Content Update="Configuration\web.config" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" Link="web.config" />
+	<Content Update="Configuration\web.config" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" Link="web.config" />
   </ItemGroup>
 
 

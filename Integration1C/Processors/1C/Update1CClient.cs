@@ -50,13 +50,11 @@ namespace Integration1C
         private static void UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, Amo amo, Log log, ClientRepository repo1C)
         {
             var client1C = repo1C.GetClient(client_id_1C);
-            if (client1C == default) throw new Exception($"Unable to add client to 1C. 1C returned no client {client_id_1C}.");
+            if (client1C == default) throw new Exception($"Unable to update client to 1C. 1C returned no client {client_id_1C}.");
 
             PopulateClientCFs(contact, amo_acc, client1C);
 
             repo1C.UpdateClient(client1C);
-
-            new UpdateAmoContact(client1C, amo, log).Run();
         }
 
         public Guid Run()
@@ -79,6 +77,7 @@ namespace Integration1C
                     Guid.TryParse((string)contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out client_id_1C))
                 {
                     UpdateClientIn1C(client_id_1C, contact, _amo_acc, _amo, _log, _repo1C);
+                    _log.Add($"Updated client in 1C {client_id_1C}.");
                 }
                 #endregion
 
@@ -86,7 +85,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to create or updae contact in 1C from lead {_contactId}: {e}");
+                _log.Add($"Unable to update client in 1C from contact {_contactId}: {e}");
                 return default;
             }
         }

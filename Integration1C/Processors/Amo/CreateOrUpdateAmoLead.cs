@@ -37,6 +37,9 @@ namespace Integration1C
                 if (FieldLists.Leads[acc_id].ContainsKey(p.Name) &&
                     p.GetValue(lead1C) is not null)
                 {
+                    try { if ((string)p.GetValue(lead1C) == "") continue; }
+                    catch { }
+
                     lead.custom_fields_values.Add(new Lead.Custom_fields_value()
                     {
                         field_id = FieldLists.Leads[acc_id][p.Name],
@@ -66,6 +69,9 @@ namespace Integration1C
                 custom_fields_values = new(),
             };
 
+            if (lead.responsible_user_id is null)
+                lead.responsible_user_id = UserList.GetAmoUser(lead1C.author);
+
             AddUIDToEntity(lead1C, acc_id, lead);
 
             PopulateCFs(lead1C, acc_id, lead);
@@ -86,10 +92,15 @@ namespace Integration1C
             {
                 name = "Новая сделка",
                 price = lead1C.price,
+                pipeline_id = 3198184,
+                status_id = 33625285,
                 responsible_user_id = UserList.GetAmoUser(lead1C.responsible_user),
                 custom_fields_values = new(),
-                _embedded = new()
+                _embedded = new() { tags = new() { new() { name = "1C"} } }
             };
+
+            if (lead.responsible_user_id is null)
+                lead.responsible_user_id = UserList.GetAmoUser(lead1C.author);
 
             AddUIDToEntity(lead1C, acc_id, lead);
 
@@ -136,14 +147,24 @@ namespace Integration1C
                 #region Checking if lead already linked to entity an updating if possible
                 if (_lead1C.amo_ids.Any(x => x.account_id == amo_acc))
                 {
-                    UpdateLeadInAmo(_lead1C, leadRepo, _lead1C.amo_ids.First().entity_id, amo_acc);
-                    return _lead1C.amo_ids;
+                    try
+                    {
+                        UpdateLeadInAmo(_lead1C, leadRepo, _lead1C.amo_ids.First().entity_id, amo_acc);
+
+                        _log.Add($"Updated lead {_lead1C.amo_ids.First().entity_id} in amo {amo_acc}.");
+
+                        return _lead1C.amo_ids;
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Add($"Unable to update existing lead {_lead1C.amo_ids.First().entity_id} in amo. Creating new.");
+                    }
                 } 
                 #endregion
 
                 #region Getting connected entitites ids
-                Client1C client1C = new ClientRepository(_cred1C).GetClient(_lead1C.client_id_1C);
-                Course1C course1C = new CourseRepository(_cred1C).GetCourse(_lead1C.product_id_1C);
+                Client1C client1C = new ClientRepository(_cred1C).GetClient((Guid)_lead1C.client_id_1C);
+                Course1C course1C = new CourseRepository(_cred1C).GetCourse((Guid)_lead1C.product_id_1C);
                 Company1C company1C = null;
                 if (_lead1C.is_corporate) company1C = new CompanyRepository(_cred1C).GetCompany((Guid)_lead1C.company_id_1C);
 
@@ -172,6 +193,8 @@ namespace Integration1C
                     account_id = amo_acc,
                     entity_id = lead_id
                 });
+
+                _log.Add($"Created lead {lead_id} in amo {amo_acc}.");
                 #endregion
             }
             catch (Exception e)

@@ -197,7 +197,7 @@ namespace MZPO.LeadProcessors
         #endregion
 
         #region Ожидание телефонии
-        private void CallResultWaiter()                                                                                 //Метод проверяет, была ли сделка из телефонии, если да, то ждёт полчаса
+        private async Task CallResultWaiter()                                                                                 //Метод проверяет, была ли сделка из телефонии, если да, то ждёт полчаса
         {
             var source = GetFieldValue(639085);
             var application = GetFieldValue(639075);
@@ -206,12 +206,12 @@ namespace MZPO.LeadProcessors
                 source.Contains("Коллтрекинг") ||
                 (source.Contains("instagram") && (application is null || !application.Contains("instagram"))))
             {
-                for (int i = 1; i <= 30; i++)
+                for (int i = 1; i <= 60; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
                     if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
                     UpdateLeadFromAmo();                                                                                //Загружаем сделку
-                    try { Task.Delay((int)TimeSpan.FromSeconds(60).TotalMilliseconds, _token).Wait(); }
+                    try { await Task.Delay((int)TimeSpan.FromSeconds(30).TotalMilliseconds, _token); }
                     catch { _log.Add($"LeadProcessor {_leadNumber}: Task cancelled."); }
                 }
             }
@@ -305,10 +305,10 @@ namespace MZPO.LeadProcessors
             }
             #endregion
 
-            if (lead.responsible_user_id == 2576764 &&                                                                  //Если ответственный Администратор
-                !CheckTag("A") &&                                                                                       //И нет тега А
-                !CheckTag("B"))                                                                                         //И нет тега В
-                SetTag(_sorter.GetLeadChoice() ? "A" : "B");                                                            //По очереди назначаем теги А и В
+            //if (lead.responsible_user_id == 2576764 &&                                                                  //Если ответственный Администратор
+            //    !CheckTag("A") &&                                                                                       //И нет тега А
+            //    !CheckTag("B"))                                                                                         //И нет тега В
+            //    SetTag(_sorter.GetLeadChoice() ? "A" : "B");                                                            //По очереди назначаем теги А и В
 
             Lead result = new();
 
@@ -397,7 +397,8 @@ namespace MZPO.LeadProcessors
                     PhaseOne();
                     AddNote("Phase 1 finished.");
 
-                    await Task.Run(() => CallResultWaiter());
+                    //await Task.Run(() => CallResultWaiter());
+                    await CallResultWaiter();
 
                     UpdateLeadFromAmo();                                                                                    //Обновляем информацию о сделке, если она изменилась за время ожидания
 

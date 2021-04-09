@@ -27,7 +27,7 @@ namespace MZPO.Controllers
             _log = log;
             _cred1C = cred1C;
         }
-        
+
         // POST: integration/1c/saveclient
         [HttpPost]
         [ActionName("SaveClient")]
@@ -420,17 +420,19 @@ namespace MZPO.Controllers
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to parse JSON to lead1C: {e}");
+                _log.Add($"Unable to parse JSON to lead1C: {e.Message}");
                 return BadRequest($"Incorrect JSON");
             }
 
             if (lead1C.lead_id_1C is null)
                 return BadRequest("Incorrect lead_id_1C");
 
-            if (lead1C.client_id_1C == default)
+            if (lead1C.client_id_1C == default ||
+                lead1C.client_id_1C is null)
                 return BadRequest("Incorrect client_id_1C");
 
-            if (lead1C.product_id_1C == default)
+            if (lead1C.product_id_1C == default ||
+                lead1C.product_id_1C is null)
                 return BadRequest("Incorrect product_id_1C");
 
             if (string.IsNullOrEmpty(lead1C.organization))
@@ -443,14 +445,21 @@ namespace MZPO.Controllers
             if (lead1C.amo_ids is not null &&
                 lead1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
                 return BadRequest("amo_id values cannot be 0");
+
+            if (lead1C.organization != "ООО «МЦПО»" &&
+                lead1C.organization != "ООО «МИРК»") return BadRequest($"Unknown organization {lead1C.organization}");
             #endregion
 
             List<Amo_id> result = new();
 
-            if (lead1C.amo_ids is null ||
-                !lead1C.amo_ids.Any())
-                result.AddRange(new CreateOrUpdateAmoLead(lead1C, _amo, _log, _cred1C).Run());
-            else
+            //if (lead1C.amo_ids is null ||
+            //    !lead1C.amo_ids.Any())
+            //    result.AddRange(new CreateOrUpdateAmoLead(lead1C, _amo, _log, _cred1C).Run());
+            //else
+            //    result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
+
+            if(lead1C.amo_ids is not null &&
+                lead1C.amo_ids.Any())
                 result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));

@@ -76,6 +76,8 @@ namespace MZPO.Controllers
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
 
+            //return Ok(contRepo.GetById(46825559));
+
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
             #region CorpParse

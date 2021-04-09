@@ -42,8 +42,9 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult KPI()
         {
-            var yesterday = DateTime.Today.AddSeconds(-1).AddHours(2);                                                                          //Поправить на использование UTC
-            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 2, 0, 0);
+            var now = DateTime.UtcNow.AddHours(3);
+            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
+            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
             long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
             long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
 
@@ -68,8 +69,9 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult LongLeads()
         {
-            var yesterday = DateTime.Today.AddSeconds(-1).AddHours(2);                                                                          //Поправить на использование UTC
-            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 2, 0, 0);
+            var now = DateTime.UtcNow.AddHours(3);
+            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
+            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
             long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
             long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
 
@@ -103,7 +105,8 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult WeeklyReport()
         {
-            var yesterday = DateTime.Today.AddSeconds(-1).AddHours(2);                                                                          //Поправить на использование UTC
+            var now = DateTime.UtcNow.AddHours(3);
+            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
             long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
 
             ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, 0, dateTo);
@@ -126,8 +129,9 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult MonthlyReport()
         {
-            var yesterday = DateTime.Today.AddSeconds(-1).AddHours(2);                                                                          //Поправить на использование UTC
-            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 2, 0, 0);
+            var now = DateTime.UtcNow.AddHours(3);
+            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
+            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
             long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
             long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
 

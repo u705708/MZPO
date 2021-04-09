@@ -42,72 +42,17 @@ namespace Integration1C
                     }
         }
 
-        private static void GetConnectedEntities(Amo amo, Log log, Lead lead, int amo_acc, Lead1C lead1C, Cred1C cred1C)
-        {
-            if (lead._embedded is null ||
-                lead._embedded.contacts is null ||
-                !lead._embedded.contacts.Any() ||
-                lead._embedded.catalog_elements is null ||
-                !lead._embedded.catalog_elements.Any())
-                throw new Exception($"No contacts or catalog elements in lead {lead.id}");
-
-            #region Client
-            var clientId = new CreateOrUpdate1CClient(amo, log, lead.id, amo_acc, cred1C).Run();
-
-            if (clientId == default) throw new Exception($"Unable to get clientId for contact from the lead {lead.id}");
-
-            lead1C.client_id_1C = clientId;
-            #endregion
-
-            #region Course
-            var course = amo.GetAccountById(amo_acc).GetRepo<Lead>().GetCEById(lead._embedded.catalog_elements.First().id);
-
-            if (course is not null &&
-                course.custom_fields is not null &&
-                course.custom_fields.Any(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]) &&
-                Guid.TryParse(course.custom_fields.First(x => x.id == FieldLists.Courses[amo_acc]["product_id_1C"]).values[0].value, out Guid product_id_1C))
-                lead1C.product_id_1C = product_id_1C;
-            else
-                throw new Exception($"Unable to add course {course.id} from lead {lead.id}");
-            #endregion
-
-            #region Company
-            if (lead1C.is_corporate &&
-                lead._embedded.companies is not null &&
-                lead._embedded.companies.Any())
-            {
-                var companyId = new CreateOrUpdate1CCompany(amo, log, lead.id, cred1C).Run();
-
-                if (companyId == default) throw new Exception($"Unable to get companyId for company from the lead {lead.id}");
-
-                lead1C.company_id_1C = companyId;
-            }
-
-            if (lead1C.is_corporate &&
-                lead1C.company_id_1C is null)
-                throw new Exception($"Unable to get company in lead {lead.id}");
-            #endregion
-        }
-
         private static void UpdateLeadIn1C(Amo amo, Log log, Lead lead, Guid lead_id_1C, int amo_acc, Cred1C cred1C)
         {
-            Lead1C lead1C = new()
-            {
-                lead_id_1C = lead_id_1C,
-                price = (int)lead.price,
-                author = UserList.Get1CUser(lead.responsible_user_id),
-                responsible_user = UserList.Get1CUser(lead.responsible_user_id),
-                amo_ids = new()
-                {
-                    new()
-                    {
-                        account_id = amo_acc,
-                        entity_id = lead.id
-                    }
-                }
-            };
+            var repo1C = new LeadRepository(cred1C);
+
+            Lead1C lead1C = repo1C.GetLead(lead_id_1C);
+            
+            if (lead1C == default) throw new Exception($"Unable to update lead in 1C. 1C returned no lead {lead_id_1C}.");
 
             PopulateCFs(lead, amo_acc, lead1C);
+
+            lead1C.responsible_user = UserList.Get1CUser(lead.responsible_user_id);
 
             if (string.IsNullOrEmpty(lead1C.lead_status))
                 lead1C.lead_status = "ВРаботе";
@@ -115,9 +60,7 @@ namespace Integration1C
             if (amo_acc == 19453687)
                 lead1C.is_corporate = true;
 
-            GetConnectedEntities(amo, log, lead, amo_acc, lead1C, cred1C);
-
-            new LeadRepository(cred1C).UpdateLead(lead1C);
+            repo1C.UpdateLead(lead1C);
         }
 
         public Guid Run()
@@ -137,7 +80,10 @@ namespace Integration1C
                 if (lead.custom_fields_values is not null &&
                     lead.custom_fields_values.Any(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]) &&
                     Guid.TryParse((string)lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]).values[0].value, out lead_id_1C))
+                {
                     UpdateLeadIn1C(_amo, _log, lead, lead_id_1C, _amo_acc, _cred1C);
+                    _log.Add($"Updated lead in 1C {lead_id_1C}.");
+                }
 
                 return lead_id_1C;
             }

@@ -40,6 +40,9 @@ namespace Integration1C
                         value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
                     }
 
+                    try { if ((string)value == "") continue; }
+                    catch { }
+
                     if (contact.custom_fields_values is null) contact.custom_fields_values = new();
 
                     contact.custom_fields_values.Add(new Contact.Custom_fields_value()
@@ -79,7 +82,11 @@ namespace Integration1C
             {
                 if (_client1C.amo_ids is not null)
                     foreach (var c in _client1C.amo_ids)
+                    {
                         UpdateContactInAmo(_client1C, _amo.GetAccountById(c.account_id).GetRepo<Contact>(), c.entity_id, c.account_id);
+                        
+                        _log.Add($"Updated contact {c.entity_id} in amo {c.account_id}.");
+                    }
             }
             catch (Exception e)
             {

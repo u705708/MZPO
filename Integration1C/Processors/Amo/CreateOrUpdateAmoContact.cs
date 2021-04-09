@@ -70,6 +70,9 @@ namespace Integration1C
                         value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
                     }
 
+                    try { if ((string)value == "") continue; }
+                    catch { }
+
                     if (contact.custom_fields_values is null) contact.custom_fields_values = new();
 
                     contact.custom_fields_values.Add(new Contact.Custom_fields_value()
@@ -140,10 +143,18 @@ namespace Integration1C
 
                     #region Checking if contact already linked to entity and updating if possible
                     if (_client1C.amo_ids.Any(x => x.account_id == a))
-                    {
-                        UpdateContactInAmo(_client1C, contRepo, _client1C.amo_ids.First(x => x.account_id == a).entity_id, a);
-                        continue;
-                    } 
+                        try
+                        {
+                            UpdateContactInAmo(_client1C, contRepo, _client1C.amo_ids.First(x => x.account_id == a).entity_id, a);
+
+                            _log.Add($"Updated contact {_client1C.amo_ids.First(x => x.account_id == a).entity_id} in amo {a}.");
+
+                            continue;
+                        } 
+                        catch (Exception e)
+                        {
+                            _log.Add($"Unable to update existing contact {_client1C.amo_ids.First(x => x.account_id == a).entity_id} in amo. Trying to create new or find existing. {e}");
+                        }
                     #endregion
 
                     #region Checking contact
@@ -169,6 +180,9 @@ namespace Integration1C
                             account_id = a,
                             entity_id = (int)similarContacts.First().id
                         });
+
+                        _log.Add($"Found and updated contact {similarContacts.First().id} in amo {a}.");
+
                         continue;
                     }
                     #endregion
@@ -182,6 +196,8 @@ namespace Integration1C
                         entity_id = compId
                     });
                     #endregion
+
+                    _log.Add($"Created contact {compId} in amo {a}.");
                 }
             }
             catch (Exception e)

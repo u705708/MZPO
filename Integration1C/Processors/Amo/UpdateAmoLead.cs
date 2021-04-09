@@ -37,6 +37,9 @@ namespace Integration1C
                 if (FieldLists.Leads[acc_id].ContainsKey(p.Name) &&
                     p.GetValue(lead1C) is not null)
                 {
+                    try { if ((string)p.GetValue(lead1C) == "") continue; }
+                    catch { }
+
                     lead.custom_fields_values.Add(new Lead.Custom_fields_value()
                     {
                         field_id = FieldLists.Leads[acc_id][p.Name],
@@ -54,6 +57,9 @@ namespace Integration1C
                 responsible_user_id = UserList.GetAmoUser(lead1C.responsible_user),
                 custom_fields_values = new(),
             };
+
+            if (lead.responsible_user_id is null) 
+                lead.responsible_user_id = UserList.GetAmoUser(lead1C.author);
 
             AddUIDToEntity(lead1C, acc_id, lead);
 
@@ -80,6 +86,8 @@ namespace Integration1C
 
                 if (_lead1C.amo_ids.Any(x => x.account_id == amo_acc))
                     UpdateLeadInAmo(_lead1C, leadRepo, _lead1C.amo_ids.First().entity_id, amo_acc);
+
+                _log.Add($"Updated lead {_lead1C.amo_ids.First().entity_id} in amo {amo_acc}.");
             }
             catch (Exception e)
             {

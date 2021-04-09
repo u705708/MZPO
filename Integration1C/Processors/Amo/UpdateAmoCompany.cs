@@ -38,6 +38,9 @@ namespace Integration1C
                 if (FieldLists.Companies[19453687].ContainsKey(p.Name) &&
                     p.GetValue(company1C) is not null)
                 {
+                    try { if ((string)p.GetValue(company1C) == "") continue; }
+                    catch { }
+
                     if (company.custom_fields_values is null) company.custom_fields_values = new();
                     company.custom_fields_values.Add(new Company.Custom_fields_value()
                     {
@@ -77,7 +80,10 @@ namespace Integration1C
                 if (_company1C.amo_ids is not null &&
                     _company1C.amo_ids.Any(x => x.account_id == _amo_acc))
                     foreach (var c in _company1C.amo_ids.Where(x => x.account_id == _amo_acc))
+                    {
                         UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id);
+                        _log.Add($"Company {c.entity_id} updated in amo.");
+                    }
                 
                 return _company1C.amo_ids;
             }

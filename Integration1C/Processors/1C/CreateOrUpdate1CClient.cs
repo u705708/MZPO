@@ -65,6 +65,9 @@ namespace Integration1C
                         value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
                     }
 
+                    try { if ((string)value == "") continue; }
+                    catch { }
+
                     if (contact.custom_fields_values is null) contact.custom_fields_values = new();
 
                     contact.custom_fields_values.Add(new Contact.Custom_fields_value()
@@ -159,8 +162,6 @@ namespace Integration1C
             PopulateClientCFs(contact, amo_acc, client1C);
 
             repo1C.UpdateClient(client1C);
-
-            new UpdateAmoContact(client1C, amo, log).Run();
         }
 
         private static void CreateClientIn1C(Client1C client1C, ClientRepository repo1C)
@@ -217,6 +218,9 @@ namespace Integration1C
                         Guid.TryParse((string)c.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out Guid client_id_1C))
                     {
                         UpdateClientIn1C(client_id_1C, c, _amo_acc, _amo, _log, _repo1C);
+                        
+                        _log.Add($"Updated client {c.id} in 1C {client_id_1C}.");
+                        
                         return client_id_1C;
                     }
                 #endregion
@@ -262,11 +266,14 @@ namespace Integration1C
                             Guid.TryParse((string)c.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[a]["client_id_1C"]).values[0].value, out Guid client_id_1C))
                         {
                             UpdateClientIn1C(client_id_1C, contact, a, _amo, _log, _repo1C);
+
+                            _log.Add($"Found and updated client {c.id} in 1C {client_id_1C}.");
+
                             return client_id_1C;
                         }
                     #endregion
 
-                    #region Updating found contact
+                    #region Adding found contact
                     if (similarContacts.Any())
                     {
                         UpdateContactInAmo(client1C, anotherContRepo, (int)similarContacts.First().id, a);
@@ -275,6 +282,9 @@ namespace Integration1C
                             account_id = a,
                             entity_id = (int)similarContacts.First().id
                         });
+
+                        _log.Add($"Found and updated client {similarContacts.First().id} in 1C {client1C}.");
+                        
                         continue;
                     }
                     #endregion
@@ -287,6 +297,8 @@ namespace Integration1C
                         account_id = a,
                         entity_id = compId
                     });
+
+                    _log.Add($"Created new client {compId} in 1C {client1C}.");
                     #endregion
                 }
 
@@ -299,7 +311,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to create or updae contact in 1C from lead {_leadId}: {e}");
+                _log.Add($"Unable to create or update client in 1C from lead {_leadId}: {e}");
                 return default;
             }
         }

@@ -8,8 +8,8 @@ namespace Integration1C
 #pragma warning disable IDE1006 // Naming Styles
         public Guid? lead_id_1C { get; set; }
         public List<Amo_id> amo_ids { get; set; }
-        public Guid client_id_1C { get; set; }
-        public Guid product_id_1C { get; set; }
+        public Guid? client_id_1C { get; set; }
+        public Guid? product_id_1C { get; set; }
         public Guid? company_id_1C { get; set; }
         public string organization { get; set; }
         public int price { get; set; }

@@ -91,17 +91,15 @@ namespace Integration1C
 
         private static void UpdateLeadIn1C(Amo amo, Log log, Lead lead, Guid lead_id_1C, int amo_acc, Cred1C cred1C)
         {
-            Lead1C lead1C = new() {
-                lead_id_1C = lead_id_1C,
-                price = (int)lead.price,
-                author = UserList.Get1CUser(lead.responsible_user_id),
-                responsible_user = UserList.Get1CUser(lead.responsible_user_id),
-                amo_ids = new() { new() {
-                        account_id = amo_acc,
-                        entity_id = lead.id
-            } } };
+            var repo1C = new LeadRepository(cred1C);
+
+            Lead1C lead1C = repo1C.GetLead(lead_id_1C);
+
+            if (lead1C == default) throw new Exception($"Unable to update lead in 1C. 1C returned no lead {lead_id_1C}.");
 
             PopulateCFs(lead, amo_acc, lead1C);
+
+            lead1C.responsible_user = UserList.Get1CUser(lead.responsible_user_id);
 
             if (string.IsNullOrEmpty(lead1C.lead_status))
                 lead1C.lead_status = "ВРаботе";
@@ -111,7 +109,7 @@ namespace Integration1C
 
             GetConnectedEntities(amo, log, lead, amo_acc, lead1C, cred1C);
 
-            new LeadRepository(cred1C).UpdateLead(lead1C);
+            repo1C.UpdateLead(lead1C);
         }
 
         private static Guid CreateLeadIn1C(Amo amo, Log log, Lead lead, int amo_acc, Cred1C cred1C)
@@ -173,10 +171,15 @@ namespace Integration1C
                     Guid.TryParse((string)lead.custom_fields_values.First(x => x.field_id == FieldLists.Leads[_amo_acc]["lead_id_1C"]).values[0].value, out Guid lead_id_1C))
                 {
                     UpdateLeadIn1C(_amo, _log, lead, lead_id_1C, _amo_acc, _cred1C);
+
+                    _log.Add($"Updated lead {lead.id} in 1C {lead_id_1C}");
+
                     return lead_id_1C;
                 }
 
                 var uid = CreateLeadIn1C(_amo, _log, lead, _amo_acc, _cred1C);
+
+                _log.Add($"Created lead {lead.id} in 1C {uid}");
 
                 UpdateLeadInAmoWithUID(leadRepo, _amo_acc, _leadId, uid);
 

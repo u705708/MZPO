@@ -43,13 +43,9 @@ namespace Integration1C
 
         private static void UpdateCompanyIn1C(Company company, Guid company_id_1C, int amo_acc, CompanyRepository repo1C)
         {
-            Company1C company1C = new() {
-                name = company.name,
-                company_id_1C = company_id_1C,
-                amo_ids = new() { new() {
-                        account_id = amo_acc,
-                        entity_id = company.id
-            } } };
+            Company1C company1C = repo1C.GetCompany(company_id_1C);
+
+            if (company1C == default) throw new Exception($"Unable to update company in 1C. 1C returned no company {company_id_1C}.");
 
             PopulateCFs(company, amo_acc, company1C);
 
@@ -98,7 +94,9 @@ namespace Integration1C
                     Guid.TryParse((string)company.custom_fields_values.First(x => x.field_id == FieldLists.Companies[_amo_acc]["company_id_1C"]).values[0].value, out Guid company_id_1C))
                 {
                     UpdateCompanyIn1C(company, company_id_1C, _amo_acc, _repo1C);
+
                     _log.Add($"Updated company in 1C {company_id_1C}.");
+                    
                     return company_id_1C;
                 }
                 #endregion
@@ -118,6 +116,8 @@ namespace Integration1C
                         }
                     }
                 };
+
+                _log.Add($"Created company in 1C {result}.");
                 #endregion
 
                 compRepo.Save(updatedCompany);

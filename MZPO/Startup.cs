@@ -39,7 +39,7 @@ namespace MZPO
 
             services.AddDbContext<MySQLContext>(opt => opt.UseMySql(
                 Configuration.GetConnectionString("MySQLConnection"), 
-                new MySqlServerVersion(new Version(5, 7, 31)),
+                new MariaDbServerVersion(new Version(10, 5, 8)),
                 builder =>
                 {
                     builder.EnableRetryOnFailure(6, TimeSpan.FromSeconds(20), null);

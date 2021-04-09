@@ -37,6 +37,9 @@ namespace Integration1C
                     if (p.Name == "price")
                         continue;
 
+                    try { if ((string)p.GetValue(course) == "") continue; }
+                    catch { }
+
                     ce.custom_fields.Add(new CatalogElement.Custom_fields()
                     {
                         id = FieldLists.Courses[acc_id][p.Name],
@@ -76,7 +79,11 @@ namespace Integration1C
                 if (_course1C.amo_ids is not null)
                 {
                     foreach (var a in _course1C.amo_ids)
+                    {
                         UpdateCourseInAmo(_course1C, _amo.GetAccountById(a.account_id).GetRepo<Lead>(), a.entity_id, a.account_id);
+
+                        _log.Add($"Updated course {_course1C.short_name} in amo {a.account_id}.");
+                    }
                 }
             }
             catch (Exception e)

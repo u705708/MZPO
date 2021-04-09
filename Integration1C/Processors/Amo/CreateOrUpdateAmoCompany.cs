@@ -61,6 +61,9 @@ namespace Integration1C
                 if (FieldLists.Companies[amo_acc].ContainsKey(p.Name) &&
                     p.GetValue(company1C) is not null)
                 {
+                    try { if ((string)p.GetValue(company1C) == "") continue; }
+                    catch { }
+
                     company.custom_fields_values.Add(new Company.Custom_fields_value()
                     {
                         field_id = FieldLists.Companies[amo_acc][p.Name],
@@ -127,13 +130,27 @@ namespace Integration1C
                 if (_company1C.amo_ids.Any(x => x.account_id == _amo_acc))
                 {
                     foreach (var c in _company1C.amo_ids.Where(x => x.account_id == _amo_acc))
-                        UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id, _amo_acc);
-                    return _company1C.amo_ids;
+                        try 
+                        { 
+                            UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id, _amo_acc);
+
+                            _log.Add($"Updated company {c.entity_id} in amo.");
+
+                            return _company1C.amo_ids;
+                        }
+                        catch (Exception e) 
+                        { 
+                            _log.Add($"Unable to update company {c.entity_id} in amo {e}"); 
+                        }
                 } 
                 #endregion
 
                 #region Checking company
                 List<Company> similarCompanies = new();
+                if (_company1C.phone is not null &&
+                    _company1C.phone != "")
+                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.INN}"));
+
                 if (_company1C.phone is not null &&
                     _company1C.phone != "")
                     similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.phone}"));
@@ -152,7 +169,9 @@ namespace Integration1C
                         account_id = _amo_acc,
                         entity_id = similarCompanies.First().id
                     });
-                    
+
+                    _log.Add($"Found and updated company {similarCompanies.First().id} in amo");
+
                     return _company1C.amo_ids;
                 }
 
@@ -170,6 +189,8 @@ namespace Integration1C
                     entity_id = compId
                 });
                 #endregion
+
+                _log.Add($"Created company {compId} in amo.");
             }
             catch (Exception e)
             {

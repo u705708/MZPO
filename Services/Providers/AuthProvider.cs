@@ -36,7 +36,7 @@ namespace MZPO.Services
         #region Supplementary methods
         private bool IsValid()
         {
-            return _validity > DateTime.Now;
+            return _validity > DateTime.UtcNow;
         }
 
         private void Refresh()
@@ -115,7 +115,7 @@ namespace MZPO.Services
                 _amoAccountAuth.authToken = _authToken;
                 _refrToken = (string)securityData["refresh_token"];
                 _amoAccountAuth.refrToken = _refrToken;
-                _validity = DateTime.Now.AddSeconds((int)securityData["expires_in"] - 5);
+                _validity = DateTime.UtcNow.AddSeconds((int)securityData["expires_in"] - 5);
                 _amoAccountAuth.validity = _validity;
             }
             catch (Exception e)
