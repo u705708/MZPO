@@ -75,7 +75,9 @@ namespace Integration1C
         internal Guid AddCompany(Company1C company)
         {
             if (string.IsNullOrEmpty(company.email) &&
-                string.IsNullOrEmpty(company.phone))
+                string.IsNullOrEmpty(company.phone) &&
+                string.IsNullOrEmpty(company.name) &&
+                string.IsNullOrEmpty(company.INN))
                 throw new Exception("Unable to add company to 1C: no phone or email.");
 
             company.company_id_1C = null;

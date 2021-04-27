@@ -19,13 +19,15 @@ namespace MZPO.Controllers
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly Cred1C _cred1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public Integration1CController(Amo amo, TaskList processQueue, Log log, Cred1C cred1C)
+        public Integration1CController(Amo amo, TaskList processQueue, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _processQueue = processQueue;
             _log = log;
             _cred1C = cred1C;
+            _filter = filter;
         }
 
         // POST: integration/1c/saveclient
@@ -44,7 +46,7 @@ namespace MZPO.Controllers
             if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
                 !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CClient(_amo, _log, leadNumber, accNumber, _cred1C).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CClient(_amo, _log, leadNumber, accNumber, _cred1C, _filter).Run());
 
             return Ok();
         }
@@ -69,7 +71,10 @@ namespace MZPO.Controllers
             if (!col.ContainsKey("contacts[update][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["contacts[update][0][id]"], out int contactNumber)) return BadRequest("Incorrect contact number.");
 
-            var task = Task.Run(() => new Update1CClient(_amo, _log, contactNumber, accNumber, _cred1C).Run());
+            if (!_filter.CheckEntityIsValid(contactNumber)) 
+                return Ok();
+
+            var task = Task.Run(() => new Update1CClient(_amo, _log, contactNumber, accNumber, _cred1C, _filter).Run());
 
             return Ok();
         }
@@ -121,9 +126,11 @@ namespace MZPO.Controllers
 
             if (client1C.amo_ids is null ||
                 !client1C.amo_ids.Any())
-                result.AddRange(new CreateOrUpdateAmoContact(client1C, _amo, _log).Run());
+                result.AddRange(new CreateOrUpdateAmoContact(client1C, _amo, _log, _filter).Run());
             else
-                result.AddRange(new UpdateAmoContact(client1C, _amo, _log).Run());
+                result.AddRange(new UpdateAmoContact(client1C, _amo, _log, _filter).Run());
+
+            result.ForEach(x => _filter.AddEntity(x.entity_id));
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
@@ -177,7 +184,9 @@ namespace MZPO.Controllers
 
             List<Amo_id> result = new();
 
-            result.AddRange(new UpdateAmoContact(client1C, _amo, _log).Run());
+            result.AddRange(new UpdateAmoContact(client1C, _amo, _log, _filter).Run());
+
+            result.ForEach(x => _filter.AddEntity(x.entity_id));
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
@@ -203,7 +212,7 @@ namespace MZPO.Controllers
             if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
                 !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CCompany(_amo, _log, leadNumber, _cred1C).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CCompany(_amo, _log, leadNumber, _cred1C, _filter).Run());
 
             return Ok();
         }
@@ -227,6 +236,9 @@ namespace MZPO.Controllers
 
             if (!col.ContainsKey("contacts[update][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["contacts[update][0][id]"], out int companyNumber)) return BadRequest("Incorrect lead number.");
+
+            if (!_filter.CheckEntityIsValid(companyNumber))
+                return Ok();
 
             var task = Task.Run(() => new Update1CCompany(_amo, _log, companyNumber, _cred1C).Run());
 
@@ -268,8 +280,9 @@ namespace MZPO.Controllers
                 return BadRequest("Incorrect name");
 
             if (string.IsNullOrEmpty(company1C.phone) &&
-                string.IsNullOrEmpty(company1C.email))
-                return BadRequest("Incorrect contacts");
+                string.IsNullOrEmpty(company1C.email) &&
+                string.IsNullOrEmpty(company1C.INN))
+                return BadRequest("Incorrect contacts/INN");
 
             if (company1C.amo_ids is not null &&
                 company1C.amo_ids.Any(x => x.account_id == 0 || x.entity_id == 0))
@@ -280,9 +293,9 @@ namespace MZPO.Controllers
 
             if (company1C.amo_ids is null ||
                 !company1C.amo_ids.Any())
-                result.AddRange(new CreateOrUpdateAmoCompany(company1C, _amo, _log).Run());
+                result.AddRange(new CreateOrUpdateAmoCompany(company1C, _amo, _log, _filter).Run());
             else
-                result.AddRange(new UpdateAmoCompany(company1C, _amo, _log).Run());
+                result.AddRange(new UpdateAmoCompany(company1C, _amo, _log, _filter).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
@@ -336,7 +349,7 @@ namespace MZPO.Controllers
 
             List<Amo_id> result = new();
 
-            result.AddRange(new UpdateAmoCompany(company1C, _amo, _log).Run());
+            result.AddRange(new UpdateAmoCompany(company1C, _amo, _log, _filter).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
@@ -362,7 +375,7 @@ namespace MZPO.Controllers
             if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
                 !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
 
-            var task = Task.Run(() => new CreateOrUpdate1CLead(_amo, _log, leadNumber, accNumber, _cred1C).Run());
+            var task = Task.Run(() => new CreateOrUpdate1CLead(_amo, _log, leadNumber, accNumber, _cred1C, _filter).Run());
 
             return Ok();
         }
@@ -390,6 +403,9 @@ namespace MZPO.Controllers
                 !col.ContainsKey("leads[add][0][id]")) return BadRequest("Unexpected request.");
             if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber) &&
                 !Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+
+            if (!_filter.CheckEntityIsValid(leadNumber))
+                return Ok();
 
             var task = Task.Run(() => new Update1CLead(_amo, _log, leadNumber, accNumber, _cred1C).Run());
 
@@ -447,20 +463,21 @@ namespace MZPO.Controllers
                 return BadRequest("amo_id values cannot be 0");
 
             if (lead1C.organization != "ООО «МЦПО»" &&
-                lead1C.organization != "ООО «МИРК»") return BadRequest($"Unknown organization {lead1C.organization}");
+                lead1C.organization != "ООО «МИРК»" &&
+                lead1C.organization != "МЦПО ") return BadRequest($"Unknown organization {lead1C.organization}");
             #endregion
 
             List<Amo_id> result = new();
 
             //if (lead1C.amo_ids is null ||
             //    !lead1C.amo_ids.Any())
-            //    result.AddRange(new CreateOrUpdateAmoLead(lead1C, _amo, _log, _cred1C).Run());
+            //    result.AddRange(new CreateOrUpdateAmoLead(lead1C, _amo, _log, _cred1C, _filter).Run());
             //else
             //    result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
 
             if(lead1C.amo_ids is not null &&
                 lead1C.amo_ids.Any())
-                result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
+                result.AddRange(new UpdateAmoLead(lead1C, _amo, _log, _filter).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
@@ -520,7 +537,7 @@ namespace MZPO.Controllers
 
             List<Amo_id> result = new();
 
-            result.AddRange(new UpdateAmoLead(lead1C, _amo, _log).Run());
+            result.AddRange(new UpdateAmoLead(lead1C, _amo, _log, _filter).Run());
 
             return Ok(JsonConvert.SerializeObject(result, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }

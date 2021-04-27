@@ -19,6 +19,17 @@ namespace MZPO.Controllers.ReportProcessors
             _gSheets = gSheets;
         }
 
+        private static (long, long) GetDates()
+        {
+            var now = DateTime.UtcNow.AddHours(3);
+            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
+            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3);
+            long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
+            long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
+
+            return (dateFrom, dateTo);
+        }
+
         // GET: reports/corporatesales
         [HttpGet]
         public IActionResult CorporateSales()
@@ -42,13 +53,9 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult KPI()
         {
-            var now = DateTime.UtcNow.AddHours(3);
-            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
-            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
-            long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
-            long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
+            var dates = GetDates();
 
-            ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+            ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
             return Ok();
         }
@@ -69,13 +76,9 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult LongLeads()
         {
-            var now = DateTime.UtcNow.AddHours(3);
-            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
-            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
-            long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
-            long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
+            var dates = GetDates();
 
-            ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+            ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
             
             return Ok();
         }
@@ -105,11 +108,9 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult WeeklyReport()
         {
-            var now = DateTime.UtcNow.AddHours(3);
-            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
-            long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
+            var dates = GetDates();
 
-            ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, 0, dateTo);
+            ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, 0, dates.Item2);
 
             return Ok();
         }
@@ -129,13 +130,9 @@ namespace MZPO.Controllers.ReportProcessors
         [HttpGet]
         public IActionResult MonthlyReport()
         {
-            var now = DateTime.UtcNow.AddHours(3);
-            var yesterday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
-            var firstDayofMonth = new DateTime(yesterday.Year, yesterday.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3).AddSeconds(-1);
-            long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
-            long dateTo = ((DateTimeOffset)yesterday).ToUnixTimeSeconds();
+            var dates = GetDates();
 
-            ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+            ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
             return Ok();
         }
@@ -148,6 +145,29 @@ namespace MZPO.Controllers.ReportProcessors
                 !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
 
             ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok();
+        }
+
+        // GET reports/doubleslist/1614546000,1617224399
+        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult DoublesList(string from, string to)
+        {
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            ReportsProvider.StartReport(Reports.Doubles, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok();
+        }
+
+        // GET: reports/doubleslist/
+        [HttpGet]
+        public IActionResult DoublesList()
+        {
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.Doubles, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
             return Ok();
         }

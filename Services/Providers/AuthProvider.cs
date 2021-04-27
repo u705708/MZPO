@@ -20,7 +20,8 @@ namespace MZPO.Services
         private string _authToken;
         private string _refrToken;
         private DateTime _validity;
-        private readonly SemaphoreSlim _ss;
+        private readonly SemaphoreSlim _amoConnectionsSemaphore;
+        private readonly SemaphoreSlim _tokenUpdateSemaphore;
 
         public AuthProvider(AmoAccountAuth acc, AmoProvider prov)
         {
@@ -29,7 +30,8 @@ namespace MZPO.Services
             _authToken = acc.authToken;
             _refrToken = acc.refrToken;
             _validity = acc.validity;
-            _ss = new(_concurrentRequestsAmount, _concurrentRequestsAmount);
+            _amoConnectionsSemaphore = new(_concurrentRequestsAmount, _concurrentRequestsAmount);
+            _tokenUpdateSemaphore = new(1, 1);
         }
         #endregion
 
@@ -128,7 +130,9 @@ namespace MZPO.Services
         #region Realization
         public string GetToken()
         {
+            _tokenUpdateSemaphore.Wait();
             if (!IsValid()) Refresh();
+            _tokenUpdateSemaphore.Release();
             return _authToken;
         }
 
@@ -139,7 +143,7 @@ namespace MZPO.Services
 
         public SemaphoreSlim GetSemaphoreSlim()
         {
-            return _ss;
+            return _amoConnectionsSemaphore;
         }
         #endregion
     }

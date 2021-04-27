@@ -13,13 +13,14 @@ namespace Integration1C
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly Lead1C _lead1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public UpdateAmoLead(Lead1C lead1C, Amo amo, Log log)
+        public UpdateAmoLead(Lead1C lead1C, Amo amo, Log log, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _lead1C = lead1C;
-
+            _filter = filter;
         }
 
         private static void AddUIDToEntity(Lead1C lead1C, int acc_id, Lead lead)
@@ -48,7 +49,7 @@ namespace Integration1C
                 }
         }
 
-        private static void UpdateLeadInAmo(Lead1C lead1C, IAmoRepo<Lead> leadRepo, int lead_id, int acc_id)
+        private static void UpdateLeadInAmo(Lead1C lead1C, IAmoRepo<Lead> leadRepo, int lead_id, int acc_id, RecentlyUpdatedEntityFilter filter)
         {
             Lead lead = new()
             {
@@ -67,6 +68,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(lead_id);
                 leadRepo.Save(lead);
             }
             catch (Exception e)
@@ -85,7 +87,7 @@ namespace Integration1C
                 var leadRepo = _amo.GetAccountById(amo_acc).GetRepo<Lead>();
 
                 if (_lead1C.amo_ids.Any(x => x.account_id == amo_acc))
-                    UpdateLeadInAmo(_lead1C, leadRepo, _lead1C.amo_ids.First().entity_id, amo_acc);
+                    UpdateLeadInAmo(_lead1C, leadRepo, _lead1C.amo_ids.First().entity_id, amo_acc, _filter);
 
                 _log.Add($"Updated lead {_lead1C.amo_ids.First().entity_id} in amo {amo_acc}.");
             }

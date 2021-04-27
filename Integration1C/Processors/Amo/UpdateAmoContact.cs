@@ -10,12 +10,14 @@ namespace Integration1C
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly Client1C _client1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public UpdateAmoContact(Client1C client1C, Amo amo, Log log)
+        public UpdateAmoContact(Client1C client1C, Amo amo, Log log, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _client1C = client1C;
+            _filter = filter;
         }
 
         private static void AddUIDToEntity(Client1C client1C, int acc_id, Contact contact)
@@ -53,7 +55,7 @@ namespace Integration1C
                 }
         }
 
-        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
+        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id, RecentlyUpdatedEntityFilter filter)
         {
             Contact contact = new()
             {
@@ -68,6 +70,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(contact_id);
                 contRepo.Save(contact);
             }
             catch (Exception e)
@@ -83,7 +86,7 @@ namespace Integration1C
                 if (_client1C.amo_ids is not null)
                     foreach (var c in _client1C.amo_ids)
                     {
-                        UpdateContactInAmo(_client1C, _amo.GetAccountById(c.account_id).GetRepo<Contact>(), c.entity_id, c.account_id);
+                        UpdateContactInAmo(_client1C, _amo.GetAccountById(c.account_id).GetRepo<Contact>(), c.entity_id, c.account_id, _filter);
                         
                         _log.Add($"Updated contact {c.entity_id} in amo {c.account_id}.");
                     }

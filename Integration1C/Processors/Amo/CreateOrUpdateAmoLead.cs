@@ -14,13 +14,15 @@ namespace Integration1C
         private readonly Log _log;
         private readonly Lead1C _lead1C;
         private readonly Cred1C _cred1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public CreateOrUpdateAmoLead(Lead1C lead1C, Amo amo, Log log, Cred1C cred1C)
+        public CreateOrUpdateAmoLead(Lead1C lead1C, Amo amo, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _lead1C = lead1C;
             _cred1C = cred1C;
+            _filter = filter;
         }
         private static void AddUIDToEntity(Lead1C lead1C, int acc_id, Lead lead)
         {
@@ -59,7 +61,7 @@ namespace Integration1C
                 lead._embedded.companies is null) throw new Exception("Unable to add entities to lead.");
         }
 
-        private static void UpdateLeadInAmo(Lead1C lead1C, IAmoRepo<Lead> leadRepo, int lead_id, int acc_id)
+        private static void UpdateLeadInAmo(Lead1C lead1C, IAmoRepo<Lead> leadRepo, int lead_id, int acc_id, RecentlyUpdatedEntityFilter filter)
         {
             Lead lead = new()
             {
@@ -78,6 +80,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(lead_id);
                 leadRepo.Save(lead);
             }
             catch (Exception e)
@@ -86,7 +89,7 @@ namespace Integration1C
             }
         }
 
-        private static int CreateLeadInAmo(Lead1C lead1C, IAmoRepo<Lead> leadRepo, int acc_id, int contact_id, int course_id, int company_id)
+        private static int CreateLeadInAmo(Lead1C lead1C, IAmoRepo<Lead> leadRepo, int acc_id, int contact_id, int course_id, int company_id, RecentlyUpdatedEntityFilter filter)
         {
             Lead lead = new()
             {
@@ -110,7 +113,8 @@ namespace Integration1C
 
             try
             {
-                var result = leadRepo.AddNewComplex(lead);
+                var result = leadRepo.AddNewComplex(lead).ToList();
+                result.ForEach(x => filter.AddEntity(x));
                 if (result.Any())
                 {
                     EntityLink link = new()
@@ -149,7 +153,7 @@ namespace Integration1C
                 {
                     try
                     {
-                        UpdateLeadInAmo(_lead1C, leadRepo, _lead1C.amo_ids.First().entity_id, amo_acc);
+                        UpdateLeadInAmo(_lead1C, leadRepo, _lead1C.amo_ids.First().entity_id, amo_acc, _filter);
 
                         _log.Add($"Updated lead {_lead1C.amo_ids.First().entity_id} in amo {amo_acc}.");
 
@@ -187,7 +191,7 @@ namespace Integration1C
                 #endregion
 
                 #region Creating new lead
-                var lead_id = CreateLeadInAmo(_lead1C, leadRepo, amo_acc, contact_id, course_id, company_id);
+                var lead_id = CreateLeadInAmo(_lead1C, leadRepo, amo_acc, contact_id, course_id, company_id, _filter);
                 _lead1C.amo_ids.Add(new()
                 {
                     account_id = amo_acc,

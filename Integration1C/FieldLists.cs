@@ -9,6 +9,7 @@ namespace Integration1C
             { 28395871, new()
                             {
                                 { "client_id_1C", 710429 },
+                                { "company_id_1C", 716023 },
                                 { "email", 264913 },
                                 { "phone", 264911 },
                                 { "dob", 644285 },

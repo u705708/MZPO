@@ -58,6 +58,21 @@ namespace MZPO.ReportProcessors
             (6890059, "Аскер Абулгазинов"),
         };
 
+        protected static readonly List<(int, string)> managersCorp = new()
+        {
+            (2375116, "Киреева Светлана"),
+            (6904255, "Виктория Корчагина"),
+            (6909061, "Оксана Строганова"),
+            (2375131, "Алферова Лилия"),
+            (6630727, "Елена Зубатых"),
+            (6028753, "Алена Федосова"),
+            (6697522, "Наталья Филатова"),
+            (2884132, "Ирина Сорокина"),
+            //(3770773, "Шталева Лидия"),
+            //(6200629, "Харшиладзе Леван"),
+            //(6346882, "Мусихина Юлия")
+        };
+
         protected static readonly List<int> pipelinesRet = new()
         {
             3198184,    //Продажи(Розница)
@@ -117,8 +132,8 @@ namespace MZPO.ReportProcessors
                 timeOfReference = (int)((DateTimeOffset)new DateTime(dt.Year, dt.Month, dt.Day, 11, 0, 0)).ToUnixTimeSeconds();
             #endregion
 
-            var allEvents = new List<Event>(leadRepo.GetEntityEvents(lead.id));
-            var allNotes = new List<Note>(leadRepo.GetEntityNotes(lead.id));
+            var allEvents = leadRepo.GetEntityEvents(lead.id).ToList();
+            var allNotes = leadRepo.GetEntityNotes(lead.id).ToList();
 
             #region Смена ответственного
             var responsibilityChangeVents = allEvents.Where(x => x.type == "entity_responsible_changed");
@@ -136,16 +151,8 @@ namespace MZPO.ReportProcessors
             if (lead._embedded.contacts is not null)
                 foreach(var contact in lead._embedded.contacts)
                 {
-                    var events = contRepo.GetEntityEvents((int)contact.id);
-                    lock (allEvents)
-                    {
-                        allEvents.AddRange(events);
-                    }
-                    var notes = contRepo.GetEntityNotes((int)contact.id);
-                    lock (allNotes)
-                    {
-                        allNotes.AddRange(notes);
-                    }
+                    allEvents.AddRange(contRepo.GetEntityEvents((int)contact.id).ToList());
+                    allNotes.AddRange(contRepo.GetEntityNotes((int)contact.id).ToList());
                 }
             #endregion
 
@@ -205,15 +212,18 @@ namespace MZPO.ReportProcessors
                 leads,
                 new ParallelOptions { MaxDegreeOfParallelism = 3 },
                 x => {
-                var rTime = GetLeadResponseTime(x, leadRepo, contRepo);
-                responseTimes.Add(rTime);
+                    var rTime = GetLeadResponseTime(x, leadRepo, contRepo);
+                    responseTimes.Add(rTime);
 
-                if (rTime > 3600)
-                    lock (longAnsweredLeads)
+
+                    if (rTime > 3600)
                     {
-                        longAnsweredLeads.Add((x.responsible_user_id, x.id, rTime, x.status_id));
+                        lock (longAnsweredLeads)
+                        {
+                            longAnsweredLeads.Add((x.responsible_user_id, x.id, rTime, x.status_id));
+                        }
                     }
-            });
+                });
 
             if (responseTimes.AsParallel().Any(x => (x > 0) && (x < 3600)))
                 return responseTimes.AsParallel().Where(x => (x > 0) && (x < 3600)).Average();

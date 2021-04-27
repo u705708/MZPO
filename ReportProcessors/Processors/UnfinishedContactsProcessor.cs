@@ -17,20 +17,6 @@ namespace MZPO.ReportProcessors
         /// </summary>
         internal UnfinishedContactsProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token) { }
-
-        private readonly List<(int, string)> managers = new()
-        {
-            (2375122, "Васина Елена"),
-            (2375116, "Киреева Светлана"),
-            (2375131, "Алферова Лилия"),
-            (6630727, "Елена Зубатых"),
-            (6028753, "Алена Федосова"),
-            (2884132, "Ирина Сорокина"),
-            (6697522, "Наталья Филатова"),
-            (3770773, "Шталева Лидия"),
-            (6200629, "Харшиладзе Леван"),
-            (6346882, "Мусихина Юлия")
-        };
         #endregion
 
         #region Supplementary methods
@@ -62,7 +48,7 @@ namespace MZPO.ReportProcessors
             };
             #endregion
 
-            foreach (var m in managers)
+            foreach (var m in managersCorp)
             {
                 #region Adding sheet
                 requestContainer.Add(new Request()
@@ -322,7 +308,7 @@ namespace MZPO.ReportProcessors
 
             List<Task> tasks = new();
 
-            foreach (var manager in managers)
+            foreach (var manager in managersCorp)
             {
                 if (_token.IsCancellationRequested) break;
                 var m = manager;

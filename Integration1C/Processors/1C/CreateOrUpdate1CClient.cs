@@ -14,14 +14,16 @@ namespace Integration1C
         private readonly int _leadId;
         private readonly int _amo_acc;
         private readonly ClientRepository _repo1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public CreateOrUpdate1CClient(Amo amo, Log log, int leadId, int amo_acc, Cred1C cred1C)
+        public CreateOrUpdate1CClient(Amo amo, Log log, int leadId, int amo_acc, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _leadId = leadId;
             _amo_acc = amo_acc;
             _repo1C = new(cred1C);
+            _filter = filter;
         }
 
         private readonly List<int> amo_accounts = new()
@@ -112,7 +114,7 @@ namespace Integration1C
             return client1C;
         }
 
-        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
+        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id, RecentlyUpdatedEntityFilter filter)
         {
             Contact contact = new()
             {
@@ -124,6 +126,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(contact_id);
                 contRepo.Save(contact);
             }
             catch (Exception e)
@@ -132,7 +135,7 @@ namespace Integration1C
             }
         }
 
-        private static int CreateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int acc_id)
+        private static int CreateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int acc_id, RecentlyUpdatedEntityFilter filter)
         {
             Contact contact = new()
             {
@@ -143,7 +146,8 @@ namespace Integration1C
 
             try
             {
-                var result = contRepo.AddNew(contact);
+                var result = contRepo.AddNew(contact).ToList();
+                result.ForEach(x => filter.AddEntity((int)x.id));
                 if (result.Any())
                     return (int)result.First().id;
                 else throw new Exception("Amo returned no contact Ids.");
@@ -171,7 +175,7 @@ namespace Integration1C
             client1C.client_id_1C = result;
         }
 
-        private static void UpdateAmoEntities(IAmoRepo<Contact> contRepo, Amo_id amo_id, Guid uid)
+        private static void UpdateAmoEntities(IAmoRepo<Contact> contRepo, Amo_id amo_id, Guid uid, RecentlyUpdatedEntityFilter filter)
         {
             Contact contact = new() {
                 id = amo_id.entity_id,
@@ -182,6 +186,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(amo_id.entity_id);
                 contRepo.Save(contact);
             }
             catch (Exception e)
@@ -276,21 +281,21 @@ namespace Integration1C
                     #region Adding found contact
                     if (similarContacts.Any())
                     {
-                        UpdateContactInAmo(client1C, anotherContRepo, (int)similarContacts.First().id, a);
+                        UpdateContactInAmo(client1C, anotherContRepo, (int)similarContacts.First().id, a, _filter);
                         client1C.amo_ids.Add(new()
                         {
                             account_id = a,
                             entity_id = (int)similarContacts.First().id
                         });
 
-                        _log.Add($"Found and updated client {similarContacts.First().id} in 1C {client1C}.");
+                        _log.Add($"Found and updated client {similarContacts.First().id} in 1C {client1C.client_id_1C}.");
                         
                         continue;
                     }
                     #endregion
 
                     #region Creating new contact
-                    var compId = CreateContactInAmo(client1C, anotherContRepo, a);
+                    var compId = CreateContactInAmo(client1C, anotherContRepo, a, _filter);
 
                     client1C.amo_ids.Add(new()
                     {
@@ -298,14 +303,14 @@ namespace Integration1C
                         entity_id = compId
                     });
 
-                    _log.Add($"Created new client {compId} in 1C {client1C}.");
+                    _log.Add($"Created new client {compId} in 1C {client1C.client_id_1C}.");
                     #endregion
                 }
 
                 CreateClientIn1C(client1C, _repo1C);
 
                 foreach (var a in amo_accounts)
-                    UpdateAmoEntities(_amo.GetAccountById(a).GetRepo<Contact>(), client1C.amo_ids.First(x => x.account_id == a), (Guid)client1C.client_id_1C);
+                    UpdateAmoEntities(_amo.GetAccountById(a).GetRepo<Contact>(), client1C.amo_ids.First(x => x.account_id == a), (Guid)client1C.client_id_1C, _filter);
 
                 return (Guid)client1C.client_id_1C;
             }

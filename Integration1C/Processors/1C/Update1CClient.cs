@@ -1,6 +1,7 @@
 ﻿using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Integration1C
@@ -12,14 +13,16 @@ namespace Integration1C
         private readonly int _contactId;
         private readonly int _amo_acc;
         private readonly ClientRepository _repo1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public Update1CClient(Amo amo, Log log, int contactId, int amo_acc, Cred1C cred1C)
+        public Update1CClient(Amo amo, Log log, int contactId, int amo_acc, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _contactId = contactId;
             _amo_acc = amo_acc;
             _repo1C = new(cred1C);
+            _filter = filter;
         }
 
         private static void PopulateClientCFs(Contact contact, int amo_acc, Client1C client1C)
@@ -47,7 +50,7 @@ namespace Integration1C
                     }
         }
 
-        private static void UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, Amo amo, Log log, ClientRepository repo1C)
+        private static Client1C UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, ClientRepository repo1C)
         {
             var client1C = repo1C.GetClient(client_id_1C);
             if (client1C == default) throw new Exception($"Unable to update client to 1C. 1C returned no client {client_id_1C}.");
@@ -55,6 +58,8 @@ namespace Integration1C
             PopulateClientCFs(contact, amo_acc, client1C);
 
             repo1C.UpdateClient(client1C);
+
+            return client1C;
         }
 
         public Guid Run()
@@ -76,8 +81,10 @@ namespace Integration1C
                 if (contact.custom_fields_values.Any(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]) &&
                     Guid.TryParse((string)contact.custom_fields_values.First(x => x.field_id == FieldLists.Contacts[_amo_acc]["client_id_1C"]).values[0].value, out client_id_1C))
                 {
-                    UpdateClientIn1C(client_id_1C, contact, _amo_acc, _amo, _log, _repo1C);
+                    var client1C = UpdateClientIn1C(client_id_1C, contact, _amo_acc, _repo1C);
                     _log.Add($"Updated client in 1C {client_id_1C}.");
+
+                    new UpdateAmoContact(client1C, _amo, _log, _filter).Run();
                 }
                 #endregion
 

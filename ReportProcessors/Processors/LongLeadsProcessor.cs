@@ -232,39 +232,47 @@ namespace MZPO.ReportProcessors
 
         private void ProcessManager((int, string) manager, (int, int) dataRange)
         {
-            //Даты
-            string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
+            try
+            {
+                //Даты
+                string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
-            //Список новых сделок в воронках из pipelines
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
+                //Список новых сделок в воронках из pipelines
+                _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
 
-            List<Lead> newLeads = new();
+                List<Lead> newLeads = new();
 
-            Parallel.ForEach(
-                pipelinesRet,
-                new ParallelOptions { MaxDegreeOfParallelism = 3 },
-                p => {
-                var range = _leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
-                lock (newLeads)
-                {
-                    newLeads.AddRange(range);
-                }
-            });
+                Parallel.ForEach(
+                    pipelinesRet,
+                    new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                    p =>
+                    {
+                        var range = _leadRepo.GetByCriteria($"filter[pipeline_id][0]={p}&filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts");
+                        lock (newLeads)
+                        {
+                            newLeads.AddRange(range);
+                        }
+                    });
 
-            int totalNewLeads = newLeads.Count;
+                int totalNewLeads = newLeads.Count;
 
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
+                _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
 
-            double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
-            int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
+                double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
+                int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
 
-            List<Request> requestContainer = new();
+                List<Request> requestContainer = new();
 
-            requestContainer.Add(GetRowRequest(manager.Item1, GetCellData(dates, totalNewLeads, responseTime)));
+                requestContainer.Add(GetRowRequest(manager.Item1, GetCellData(dates, totalNewLeads, responseTime)));
 
-            UpdateSheetsAsync(requestContainer, _service, _spreadsheetId).Wait();
+                UpdateSheetsAsync(requestContainer, _service, _spreadsheetId).Wait();
 
-            _processQueue.Remove($"{_taskName}_{manager.Item2}");
+                _processQueue.Remove($"{_taskName}_{manager.Item2}");
+            }
+            catch
+            {
+                _processQueue.Remove($"{_taskName}_{manager.Item2}");
+            }
         }
 
         private async Task FinalizeManagers()

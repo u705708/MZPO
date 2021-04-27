@@ -13,14 +13,16 @@ namespace Integration1C
         private readonly Company1C _company1C;
         private readonly IAmoRepo<Company> _compRepo;
         private readonly int _amo_acc;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public UpdateAmoCompany(Company1C company1C, Amo amo, Log log)
+        public UpdateAmoCompany(Company1C company1C, Amo amo, Log log, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _company1C = company1C;
             _amo_acc = 19453687;
             _compRepo = _amo.GetAccountById(_amo_acc).GetRepo<Company>();
+            _filter = filter;
         }
 
         private static void AddUIDToEntity(Company1C company1C, Company company)
@@ -50,7 +52,7 @@ namespace Integration1C
                 }
         }
 
-        private static void UpdateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int company_id)
+        private static void UpdateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int company_id, RecentlyUpdatedEntityFilter filter)
         {
             Company company = new()
             {
@@ -65,6 +67,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(company_id);
                 compRepo.Save(company);
             }
             catch (Exception e)
@@ -81,7 +84,7 @@ namespace Integration1C
                     _company1C.amo_ids.Any(x => x.account_id == _amo_acc))
                     foreach (var c in _company1C.amo_ids.Where(x => x.account_id == _amo_acc))
                     {
-                        UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id);
+                        UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id, _filter);
                         _log.Add($"Company {c.entity_id} updated in amo.");
                     }
                 

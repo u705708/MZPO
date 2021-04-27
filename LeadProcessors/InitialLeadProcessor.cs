@@ -88,13 +88,21 @@ namespace MZPO.LeadProcessors
             #region Врач-косметолог
             var pageURL = GetFieldValue(639083);
 
-            if (pageURL is not null)
+            if (pageURL is not null &&
+                pageURL.Contains("vrach-kosmetolog"))                                                               //Если посадочная страница содержит врач-косметолог
             {
-                if (pageURL.Contains("vrach-kosmetolog"))                                                               //Если посадочная страница содержит врач-косметолог
-                {
-                    SetFieldValue(639081, "mirk.vrach.kosmetolog");                                                     //Устанавливаем сайт
-                    //SetFieldValue(639075, "");                                                                        //И тип обращения
-                }
+                SetFieldValue(639081, "mirk.vrach.kosmetolog");                                                     //Устанавливаем сайт
+                //SetFieldValue(639075, "");                                                                        //И тип обращения
+            }
+            #endregion
+
+            #region Фитнес-инструктор
+            if (pageURL is not null &&
+                pageURL.Contains("rassylkapartnery_instruktor.fitness.promokod"))
+            {
+                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Фитнес Инструктор: Промокод 5000." } });
+                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Скидка клиенту 5000руб." } });
+                SetTag("WeGym");
             }
             #endregion
 

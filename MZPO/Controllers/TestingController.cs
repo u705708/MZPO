@@ -27,14 +27,16 @@ namespace MZPO.Controllers
         private readonly GSheets _gSheets;
         private readonly Log _log;
         private readonly Cred1C _cred1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public TestingController(Amo amo, TaskList processQueue, GSheets gSheets, Log log, Cred1C cred1C)
+        public TestingController(Amo amo, TaskList processQueue, GSheets gSheets, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _processQueue = processQueue;
             _gSheets = gSheets;
             _log = log;
             _cred1C = cred1C;
+            _filter = filter;
         }
 
         public class Entry
@@ -46,26 +48,98 @@ namespace MZPO.Controllers
             public string client_name;
         }
 
-        class ContactsComparer : IEqualityComparer<Contact>
+        private static string GetManager(int id)
         {
-            public bool Equals(Contact x, Contact y)
+            List<(int, string)> managersCorp = new()
             {
-                if (Object.ReferenceEquals(x, y)) return true;
+                (2375116, "Киреева Светлана"),
+                (6904255, "Виктория Корчагина"),
+                (6909061, "Оксана Строганова"),
+                (2375131, "Алферова Лилия"),
+                (6630727, "Елена Зубатых"),
+                (6028753, "Алена Федосова"),
+                (6697522, "Наталья Филатова"),
+                (2884132, "Ирина Сорокина"),
+                //(3770773, "Шталева Лидия"),
+                //(6200629, "Харшиладзе Леван"),
+                //(6346882, "Мусихина Юлия")
+            };
 
-                if (x is null || y is null)
-                    return false;
+            if (managersCorp.Any(x => x.Item1 == id))
+                return managersCorp.First(x => x.Item1 == id).Item2;
+            return id.ToString();
+        }
 
-                return x.id == y.id;
-            }
+        private static bool CheckEventsRecent(List<(string, int)> events, DateTime refDT, out int lastContactEventTime)
+        {
+            lastContactEventTime = 0;
 
-            public int GetHashCode(Contact c)
-            {
-                if (c is null) return 0;
+            if (!events.Any(e => e.Item1 == "outgoing_chat_message" ||
+                                 e.Item1 == "incoming_chat_message" ||
+                                 e.Item1 == "outgoing_call" ||
+                                 e.Item1 == "incoming_call"))
+                return false;
 
-                int hashProductCode = (int)c.id;
+            lastContactEventTime = events.Where(e => e.Item1 == "outgoing_chat_message" ||
+                                                         e.Item1 == "incoming_chat_message" ||
+                                                         e.Item1 == "outgoing_call" ||
+                                                         e.Item1 == "incoming_call")
+                                             .Select(x => x.Item2)
+                                             .Max();
 
-                return hashProductCode;
-            }
+            return DateTimeOffset.FromUnixTimeSeconds(lastContactEventTime).UtcDateTime.AddHours(3) > refDT;
+        }
+
+        private static bool CheckNotesRecent(List<(string, int)> notes, DateTime refDT, out int lastNoteEventTime)
+        {
+            lastNoteEventTime = 0;
+            
+            if (!notes.Any(n => n.Item1 == "amomail_message")) 
+                return false;
+
+            lastNoteEventTime = notes.Where(n => n.Item1 == "amomail_message")
+                                         .Select(x => x.Item2)
+                                         .Max();
+
+            return DateTimeOffset.FromUnixTimeSeconds(lastNoteEventTime).UtcDateTime.AddHours(3) > refDT;
+        }
+
+        private static bool CheckLeadRecent(Lead lead, DateTime refDT, out int leadCreatedTime)
+        {
+            leadCreatedTime = 0;
+
+            if (lead.created_at is null)
+                return false;
+
+            leadCreatedTime = (int)lead.created_at;
+
+            return DateTimeOffset.FromUnixTimeSeconds(leadCreatedTime).UtcDateTime.AddHours(3) > refDT;
+        }
+
+        private static bool CheckCompanyRecent(Company company, DateTime refDT, out int companyCreatedTime)
+        {
+            companyCreatedTime = 0;
+
+            if (company.created_at is null)
+                return false;
+
+            companyCreatedTime = (int)company.created_at;
+
+            return DateTimeOffset.FromUnixTimeSeconds(companyCreatedTime).UtcDateTime.AddHours(3) > refDT;
+        }
+
+        private static bool CheckCompanyTasks(IEnumerable<AmoTask> tasks)
+        {
+            return tasks.Any(x => x.is_completed == false);
+
+            var now = DateTime.UtcNow.AddHours(3);
+            var today = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc).AddHours(-3);
+
+            return tasks.Any(x => x.is_completed == false &&
+                                  DateTimeOffset.FromUnixTimeSeconds(x.complete_till).UtcDateTime.AddHours(3) >= today.AddDays(-7) &&
+                                  DateTimeOffset.FromUnixTimeSeconds(x.complete_till).UtcDateTime.AddHours(3) < today.AddDays(14) &&
+                                  (x.created_by == 2375131 || x.created_by == 2884132)
+            );
         }
 
         // GET: api/testing
@@ -76,7 +150,9 @@ namespace MZPO.Controllers
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
 
-            //return Ok(contRepo.GetById(46825559));
+            //return Ok(contRepo.GetById(33494965));
+
+            //return Ok(JsonConvert.SerializeObject(_filter.GetFilterEntries(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
@@ -179,89 +255,6 @@ namespace MZPO.Controllers
             //return Ok();
             #endregion
 
-            #region DupeCheck
-            //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-
-            //List<(int, int)> dataRanges = new()
-            //{
-            //    (1559336400, 1567285199),
-            //    (1567285200, 1569877199),
-            //    (1569877200, 1572555599),
-            //    (1572555600, 1575147599), //01-30.11.2019 ---
-            //    (1575147600, 1577825999),
-            //    (1577826000, 1580504399),
-            //    (1580504400, 1583009999),
-            //    (1583010000, 1585688399),
-            //    (1585688400, 1588280399),
-            //    (1588280400, 1590958799),
-            //    (1590958800, 1593550799),
-            //    (1593550800, 1596229199),
-            //    (1596229200, 1598907599),
-            //    (1598907600, 1601499599),
-            //    (1601499600, 1604177999),
-            //    (1604178000, 1606769999),
-            //    (1606770000, 1609448399),
-            //    (1609448400, 1612126799),
-            //    (1612126800, 1614545999),
-            //    (1614546000, 1617224399)
-            //};
-
-            //List<Contact> contacts = new();
-
-            //Parallel.ForEach(
-            //    dataRanges,
-            //    new ParallelOptions { MaxDegreeOfParallelism = 4 },
-            //    d =>
-            //    {
-            //        var criteria = $"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}";
-
-            //        lock (contacts) contacts.AddRange(contRepo.GetByCriteria(criteria));
-            //    }
-            //    );
-
-            //List<(int, string)> doubleContacts = new();
-
-            //Parallel.ForEach(
-            //    contacts,
-            //    new ParallelOptions { MaxDegreeOfParallelism = 6 },
-            //    c =>
-            //{
-            //    List<Contact> contactsWithSimilarPhone = new();
-            //    List<Contact> contactsWithSimilarMail = new();
-
-            //    if (c.custom_fields_values is null) return;
-
-            //    if (c.custom_fields_values.Any(x => x.field_id == 264911))
-            //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264911).values)
-            //            if ((string)v.value != "" &&
-            //                (string)v.value != "0")
-            //                contactsWithSimilarPhone.AddRange(contRepo.GetByCriteria($"query={v.value}"));
-
-            //    if (c.custom_fields_values.Any(x => x.field_id == 264913))
-            //        foreach (var v in c.custom_fields_values.First(x => x.field_id == 264913).values)
-            //            if ((string)v.value != "" &&
-            //                (string)v.value != "0")
-            //                contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={v.value}"));
-
-            //    if (contactsWithSimilarPhone.Distinct(new ContactsComparer()).Count() > 1)
-            //        doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264911).values[0].value));
-            //    if (contactsWithSimilarMail.Distinct(new ContactsComparer()).Count() > 1)
-            //        doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264913).values[0].value));
-            //});
-
-            //var l1 = doubleContacts.GroupBy(x => x.Item1).Select(g => new { cid = g.Key, cont = g.First().Item2 }).ToList();
-            //var l2 = l1.GroupBy(x => x.cont).Select(g => new { cid = g.First().cid, cont = g.Key }).ToList();
-
-            //using StreamWriter sw1 = new StreamWriter("ContactsWithDoubles.csv", false, System.Text.Encoding.Default);
-            //sw1.WriteLine($"cid;contact");
-            //foreach (var c in l2)
-            //{
-            //    sw1.WriteLine($"{c.cid};{c.cont}");
-            //}
-
-            //return Ok();
-            #endregion
-
             #region AddCourses
             //using StreamReader sr = new("courses.json");
             //List<Guid> course_ids = new();
@@ -292,6 +285,134 @@ namespace MZPO.Controllers
             //    sw2.WriteLine($"{e.Item1};{e.Item2}");
 
             //return Ok();
+            #endregion
+
+            #region AbandonedCompanies
+
+            string startDT = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
+
+            var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
+            var compRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
+            var leadRepo = _amo.GetAccountById(19453687).GetRepo<Lead>();
+
+            List<(int, int)> dataranges = new()
+            {
+                (1525104000, 1541001599),   //05.2018-10.2018
+                (1541001600, 1572537599),   //11.2018-10.2019
+                (1572537600, 1588262399),   //11.2019-04.2020
+                (1588262400, 1604159999),   //05.2020-10.2020
+                (1604160000, 1619798399),   //11.2020-04.2021
+                (1619798400, 1635695999),   //05.2021-10.2021
+            };
+
+            //List<Company> companies = new();
+
+            //Parallel.ForEach(
+            //    dataranges,
+            //    new ParallelOptions { MaxDegreeOfParallelism = 6 },
+            //    d =>
+            //    {
+            //        var criteria = $"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads";
+            //        companies.AddRange(compRepo.GetByCriteria(criteria));
+            //    });
+
+            List<(int, string, string, string)> abandonedCompaniesResultsList = new();
+            DateTime refDT = DateTime.UtcNow.AddHours(3).AddMonths(-6);
+
+            //companies.Add(compRepo.GetById(46054415));
+
+            IEnumerable<Company> companies = null;
+
+            foreach (var d in dataranges)
+            {
+                if (companies is null)
+                {
+                    companies = compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads");
+                    continue;
+                }
+
+                companies = companies.Concat(compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads"));
+            }
+
+            int i = 0;
+
+            Parallel.ForEach(
+                companies,
+                new ParallelOptions { MaxDegreeOfParallelism = 12 },
+                c =>
+                {
+                    i++;
+
+                    if (i % 60 == 0)
+                        GC.Collect();
+
+                    List<int> timeStamps = new();
+                    int contactTime = 0;
+
+                    #region Collecting company notes and events
+                    if (CheckCompanyRecent(c, refDT, out contactTime))
+                        return;
+                    timeStamps.Add(contactTime);
+
+                    if (CheckCompanyTasks(compRepo.GetEntityTasks(c.id)))
+                        return;
+
+                    if (CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                        return;
+                    timeStamps.Add(contactTime);
+
+                    if (CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                        return;
+                    timeStamps.Add(contactTime);
+                    #endregion
+
+                    #region Collecting associated leads notes and events
+                    if (c._embedded.leads is not null)
+                        foreach (var lead in c._embedded.leads.OrderByDescending(x => x.id))
+                        {
+                            if (CheckLeadRecent(leadRepo.GetById(lead.id), refDT, out contactTime))
+                                return;
+                            timeStamps.Add(contactTime);
+
+                            if (CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                                return;
+                            timeStamps.Add(contactTime);
+
+                            if (CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                                return;
+                            timeStamps.Add(contactTime);
+                        }
+                    #endregion
+
+                    #region Collecting associated contacts notes and events
+                    if (c._embedded.contacts is not null)
+                        foreach (var contact in c._embedded.contacts.OrderByDescending(x => x.id))
+                        {
+                            if (CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                                return;
+                            timeStamps.Add(contactTime);
+
+                            if (CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                                return;
+                            timeStamps.Add(contactTime);
+                        }
+                    #endregion
+
+                    var lastContactTime = DateTimeOffset.FromUnixTimeSeconds(timeStamps.Max()).UtcDateTime.AddHours(3);
+
+                    abandonedCompaniesResultsList.Add((c.id, c.name.Replace(";", " ").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " "), $"{lastContactTime.ToShortDateString()} {lastContactTime.ToShortTimeString()}", GetManager((int)c.responsible_user_id)));
+                });
+
+            using StreamWriter sw = new("AC.csv", true, System.Text.Encoding.Default);
+
+            sw.WriteLine($"{startDT} -> {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}");
+
+            sw.WriteLine($"ID компании;Название;Последний контакт;Ответственный");
+
+            foreach (var ac in abandonedCompaniesResultsList)
+                sw.WriteLine($"{ac.Item1};{ac.Item2};{ac.Item3};{ac.Item4}");
+
+            return Ok(abandonedCompaniesResultsList.Count); 
             #endregion
         }
 

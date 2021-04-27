@@ -23,6 +23,7 @@ namespace MZPO.AmoRepo
                 public IEnumerable<Company> companies;
                 public IEnumerable<Event> events;
                 public IEnumerable<Note> notes;
+                public IEnumerable<AmoTask> tasks;
                 public IEnumerable<Tag> tags;
                 public IEnumerable<CustomField> custom_fields;
                 public IEnumerable<CatalogElement> items;

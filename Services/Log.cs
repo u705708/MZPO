@@ -10,7 +10,7 @@ namespace MZPO.Services
 
         public Log()
         {
-            _ss = _ss = new(1, 1);
+            _ss = new(1, 1);
         }
 
         public void Add(string message)

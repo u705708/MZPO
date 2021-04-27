@@ -12,12 +12,14 @@ namespace Integration1C
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly Client1C _client1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public CreateOrUpdateAmoContact(Client1C client1C, Amo amo, Log log)
+        public CreateOrUpdateAmoContact(Client1C client1C, Amo amo, Log log, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _client1C = client1C;
+            _filter = filter;
         }
 
         private readonly List<int> amo_accounts = new()
@@ -83,7 +85,7 @@ namespace Integration1C
                 }
         }
 
-        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id)
+        private static void UpdateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int contact_id, int acc_id, RecentlyUpdatedEntityFilter filter)
         {
             Contact contact = new()
             {
@@ -98,6 +100,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(contact_id);
                 contRepo.Save(contact);
             }
             catch (Exception e)
@@ -106,7 +109,7 @@ namespace Integration1C
             }
         }
 
-        private static int CreateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int acc_id)
+        private static int CreateContactInAmo(Client1C client1C, IAmoRepo<Contact> contRepo, int acc_id, RecentlyUpdatedEntityFilter filter)
         {
             Contact contact = new()
             {
@@ -120,7 +123,8 @@ namespace Integration1C
 
             try
             {
-                var result = contRepo.AddNew(contact);
+                var result = contRepo.AddNew(contact).ToList();
+                result.ForEach(x => filter.AddEntity((int)x.id));
                 if (result.Any())
                     return (int)result.First().id;
                 else throw new Exception("Amo returned no contact Ids.");
@@ -145,7 +149,7 @@ namespace Integration1C
                     if (_client1C.amo_ids.Any(x => x.account_id == a))
                         try
                         {
-                            UpdateContactInAmo(_client1C, contRepo, _client1C.amo_ids.First(x => x.account_id == a).entity_id, a);
+                            UpdateContactInAmo(_client1C, contRepo, _client1C.amo_ids.First(x => x.account_id == a).entity_id, a, _filter);
 
                             _log.Add($"Updated contact {_client1C.amo_ids.First(x => x.account_id == a).entity_id} in amo {a}.");
 
@@ -168,13 +172,13 @@ namespace Integration1C
                         similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.email}"));
 
                     if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
-                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()), Formatting.Indented)}");
+                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
                     #endregion
 
                     #region Updating found contact
                     if (similarContacts.Any())
                     {
-                        UpdateContactInAmo(_client1C, contRepo, (int)similarContacts.First().id, a);
+                        UpdateContactInAmo(_client1C, contRepo, (int)similarContacts.First().id, a, _filter);
                         _client1C.amo_ids.Add(new()
                         {
                             account_id = a,
@@ -188,7 +192,7 @@ namespace Integration1C
                     #endregion
 
                     #region Creating new contact
-                    var compId = CreateContactInAmo(_client1C, contRepo, a);
+                    var compId = CreateContactInAmo(_client1C, contRepo, a, _filter);
 
                     _client1C.amo_ids.Add(new()
                     {

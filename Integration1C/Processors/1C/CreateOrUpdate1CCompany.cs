@@ -12,14 +12,16 @@ namespace Integration1C
         private readonly int _leadId;
         private readonly int _amo_acc;
         private readonly CompanyRepository _repo1C;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public CreateOrUpdate1CCompany(Amo amo, Log log, int leadId, Cred1C cred1C)
+        public CreateOrUpdate1CCompany(Amo amo, Log log, int leadId, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _leadId = leadId;
             _amo_acc = 19453687;
             _repo1C = new(cred1C);
+            _filter = filter;
         }
 
         private static void PopulateCFs(Company company, int amo_acc, Company1C company1C)
@@ -120,6 +122,7 @@ namespace Integration1C
                 _log.Add($"Created company in 1C {result}.");
                 #endregion
 
+                _filter.AddEntity(company.id);
                 compRepo.Save(updatedCompany);
 
                 return result;

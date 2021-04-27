@@ -56,6 +56,7 @@ namespace MZPO
             services.AddSingleton<LeadsSorter>();
             services.AddSingleton<Cred1C>();
             services.AddSingleton<Log>();
+            services.AddSingleton<RecentlyUpdatedEntityFilter>();
             services.AddTransient<GSheets>();
         }
 

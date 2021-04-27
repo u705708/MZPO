@@ -51,7 +51,7 @@ namespace Integration1C
 
             response = httpClient.SendAsync(request).Result;
 
-            if (!response.IsSuccessStatusCode) throw new Exception($"Bad response: {response.Content.ReadAsStringAsync().Result} -- Request: {content}");
+            if (!response.IsSuccessStatusCode) throw new Exception($"Bad response: {response.StatusCode} -- Request: {content}");
             return response.Content.ReadAsStringAsync().Result;
         }
         #endregion

@@ -14,14 +14,16 @@ namespace Integration1C
         private readonly Company1C _company1C;
         private readonly IAmoRepo<Company> _compRepo;
         private readonly int _amo_acc;
+        private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public CreateOrUpdateAmoCompany(Company1C company1C, Amo amo, Log log)
+        public CreateOrUpdateAmoCompany(Company1C company1C, Amo amo, Log log, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _log = log;
             _company1C = company1C;
             _compRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
             _amo_acc = 19453687;
+            _filter = filter;
         }
 
         class CompaniesComparer : IEqualityComparer<Company>
@@ -72,7 +74,7 @@ namespace Integration1C
                 }
         }
 
-        private static void UpdateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int company_id, int amo_acc)
+        private static void UpdateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int company_id, int amo_acc, RecentlyUpdatedEntityFilter filter)
         {
             Company company = new()
             {
@@ -87,6 +89,7 @@ namespace Integration1C
 
             try
             {
+                filter.AddEntity(company_id);
                 compRepo.Save(company);
             }
             catch (Exception e)
@@ -95,7 +98,7 @@ namespace Integration1C
             }
         }
 
-        private static int CreateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int amo_acc)
+        private static int CreateCompanyInAmo(Company1C company1C, IAmoRepo<Company> compRepo, int amo_acc, RecentlyUpdatedEntityFilter filter)
         {
             Company company = new()
             {
@@ -109,7 +112,8 @@ namespace Integration1C
 
             try
             {
-                var result = compRepo.AddNew(company);
+                var result = compRepo.AddNew(company).ToList();
+                result.ForEach(x => filter.AddEntity(x.id));
                 if (result.Any())
                     return result.First().id;
                 else throw new Exception("Amo returned no company Ids.");
@@ -132,7 +136,7 @@ namespace Integration1C
                     foreach (var c in _company1C.amo_ids.Where(x => x.account_id == _amo_acc))
                         try 
                         { 
-                            UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id, _amo_acc);
+                            UpdateCompanyInAmo(_company1C, _compRepo, c.entity_id, _amo_acc, _filter);
 
                             _log.Add($"Updated company {c.entity_id} in amo.");
 
@@ -147,8 +151,8 @@ namespace Integration1C
 
                 #region Checking company
                 List<Company> similarCompanies = new();
-                if (_company1C.phone is not null &&
-                    _company1C.phone != "")
+                if (_company1C.INN is not null &&
+                    _company1C.INN != "")
                     similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.INN}"));
 
                 if (_company1C.phone is not null &&
@@ -163,7 +167,7 @@ namespace Integration1C
                 #region Updating found company
                 if (similarCompanies.Any())
                 {
-                    UpdateCompanyInAmo(_company1C, _compRepo, similarCompanies.First().id, _amo_acc);
+                    UpdateCompanyInAmo(_company1C, _compRepo, similarCompanies.First().id, _amo_acc, _filter);
                     _company1C.amo_ids.Add(new()
                     {
                         account_id = _amo_acc,
@@ -176,11 +180,11 @@ namespace Integration1C
                 }
 
                 if (similarCompanies.Distinct(new CompaniesComparer()).Count() > 1)
-                    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarCompanies.Distinct(new CompaniesComparer()), Formatting.Indented)}");
+                    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarCompanies.Distinct(new CompaniesComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
                 #endregion
 
                 #region Creating new company
-                var compId = CreateCompanyInAmo(_company1C, _compRepo, _amo_acc);
+                var compId = CreateCompanyInAmo(_company1C, _compRepo, _amo_acc, _filter);
 
                 if (_company1C.amo_ids is null) _company1C.amo_ids = new();
                 _company1C.amo_ids.Add(new()
