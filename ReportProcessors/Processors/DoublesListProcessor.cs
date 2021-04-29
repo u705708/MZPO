@@ -107,6 +107,11 @@ namespace MZPO.ReportProcessors
                 new ParallelOptions { MaxDegreeOfParallelism = 12 },
                 c =>
                 {
+                    if (_token.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     i++;
 
                     if (i % 60 == 0)

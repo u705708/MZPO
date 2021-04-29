@@ -1,6 +1,5 @@
 ﻿using MZPO.AmoRepo;
 using MZPO.Services;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +38,19 @@ namespace MZPO.LeadProcessors
             _sourceContRepo = amo.GetAccountById(28395871).GetRepo<Contact>();
         }
 
+        private int GetResponsibleUserId(int id)
+        {
+            switch (id)
+            {
+                case 5761144:
+                    return 2375131; //Алферова Лилия
+                case 3903853:
+                    return 2884132; //Ирина Сорокина
+                default:
+            return 2375146;
+            }
+        }
+
         public Task Run()
         {
             if (_token.IsCancellationRequested)
@@ -62,7 +74,7 @@ namespace MZPO.LeadProcessors
                 Lead lead = new()
                 {
                     name = sourceLead.name,
-                    responsible_user_id = 2375146,
+                    responsible_user_id = GetResponsibleUserId((int)sourceLead.responsible_user_id),
                     _embedded = new()
                     {
                         tags = new()

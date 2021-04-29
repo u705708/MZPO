@@ -37,7 +37,7 @@ namespace MZPO.Controllers.ReportProcessors
             return Redirect($"https://docs.google.com/spreadsheets/d/1jzqcptdlCpSPXcyLpumSGCaHtSVi28bg8Ga2aEFXCoQ/");
         }
 
-        // GET reports/corporatesales/1614546000,1617224399
+        // GET reports/corporatesales/1617224400,1619819999
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult CorporateSales(string from, string to)
         {
