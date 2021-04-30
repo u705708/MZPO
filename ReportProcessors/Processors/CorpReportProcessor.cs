@@ -252,7 +252,7 @@ namespace MZPO.ReportProcessors
                 G = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 118545).values[0].value;
             #endregion
 
-            #region Испольнитель
+            #region Исполнитель
             if (lead.custom_fields_values.Any(x => x.field_id == 162301))
                 H = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 162301).values[0].value;
             #endregion
@@ -293,7 +293,7 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Processing
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"CorpReport: total leads {leads.Count()}");
+            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"CorpReport: total leads {leads.Count}");
             List<Request> requestContainer = new();
 
             Parallel.ForEach(
