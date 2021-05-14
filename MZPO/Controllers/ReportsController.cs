@@ -30,69 +30,14 @@ namespace MZPO.Controllers.ReportProcessors
             return (dateFrom, dateTo);
         }
 
-        // GET: reports/corporatesales
-        [HttpGet]
-        public IActionResult CorporateSales()
+        private static (long, long) GetDates(long date)
         {
-            return Redirect($"https://docs.google.com/spreadsheets/d/1jzqcptdlCpSPXcyLpumSGCaHtSVi28bg8Ga2aEFXCoQ/");
-        }
+            var enddate = DateTimeOffset.FromUnixTimeSeconds(date).UtcDateTime.AddHours(3);
+            var firstDayofMonth = new DateTime(enddate.Year, enddate.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-3);
+            long dateFrom = ((DateTimeOffset)firstDayofMonth).ToUnixTimeSeconds();
+            long dateTo = ((DateTimeOffset)enddate).ToUnixTimeSeconds();
 
-        // GET reports/corporatesales/1617224400,1619819999
-        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
-        public IActionResult CorporateSales(string from, string to)
-        {
-            if (!long.TryParse(from, out long dateFrom) &
-                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
-
-            ReportsProvider.StartReport(Reports.CorporateSales, _amo, _processQueue, _gSheets, dateFrom, dateTo);
-
-            return Ok("Requested.");
-        }
-
-        // GET: reports/kpi
-        [HttpGet]
-        public IActionResult KPI()
-        {
-            var dates = GetDates();
-
-            ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
-
-            return Ok("Requested.");
-        }
-
-        // GET reports/kpi/1612126799,1612886399
-        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
-        public IActionResult KPI(string from, string to)
-        {
-            if (!long.TryParse(from, out long dateFrom) &
-                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
-
-            ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dateFrom, dateTo);
-
-            return Ok("Requested.");
-        }
-
-        // GET: reports/longleads
-        [HttpGet]
-        public IActionResult LongLeads()
-        {
-            var dates = GetDates();
-
-            ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
-            
-            return Ok("Requested.");
-        }
-
-        // GET reports/longleads/1614546000,1617224399
-        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
-        public IActionResult LongLeads(string from, string to)
-        {
-            if (!long.TryParse(from, out long dateFrom) &
-                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
-
-            ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dateFrom, dateTo);
-
-            return Ok("Requested.");
+            return (dateFrom, dateTo);
         }
 
         // GET: reports/unfinishedcompanies
@@ -104,40 +49,152 @@ namespace MZPO.Controllers.ReportProcessors
             return Ok("Requested.");
         }
 
+        #region CorporateSales
+        // GET reports/corporatesales/1617224400,1619816399
+        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult CorporateSales(string from, string to)
+        {
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            ReportsProvider.StartReport(Reports.CorporateSales, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok("Requested.");
+        }
+        // GET reports/corporatesales/1619816399
+        [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult CorporateSales(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            var dates = GetDates(dateTo);
+
+            ReportsProvider.StartReport(Reports.CorporateSales, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        // GET: reports/corporatesales
+        [HttpGet]
+        public IActionResult CorporateSales()
+        {
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.CorporateSales, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        #endregion
+
+        #region KPI
+        // GET reports/kpi/1617224400,1619816399
+        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult KPI(string from, string to)
+        {
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok("Requested.");
+        }
+        // GET reports/kpi/1619816399
+        [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult KPI(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        // GET: reports/kpi
+        [HttpGet]
+        public IActionResult KPI()
+        {
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        #endregion
+
+        #region LongLeads
+        // GET reports/longleads/1617224400,1619816399
+        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult LongLeads(string from, string to)
+        {
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok("Requested.");
+        }
+        // GET reports/longleads/1619816399
+        [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult LongLeads(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            var dates = GetDates(dateTo);
+
+            ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        // GET: reports/longleads
+        [HttpGet]
+        public IActionResult LongLeads()
+        {
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        #endregion
+
+        #region WeeklyReport
+        // GET reports/weeklyreport/1617224400,1619816399
+        [HttpGet("{from},{to}")]                                                                                                                       //Запрашиваем отчёт для диапазона дат
+        public IActionResult WeeklyReport(string from, string to)
+        {
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok("Requested.");
+        }
+        // GET reports/weeklyreport/1619816399
+        [HttpGet("{to}")]                                                                                                                       //Запрашиваем отчёт для диапазона дат
+        public IActionResult WeeklyReport(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            var dates = GetDates(dateTo);
+
+            ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
         // GET: reports/weeklyreport/
         [HttpGet]
         public IActionResult WeeklyReport()
         {
             var dates = GetDates();
 
-            ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, 0, dates.Item2);
+            ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
             return Ok("Requested.");
         }
+        #endregion
 
-        // GET reports/weeklyreport/1612126799
-        [HttpGet("{to}")]                                                                                                                       //Запрашиваем отчёт для диапазона дат
-        public IActionResult WeeklyReport(string to)
-        {
-            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
-
-            ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, 0, dateTo);
-
-            return Ok("Requested.");
-        }
-
-        // GET: reports/monthlyreport/
-        [HttpGet]
-        public IActionResult MonthlyReport()
-        {
-            var dates = GetDates();
-
-            ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
-
-            return Ok("Requested.");
-        }
-
-        // GET reports/monthlyreport/1614546000,1617224399
+        #region MonthlyReport
+        // GET reports/monthlyreport/1617224400,1619816399
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult MonthlyReport(string from, string to)
         {
@@ -148,8 +205,32 @@ namespace MZPO.Controllers.ReportProcessors
 
             return Ok("Requested.");
         }
+        // GET reports/monthlyreport/1619816399
+        [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult MonthlyReport(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
 
-        // GET reports/doubleslist/1614546000,1617224399
+            var dates = GetDates(dateTo);
+
+            ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        // GET: reports/monthlyreport/
+        [HttpGet]
+        public IActionResult MonthlyReport()
+        {
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        #endregion
+
+        #region DoublesList
+        // GET reports/doubleslist/1617224400,1619816399
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult DoublesList(string from, string to)
         {
@@ -160,7 +241,18 @@ namespace MZPO.Controllers.ReportProcessors
 
             return Ok("Requested.");
         }
+        // GET reports/doubleslist/1619816399
+        [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult DoublesList(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
 
+            var dates = GetDates(dateTo);
+
+            ReportsProvider.StartReport(Reports.Doubles, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
         // GET: reports/doubleslist/
         [HttpGet]
         public IActionResult DoublesList()
@@ -171,8 +263,10 @@ namespace MZPO.Controllers.ReportProcessors
 
             return Ok("Requested.");
         }
+        #endregion
 
-        // GET reports/cards/1614546000,1617224399
+        #region Cards
+        // GET reports/cards/1617224400,1619816399
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult Cards(string from, string to)
         {
@@ -183,7 +277,18 @@ namespace MZPO.Controllers.ReportProcessors
 
             return Ok("Requested.");
         }
+        // GET reports/cards/1619816399
+        [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult Cards(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
 
+            var dates = GetDates(dateTo);
+
+            ReportsProvider.StartReport(Reports.Cards, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
         // GET: reports/cards/
         [HttpGet]
         public IActionResult Cards()
@@ -193,6 +298,7 @@ namespace MZPO.Controllers.ReportProcessors
             ReportsProvider.StartReport(Reports.Cards, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
             return Ok("Requested.");
-        }
+        } 
+        #endregion
     }
 }

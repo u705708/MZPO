@@ -28,7 +28,7 @@ namespace MZPO.ReportProcessors
             (1609448400,1612126799),    //январь
             (1612126800,1614545999),    //февраль
             (1614546000,1617224399),    //март
-            //(1617224400,1619816399),    //апрель
+            (1617224400,1619816399),    //апрель
         };
 
         private readonly Dictionary<string, CellFormat> columns = new()
@@ -269,7 +269,7 @@ namespace MZPO.ReportProcessors
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
             //Список новых сделок в воронках из pipelines
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, new leads");
+            _processQueue.AddSubTask(_taskId, $"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, new leads");
 
             List<Lead> newLeads = new();
 
@@ -286,13 +286,13 @@ namespace MZPO.ReportProcessors
 
             int totalNewLeads = newLeads.Count;
 
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, new leads: {totalNewLeads}");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, new leads: {totalNewLeads}");
 
             double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
             int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
 
             //Список закрытых сделок
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, closed leads");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, closed leads");
 
             var allLeads = _leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
 
@@ -303,7 +303,7 @@ namespace MZPO.ReportProcessors
             int successLeads = allLeads.Where(x => x.status_id == 142).Count();
 
             //Список звонков
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
             Calls calls = new(dataRange, _contRepo, manager.Item1);
 
             //Количество исходящих вызовов
@@ -313,7 +313,7 @@ namespace MZPO.ReportProcessors
             int inCallsCount = calls.inCalls.Count();
 
             //Количество пропущенных вызовов
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, missed calls");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, missed calls");
 
             int missedCallsCount = 0;
 
@@ -350,7 +350,7 @@ namespace MZPO.ReportProcessors
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove($"{_taskName}_{manager.Item2}");
+            _processQueue.Remove($"{_taskId}_{manager.Item2}");
         }
 
         private async Task FinalizeManagers()
@@ -547,7 +547,7 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
 
@@ -572,7 +572,7 @@ namespace MZPO.ReportProcessors
             await FinalizeManagers();
             await FinalizeTotals();
 
-            _processQueue.Remove(_taskName);
+            _processQueue.Remove(_taskId);
         }
         #endregion
     }

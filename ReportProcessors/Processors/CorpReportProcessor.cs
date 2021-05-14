@@ -278,7 +278,7 @@ namespace MZPO.ReportProcessors
         private async Task ProcessManager((int, string) manager)
         {
             #region Preparing
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"CorpReport: new leads");
+            _processQueue.AddSubTask(_taskId, $"{_taskId}_{manager.Item2}", $"CorpReport: new leads");
 
             var allLeads = _leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={manager.Item1}");
 
@@ -293,7 +293,7 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Processing
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"CorpReport: total leads {leads.Count}");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"CorpReport: total leads {leads.Count}");
             List<Request> requestContainer = new();
 
             Parallel.ForEach(
@@ -309,7 +309,7 @@ namespace MZPO.ReportProcessors
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove($"{_taskName}_{manager.Item2}");
+            _processQueue.Remove($"{_taskId}_{manager.Item2}");
         }
         #endregion
 
@@ -318,7 +318,7 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
 
@@ -336,7 +336,7 @@ namespace MZPO.ReportProcessors
 
             await Task.WhenAll(tasks);
 
-            _processQueue.Remove(_taskName);
+            _processQueue.Remove(_taskId);
         }
         #endregion
     }

@@ -201,24 +201,22 @@ namespace MZPO.ReportProcessors
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private async Task ProcessManager((int, string) manager)
+        private async Task ProcessManagers()
         {
-            //Даты
-            string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
-
-            //Список новых сделок в воронках из pipelines
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"LeadsCompletionReport: {dates}, completed leads");
-
             var successLeads = _leadRepo
-                                .GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}&with=contacts")
+                                .GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&with=contacts")
                                 .Where(x => x.status_id == 142);
 
             List<Request> requestContainer = new();
 
+            int i = 0;
+
             Parallel.ForEach(
                 successLeads,
-                new ParallelOptions { MaxDegreeOfParallelism = 3 },
+                new ParallelOptions { MaxDegreeOfParallelism = 8 },
                 l => {
+                    i++;
+                    
                     int leadId = l.id;
 
                     string leadName = l.name;
@@ -228,7 +226,7 @@ namespace MZPO.ReportProcessors
                         l.custom_fields_values.Any(x => x.field_id == 357005))
                         courseName = l.custom_fields_values.First(x => x.field_id == 357005).values[0].value.ToString();
 
-                    int leadPrice = l.price is null?0:(int)l.price;
+                    int leadPrice = l.price is null ? 0 : (int)l.price;
 
                     string educationLength = "";
                     if (l.custom_fields_values is not null &&
@@ -302,14 +300,21 @@ namespace MZPO.ReportProcessors
                     if (contactEmails.Any())
                         contactEmail = contactEmails.First();
 
-                    requestContainer.Add(GetRowRequest(manager.Item1, GetCellData(leadId, leadName, courseName, leadPrice, educationLength, educationForm, educationType, educationStart, educationEnd, examDate, contactName, contactPhone, contactEmail, manager.Item2)));
+                    string responsibleUser = "";
+                    if (managersRet.Any(x => x.Item1 == l.responsible_user_id))
+                        responsibleUser = managersRet.First(x => x.Item1 == l.responsible_user_id).Item2;
+                    else return;
 
-                    //GC.Collect();
+                    requestContainer.Add(GetRowRequest((int)l.responsible_user_id, GetCellData(leadId, leadName, courseName, leadPrice, educationLength, educationForm, educationType, educationStart, educationEnd, examDate, contactName, contactPhone, contactEmail, responsibleUser)));
+
+                    if (i % 10 == 0)
+                    {
+                        GC.Collect();
+                        _processQueue.UpdateTaskName(_taskId, $"report_cards_completion, processed {i} leads.");
+                    }
                 });
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
-
-            _processQueue.Remove($"{_taskName}_{manager.Item2}");
         }
         #endregion
 
@@ -318,24 +323,22 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
 
-            await PrepareSheets();
-
-            List<Task> tasks = new();
-
-            foreach (var manager in managersRet)
+            try
             {
-                if (_token.IsCancellationRequested) break;
-                var m = manager;
-                tasks.Add(Task.Run(() => ProcessManager(m)));
+                await PrepareSheets();
+
+                await ProcessManagers();
+
+                _processQueue.Remove(_taskId);
             }
-
-            await Task.WhenAll(tasks);
-
-            _processQueue.Remove(_taskName);
+            catch
+            {
+                _processQueue.Remove(_taskId);
+            }
         }
         #endregion
     }

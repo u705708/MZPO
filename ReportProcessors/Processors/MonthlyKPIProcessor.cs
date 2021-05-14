@@ -12,16 +12,18 @@ namespace MZPO.ReportProcessors
     internal class MonthlyKPIProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
+        private readonly (int, int) dataRange;
+
         /// <summary>
         /// Формирует отчёт KPI для отдела розницы. Собирает показатели по каждому менеджеру по итогам месяца.
         /// </summary>
         internal MonthlyKPIProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
-            dataRanges = new() { ((int)dateFrom, (int)dateTo) };
-        }
+            dataRange = ((int)dateFrom, (int)dateTo);
 
-        private readonly List<(int, int)> dataRanges;
+            _longAnsweredLeads = new();
+        }
 
         private readonly List<(int, string)> _specials = new();
         private readonly List<(int, string)> _newProducts = new();
@@ -222,13 +224,13 @@ namespace MZPO.ReportProcessors
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private async Task ProcessManager((int, string) manager, (int, int) dataRange)
+        private async Task ProcessManager((int, string) manager)
         {
             //Даты
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
             //Список закрытых сделок
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, closed leads");
+            _processQueue.AddSubTask(_taskId, $"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, closed leads");
 
             List<Lead> allLeads = new();
 
@@ -256,7 +258,7 @@ namespace MZPO.ReportProcessors
                                        .Sum(x => (int)x.price);
 
             //Кол-во повторных продаж
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, recurrent leads");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, recurrent leads");
 
             int recurrentLeads = 0;
             
@@ -281,14 +283,14 @@ namespace MZPO.ReportProcessors
             }
 
             //Список звонков
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
             Calls calls = new(dataRange, _contRepo, manager.Item1);
 
             //Количество исходящих вызовов
             int outCallsCount = calls.outCalls.Count();
 
             //Длительность исходящих вызовов
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, calls duration");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, calls duration");
 
             var callIdList = new List<int>();
 
@@ -301,7 +303,7 @@ namespace MZPO.ReportProcessors
                                          .Sum(x => (int)x.parameters.duration);
 
             //Количество первых вызовов
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, first calls");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, first calls");
 
             int firstCallsCount = 0; //------------
 
@@ -316,7 +318,7 @@ namespace MZPO.ReportProcessors
             });
 
             //Отправлено КП
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, KP sent");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, KP sent");
 
             var criteria = $"filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[created_by][]={manager.Item1}&filter[entity][]=lead&filter[type][]=lead_status_changed&filter[value_after][leads_statuses][0][pipeline_id]=3198184&filter[value_after][leads_statuses][0][status_id]=32532886";
             List<Event> sentKPEvents = new();
@@ -324,7 +326,7 @@ namespace MZPO.ReportProcessors
             int sentKPCount = sentKPEvents.Count;
 
             //Переведено из актуализации
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"KPIReport: {dates}, Actualization");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"KPIReport: {dates}, Actualization");
 
             criteria = $"filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&filter[created_by][]={manager.Item1}&filter[entity][]=lead&filter[type][]=lead_status_changed&filter[value_before][leads_statuses][0][pipeline_id]=3558922&filter[value_before][leads_statuses][0][status_id]=35002129";
             List<Event> actualizationCheckEvents = new();
@@ -356,7 +358,7 @@ namespace MZPO.ReportProcessors
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove($"{_taskName}_{manager.Item2}");
+            _processQueue.Remove($"{_taskId}_{manager.Item2}");
         }
 
         private async Task FinalizeManagers()
@@ -433,8 +435,8 @@ namespace MZPO.ReportProcessors
                         Range = new GridRange()
                         {
                             SheetId = m.Item1,
-                            StartRowIndex = dataRanges.Count + 3,
-                            EndRowIndex = dataRanges.Count + 3 + rows.Count,
+                            StartRowIndex = 4,
+                            EndRowIndex = 4 + rows.Count,
                             StartColumnIndex = 0,
                             EndColumnIndex = 4
                         }
@@ -452,31 +454,26 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
 
             await PrepareSheets();
 
-            foreach (var d in dataRanges)
+            List<Task> tasks = new();
+
+            foreach (var manager in managersRet)
             {
                 if (_token.IsCancellationRequested) break;
-                _longAnsweredLeads = new();
-                List<Task> tasks = new();
-
-                foreach (var manager in managersRet)
-                {
-                    if (_token.IsCancellationRequested) break;
-                    var m = manager;
-                    tasks.Add(Task.Run(() => ProcessManager(m, d)));
-                }
-
-                await Task.WhenAll(tasks);
+                var m = manager;
+                tasks.Add(Task.Run(() => ProcessManager(m)));
             }
+
+            await Task.WhenAll(tasks);
 
             await FinalizeManagers();
 
-            _processQueue.Remove(_taskName);
+            _processQueue.Remove(_taskId);
         }
         #endregion
     }

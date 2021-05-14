@@ -231,7 +231,7 @@ namespace MZPO.ReportProcessors
                 };
             #endregion
 
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{m.Item2}", $"Unfinished Companies report");
+            _processQueue.AddSubTask(_taskId, $"{_taskId}_{m.Item2}", $"Unfinished Companies report");
 
             List<Lead> allLeads = new();
 
@@ -246,7 +246,7 @@ namespace MZPO.ReportProcessors
                 }
             });
 
-            _processQueue.UpdateTaskName($"{_taskName}_{m.Item2}", $"Unfinished Companies report: total {allLeads.Count} leads to check.");
+            _processQueue.UpdateTaskName($"{_taskId}_{m.Item2}", $"Unfinished Companies report: total {allLeads.Count} leads to check.");
 
             int counter = 0;
 
@@ -255,7 +255,7 @@ namespace MZPO.ReportProcessors
                 if (_token.IsCancellationRequested) break;
 
                 if (counter % 10 == 0)
-                    _processQueue.UpdateTaskName($"{_taskName}_{m.Item2}", $"Unfinished Companies report: Processed {counter} of {allLeads.Count} leads.");
+                    _processQueue.UpdateTaskName($"{_taskId}_{m.Item2}", $"Unfinished Companies report: Processed {counter} of {allLeads.Count} leads.");
                 var result = ProcessLead(l, m.Item1);
                 if (result is not null)
                     requestContainer.Add(result);
@@ -291,7 +291,7 @@ namespace MZPO.ReportProcessors
 
             UpdateSheetsAsync(requestContainer, _service, _spreadsheetId).Wait();
 
-            _processQueue.Remove($"{_taskName}_{m.Item2}");
+            _processQueue.Remove($"{_taskId}_{m.Item2}");
         }
         #endregion
 
@@ -300,7 +300,7 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
 
@@ -317,7 +317,7 @@ namespace MZPO.ReportProcessors
 
             await Task.WhenAll(tasks);
 
-            _processQueue.Remove(_taskName);
+            _processQueue.Remove(_taskId);
         }
         #endregion
     }

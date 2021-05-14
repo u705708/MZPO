@@ -15,6 +15,10 @@ namespace MZPO.ReportProcessors
         #region Definition
         private readonly string _KPISpreadsheetId;
 
+        private readonly (int, int) dataRange;
+
+        private readonly double monthRatio;
+
         /// <summary>
         /// Формирует отчёт для отдела розницы, собирает показатели с начала месяца, сравнивает со среднемесячными показателями за аналогичный период.
         /// </summary>
@@ -23,10 +27,13 @@ namespace MZPO.ReportProcessors
         {
             _KPISpreadsheetId = "1ZjdabzAtTQKKdK5ZtGfvYT2jA-JN6agO0QMxtWPed0k";
 
-            dataRanges = new List<(int, int)>();
+            dataRange = ((int)dateFrom, (int)dateTo);
+
+            monthRatio = ((dateTo - dateFrom) / 86400f) / 30.42;
+
+            _longAnsweredLeads = new();
         }
 
-        private double monthRatio;
 
         private readonly List<(int, int)> dataRanges;
 
@@ -161,21 +168,6 @@ namespace MZPO.ReportProcessors
             };
         }
 
-        private void CalculateDateRange()
-        {
-            DateTime dt = DateTimeOffset.FromUnixTimeSeconds(_dateTo).UtcDateTime;
-
-            var d2_2 = dt;
-            var d2_1 = new DateTime(d2_2.Year, d2_2.Month, 1, 2, 0, 0);
-
-            var dr2_2 = (int)((DateTimeOffset)d2_2).ToUnixTimeSeconds();
-            var dr2_1 = (int)((DateTimeOffset)d2_1).ToUnixTimeSeconds();
-
-            dataRanges.Add((dr2_1, dr2_2));
-
-            monthRatio = ((dr2_2 - dr2_1) / 86400f) / 30.42;
-        }
-
         private async Task PrepareSheets()
         {
             List<Request> requestContainer = new();
@@ -253,13 +245,13 @@ namespace MZPO.ReportProcessors
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private async Task ProcessManager((int, string) manager, (int, int) dataRange)
+        private async Task ProcessManager((int, string) manager)
         {
             //Даты
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
             //Список новых сделок в воронках из pipelines
-            _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
+            _processQueue.AddSubTask(_taskId, $"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
 
             List<Lead> newLeads = new();
 
@@ -276,13 +268,13 @@ namespace MZPO.ReportProcessors
 
             int totalNewLeads = newLeads.Count;
 
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
 
             double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
             int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
 
             //Список закрытых сделок
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, closed leads");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, closed leads");
 
             var allLeads = _leadRepo.GetByCriteria($"filter[pipeline_id][0]=3198184&filter[closed_at][from]={dataRange.Item1}&filter[closed_at][to]={dataRange.Item2}&filter[responsible_user_id]={manager.Item1}");
 
@@ -293,7 +285,7 @@ namespace MZPO.ReportProcessors
             int successLeads = allLeads.Where(x => x.status_id == 142).Count();
 
             //Список звонков
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, getting calls");
             Calls calls = new(dataRange, _contRepo, manager.Item1); 
 
             //Количество исходящих вызовов
@@ -303,7 +295,7 @@ namespace MZPO.ReportProcessors
             int inCallsCount = calls.inCalls.Count();
 
             //Количество пропущенных вызовов
-            _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, calculating missed calls");
+            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, calculating missed calls");
 
             int missedCallsCount = 0;
 
@@ -338,7 +330,7 @@ namespace MZPO.ReportProcessors
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove($"{_taskName}_{manager.Item2}");
+            _processQueue.Remove($"{_taskId}_{manager.Item2}");
         }
 
         private async Task FinalizeManagers()
@@ -422,36 +414,28 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
-
-            CalculateDateRange();
 
             await PrepareSheets();
 
             await AddKPIData();
 
-            foreach (var d in dataRanges)
+            List<Task> tasks = new();
+
+            foreach (var manager in managersRet)
             {
                 if (_token.IsCancellationRequested) break;
-
-                _longAnsweredLeads = new();
-                List<Task> tasks = new();
-
-                foreach (var manager in managersRet)
-                {
-                    if (_token.IsCancellationRequested) break;
-                    var m = manager;
-                    tasks.Add(Task.Run(() => ProcessManager(m, d)));
-                }
-
-                await Task.WhenAll(tasks);
+                var m = manager;
+                tasks.Add(Task.Run(() => ProcessManager(m)));
             }
+
+            await Task.WhenAll(tasks);
 
             await FinalizeManagers();
 
-            _processQueue.Remove(_taskName);
+            _processQueue.Remove(_taskId);
         }
         #endregion
     }

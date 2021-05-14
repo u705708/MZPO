@@ -82,7 +82,7 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
 
@@ -92,11 +92,11 @@ namespace MZPO.ReportProcessors
 
             string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
-            _processQueue.UpdateTaskName($"{_taskName}", $"Doubles check: {dates}, getting contacts");
+            _processQueue.UpdateTaskName($"{_taskId}", $"Doubles check: {dates}, getting contacts");
 
             IEnumerable<Contact> contacts = contRepo.GetByCriteria(criteria);
 
-            _processQueue.UpdateTaskName($"{_taskName}", $"Doubles check: {dates}");
+            _processQueue.UpdateTaskName($"{_taskId}", $"Doubles check: {dates}");
 
             List<(int, string)> doubleContacts = new();
 
@@ -140,7 +140,7 @@ namespace MZPO.ReportProcessors
                         doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264913).values[0].value));
                 });
 
-            _processQueue.UpdateTaskName($"{_taskName}", $"Doubles check: {dates}, finalizing results");
+            _processQueue.UpdateTaskName($"{_taskId}", $"Doubles check: {dates}, finalizing results");
 
             var l1 = doubleContacts.GroupBy(x => x.Item1).Select(g => new { cid = g.Key, cont = g.First().Item2 }).ToList();
             var l2 = l1.GroupBy(x => x.cont).Select(g => new { cid = g.First().cid, cont = g.Key }).ToList();
@@ -152,7 +152,7 @@ namespace MZPO.ReportProcessors
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 
-            _processQueue.Remove(_taskName);
+            _processQueue.Remove(_taskId);
         }
     }
 }

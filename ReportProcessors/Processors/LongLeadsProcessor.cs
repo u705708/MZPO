@@ -12,16 +12,18 @@ namespace MZPO.ReportProcessors
     internal class LongLeadsProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
+        private readonly (int, int) dataRange;
+
         /// <summary>
         /// Формирует отчёт для отдела розницы. Проверяет в сделках время ответа клиента. Выводит список сделок, где время ответа больше часа.
         /// </summary>
         internal LongLeadsProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
-            dataRanges = new() { ((int)dateFrom, (int)dateTo) };
-        }
+            dataRange = ((int)dateFrom, (int)dateTo);
 
-        private readonly List<(int, int)> dataRanges;
+            _longAnsweredLeads = new();
+        }
 
         private readonly Dictionary<int, string> statuses = new()
         {
@@ -230,7 +232,7 @@ namespace MZPO.ReportProcessors
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private void ProcessManager((int, string) manager, (int, int) dataRange)
+        private void ProcessManager((int, string) manager)
         {
             try
             {
@@ -238,7 +240,7 @@ namespace MZPO.ReportProcessors
                 string dates = $"{DateTimeOffset.FromUnixTimeSeconds(dataRange.Item1).UtcDateTime.AddHours(3).ToShortDateString()} - {DateTimeOffset.FromUnixTimeSeconds(dataRange.Item2).UtcDateTime.AddHours(3).ToShortDateString()}";
 
                 //Список новых сделок в воронках из pipelines
-                _processQueue.AddSubTask(_taskName, $"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
+                _processQueue.AddSubTask(_taskId, $"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, new leads");
 
                 List<Lead> newLeads = new();
 
@@ -256,7 +258,7 @@ namespace MZPO.ReportProcessors
 
                 int totalNewLeads = newLeads.Count;
 
-                _processQueue.UpdateTaskName($"{_taskName}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
+                _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"WeeklyReport: {dates}, new leads: {totalNewLeads}");
 
                 double responseTime = GetAverageResponseTime(newLeads, _longAnsweredLeads, _leadRepo, _contRepo);
                 int longLeads = _longAnsweredLeads.Count(x => x.Item1 == manager.Item1);
@@ -267,11 +269,11 @@ namespace MZPO.ReportProcessors
 
                 UpdateSheetsAsync(requestContainer, _service, _spreadsheetId).Wait();
 
-                _processQueue.Remove($"{_taskName}_{manager.Item2}");
+                _processQueue.Remove($"{_taskId}_{manager.Item2}");
             }
             catch
             {
-                _processQueue.Remove($"{_taskName}_{manager.Item2}");
+                _processQueue.Remove($"{_taskId}_{manager.Item2}");
             }
         }
 
@@ -334,8 +336,8 @@ namespace MZPO.ReportProcessors
                         Range = new GridRange()
                         {
                             SheetId = m.Item1,
-                            StartRowIndex = dataRanges.Count + 2,
-                            EndRowIndex = dataRanges.Count + 2 + rows.Count,
+                            StartRowIndex = 3,
+                            EndRowIndex = 3 + rows.Count,
                             StartColumnIndex = 0,
                             EndColumnIndex = 9
                         }
@@ -353,8 +355,8 @@ namespace MZPO.ReportProcessors
                             Range = new GridRange()
                             {
                                 SheetId = m.Item1,
-                                StartRowIndex = dataRanges.Count + i + 2,
-                                EndRowIndex = dataRanges.Count + i + 3,
+                                StartRowIndex = 3 + i,
+                                EndRowIndex = 4 + i,
                                 StartColumnIndex = 3,
                                 EndColumnIndex = 8
                             }
@@ -374,31 +376,26 @@ namespace MZPO.ReportProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_taskName);
+                _processQueue.Remove(_taskId);
                 return;
             }
 
             await PrepareSheets();
 
-            foreach (var d in dataRanges)
+            List<Task> tasks = new();
+
+            foreach (var manager in managersRet)
             {
                 if (_token.IsCancellationRequested) break;
-                _longAnsweredLeads = new();
-                List<Task> tasks = new();
-
-                foreach (var manager in managersRet)
-                {
-                    if (_token.IsCancellationRequested) break;
-                    var m = manager;
-                    tasks.Add(Task.Run(() => ProcessManager(m, d)));
-                }
-
-                await Task.WhenAll(tasks);
+                var m = manager;
+                tasks.Add(Task.Run(() => ProcessManager(m)));
             }
+
+            await Task.WhenAll(tasks);
 
             await FinalizeManagers();
 
-            _processQueue.Remove(_taskName);
+            _processQueue.Remove(_taskId);
         }
         #endregion
     }

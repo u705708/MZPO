@@ -22,11 +22,11 @@ namespace MZPO.ReportProcessors
         protected readonly CancellationToken _token;
         protected readonly int _dateFrom;
         protected readonly int _dateTo;
-        protected readonly string _taskName;
+        protected readonly string _taskId;
 
         protected List<(int?, int, int, int?)> _longAnsweredLeads;
 
-        internal AbstractReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+        internal AbstractReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskId, CancellationToken token)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -38,7 +38,7 @@ namespace MZPO.ReportProcessors
             _contRepo = _acc.GetRepo<Contact>();
             _dateFrom = (int)dateFrom;
             _dateTo = (int)dateTo;
-            _taskName = taskName;
+            _taskId = taskId;
         }
 
         protected static readonly List<(int, string)> managersRet = new()
