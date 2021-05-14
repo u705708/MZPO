@@ -131,9 +131,41 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => leadProcessor.Value.Run());
 
-            _processQueue.AddTask(task, cts, $"SentKP-{leadNumber}", "ret2corp", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, $"SentKP-{leadNumber}", "KP_sent", "LeadProcessor");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }
+
+        // POST: siteform/dod
+        public IActionResult DOD()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[status][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[add][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return Ok();
+
+            CancellationTokenSource cts = new();
+            CancellationToken token = cts.Token;
+
+            Lazy<ILeadProcessor> leadProcessor = new(() =>
+                   new DODProcessor(leadNumber, _amo, _gSheets, _processQueue, _log, token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Run());
+
+            _processQueue.AddTask(task, cts, $"DOD-{leadNumber}", "DOD", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+
+            return Ok();
+        }
+
     }
 }

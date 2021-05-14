@@ -15,7 +15,8 @@ namespace MZPO.ReportProcessors
         UnfinishedCompanies,
         WeeklyReport,
         KPI_monthly,
-        Doubles
+        Doubles,
+        Cards
     }
 
     public static class ReportsProvider
@@ -29,6 +30,7 @@ namespace MZPO.ReportProcessors
             { Reports.WeeklyReport, new("1w_co99gUoOdBXDECwLz2r3QCpMXOYZKPFEEQ6rcddD4", "WeeklyReport", "report_retail", 28395871) },
             { Reports.KPI_monthly, new("1fpmsI3KdC5eN_LOPg_poe6Tixv5v3cl0xS-RoacB6mM", "KPI_monthly", "report_kpi_monthly", 28395871) },
             { Reports.Doubles, new("1xKFENCBv9af16yx5SiNxviglBhWukOdqtVJRuqGrthY", "Doubles", "report_doubles_monthly", 28395871) },
+            { Reports.Cards, new("1nyq_aub7I85oOe4bq5mp0RSvrwTlqeHnrcRUglBB5BA", "Cards", "report_cards_completion", 28395871) },
         };
 
         //private static readonly Dictionary<Reports, ReportParams> ReportParameters = new()
@@ -51,6 +53,7 @@ namespace MZPO.ReportProcessors
                 "WeeklyReport" => new WeeklyKPIReportProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskName, token),
                 "KPI_monthly" => new MonthlyKPIProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskName, token),
                 "Doubles" => new DoublesListProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskName, token),
+                "Cards" => new LeadscompletionReportProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskName, token),
                 _ => throw new Exception($"Unknown report type: {reportParams.ReportName}"),
             };
         }

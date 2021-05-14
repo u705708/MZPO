@@ -317,7 +317,7 @@ namespace MZPO.Controllers
             //    });
 
             List<(int, string, string, string)> abandonedCompaniesResultsList = new();
-            DateTime refDT = DateTime.UtcNow.AddHours(3).AddMonths(-6);
+            DateTime referenceDateTime = DateTime.UtcNow.AddHours(3).AddMonths(-6);
 
             //companies.Add(compRepo.GetById(46054415));
 
@@ -350,18 +350,18 @@ namespace MZPO.Controllers
                     int contactTime = 0;
 
                     #region Collecting company notes and events
-                    if (CheckCompanyRecent(c, refDT, out contactTime))
+                    if (CheckCompanyRecent(c, referenceDateTime, out contactTime))
                         return;
                     timeStamps.Add(contactTime);
 
                     if (CheckCompanyTasks(compRepo.GetEntityTasks(c.id)))
                         return;
 
-                    if (CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                    if (CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
                         return;
                     timeStamps.Add(contactTime);
 
-                    if (CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                    if (CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
                         return;
                     timeStamps.Add(contactTime);
                     #endregion
@@ -370,15 +370,15 @@ namespace MZPO.Controllers
                     if (c._embedded.leads is not null)
                         foreach (var lead in c._embedded.leads.OrderByDescending(x => x.id))
                         {
-                            if (CheckLeadRecent(leadRepo.GetById(lead.id), refDT, out contactTime))
+                            if (CheckLeadRecent(leadRepo.GetById(lead.id), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
 
-                            if (CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                            if (CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
 
-                            if (CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                            if (CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
                         }
@@ -388,11 +388,11 @@ namespace MZPO.Controllers
                     if (c._embedded.contacts is not null)
                         foreach (var contact in c._embedded.contacts.OrderByDescending(x => x.id))
                         {
-                            if (CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                            if (CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
 
-                            if (CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), refDT, out contactTime))
+                            if (CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
                         }

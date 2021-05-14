@@ -405,7 +405,6 @@ namespace MZPO.LeadProcessors
                     PhaseOne();
                     AddNote("Phase 1 finished.");
 
-                    //await Task.Run(() => CallResultWaiter());
                     await CallResultWaiter();
 
                     UpdateLeadFromAmo();                                                                                    //Обновляем информацию о сделке, если она изменилась за время ожидания

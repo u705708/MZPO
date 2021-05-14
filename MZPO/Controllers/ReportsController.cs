@@ -46,7 +46,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.CorporateSales, _amo, _processQueue, _gSheets, dateFrom, dateTo);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET: reports/kpi
@@ -57,7 +57,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET reports/kpi/1612126799,1612886399
@@ -69,7 +69,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.KPI, _amo, _processQueue, _gSheets, dateFrom, dateTo);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET: reports/longleads
@@ -80,7 +80,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
             
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET reports/longleads/1614546000,1617224399
@@ -92,7 +92,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.LongLeads, _amo, _processQueue, _gSheets, dateFrom, dateTo);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET: reports/unfinishedcompanies
@@ -101,7 +101,7 @@ namespace MZPO.Controllers.ReportProcessors
         {
             ReportsProvider.StartReport(Reports.UnfinishedCompanies, _amo, _processQueue, _gSheets, 0, 0);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET: reports/weeklyreport/
@@ -112,7 +112,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, 0, dates.Item2);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET reports/weeklyreport/1612126799
@@ -123,7 +123,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.WeeklyReport, _amo, _processQueue, _gSheets, 0, dateTo);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET: reports/monthlyreport/
@@ -134,7 +134,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET reports/monthlyreport/1614546000,1617224399
@@ -146,7 +146,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.KPI_monthly, _amo, _processQueue, _gSheets, dateFrom, dateTo);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET reports/doubleslist/1614546000,1617224399
@@ -158,7 +158,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.Doubles, _amo, _processQueue, _gSheets, dateFrom, dateTo);
 
-            return Ok();
+            return Ok("Requested.");
         }
 
         // GET: reports/doubleslist/
@@ -169,7 +169,30 @@ namespace MZPO.Controllers.ReportProcessors
 
             ReportsProvider.StartReport(Reports.Doubles, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
-            return Ok();
+            return Ok("Requested.");
+        }
+
+        // GET reports/cards/1614546000,1617224399
+        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult Cards(string from, string to)
+        {
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            ReportsProvider.StartReport(Reports.Cards, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok("Requested.");
+        }
+
+        // GET: reports/cards/
+        [HttpGet]
+        public IActionResult Cards()
+        {
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.Cards, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
         }
     }
 }
