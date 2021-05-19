@@ -464,7 +464,8 @@ namespace MZPO.Controllers
 
             if (lead1C.organization != "ООО «МЦПО»" &&
                 lead1C.organization != "ООО «МИРК»" &&
-                lead1C.organization != "МЦПО ") return BadRequest($"Unknown organization {lead1C.organization}");
+                lead1C.organization != "МЦПО" &&
+                lead1C.organization != "ООО «Первый Профессиональный Институт Эстетики»") return BadRequest($"Unknown organization {lead1C.organization}");
             #endregion
 
             List<Amo_id> result = new();

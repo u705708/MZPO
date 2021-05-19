@@ -122,6 +122,7 @@ namespace MZPO.AmoRepo
             int acc_id = _auth.GetAccountId();
             if (acc_id == 19453687) return 5111;
             if (acc_id == 28395871) return 12463;
+            if (acc_id == 29490250) return 5835;
             throw new Exception($"No catalog_id for account {acc_id}");
         }
         #endregion
@@ -489,15 +490,23 @@ namespace MZPO.AmoRepo
         public IEnumerable<CatalogElement> GetCEs()
         {
             int catalog_id = GetCatalogId();
-            var uri = $"{_apiAddress[0..^3]}v2/catalog_elements?catalog_id={catalog_id}";
+            int i = 1;
 
-            //var result = GetList(uri);
+            List<CatalogElement> result = new();
 
-            //if (result._embedded is not null && result._embedded.items is not null)
-            //    return result._embedded.items.ToList();
-            //return new List<CatalogElement>();
+            while (true)
+            {
+                int j = 0;
+                var uri = $"{_apiAddress[0..^3]}v2/catalog_elements?catalog_id={catalog_id}&page={i++}";
+                var batch = GetEntities<CatalogElement>(uri, "items");
+                foreach (var ce in batch)
+                {
+                    yield return ce;
+                    j++;
+                }
 
-            return GetEntities<CatalogElement>(uri, "items");
+                if (j < 50) yield break;
+            }
         }
         public IEnumerable<CatalogElement> AddCEs(IEnumerable<CatalogElement> elements)
         {

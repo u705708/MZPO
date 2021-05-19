@@ -3,8 +3,6 @@ using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Integration1C
 {
@@ -24,6 +22,15 @@ namespace Integration1C
             _cred1C = cred1C;
             _filter = filter;
         }
+
+        private static int GetCatalogId(int acc_id)
+        {
+            if (acc_id == 19453687) return 5111;
+            if (acc_id == 28395871) return 12463;
+            if (acc_id == 29490250) return 5835;
+            throw new Exception($"No catalog_id for account {acc_id}");
+        }
+
         private static void AddUIDToEntity(Lead1C lead1C, int acc_id, Lead lead)
         {
             lead.custom_fields_values.Add(new Lead.Custom_fields_value()
@@ -95,8 +102,8 @@ namespace Integration1C
             {
                 name = "Новая сделка",
                 price = lead1C.price,
-                pipeline_id = 3198184,
-                status_id = 33625285,
+                //pipeline_id = 3198184,
+                //status_id = 33625285,
                 responsible_user_id = UserList.GetAmoUser(lead1C.responsible_user),
                 custom_fields_values = new(),
                 _embedded = new() { tags = new() { new() { name = "1C"} } }
@@ -123,7 +130,7 @@ namespace Integration1C
                         to_entity_type = "catalog_elements",
                         metadata = new() {
                             quantity = 1,
-                            catalog_id = acc_id == 19453687 ? 5111 : 12463
+                            catalog_id = GetCatalogId(acc_id)
                         } };
 
                     leadRepo.LinkEntity(result.First(), link);
@@ -145,6 +152,7 @@ namespace Integration1C
             {
                 int amo_acc = 28395871;
                 if (_lead1C.is_corporate) amo_acc = 19453687;
+                if (_lead1C.organization == "ООО «Первый Профессиональный Институт Эстетики»") amo_acc = 29490250;
 
                 var leadRepo = _amo.GetAccountById(amo_acc).GetRepo<Lead>();
 

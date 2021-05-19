@@ -33,6 +33,20 @@ namespace Integration1C
                                 { "pass_dpt_code", 748401 },
                             }
             },
+            { 29490250, new()
+                            {
+                                { "client_id_1C", 657541 },
+                                { "company_id_1C", 657543 },
+                                { "email", 621099 },
+                                { "phone", 621097 },
+                                { "dob", 657477 },
+                                { "pass_serie", 657479 },
+                                { "pass_number", 657483 },
+                                { "pass_issued_by", 657487 },
+                                { "pass_issued_at", 657485 },
+                                { "pass_dpt_code", 657537 },
+                            }
+            },
         };
 
         internal static readonly Dictionary<int, Dictionary<string, int>> Companies = new()
@@ -87,6 +101,14 @@ namespace Integration1C
                                 { "marketing_source", 748385 },
                             }
             },
+            { 29490250, new()
+                            {
+                                { "lead_id_1C", 657207 },
+                                { "organization", 657263 },
+                                { "marketing_channel", 657275 },
+                                { "marketing_source", 657277 },
+                            }
+            },
         };
 
         internal static readonly Dictionary<int, Dictionary<string, int>> Courses = new()
@@ -108,6 +130,16 @@ namespace Integration1C
                                 { "price", 751169 },
                                 { "duration", 751185 },
                                 { "format", 751187 },
+                                { "supplementary_info", 751167 },
+                            }
+            },
+            { 29490250, new()
+                            {
+                                { "product_id_1C", 656901 },
+                                { "short_name", 626797 },
+                                { "price", 626801 },
+                                { "duration", 656955 },
+                                { "format", 656905 },
                                 { "supplementary_info", 751167 },
                             }
             },

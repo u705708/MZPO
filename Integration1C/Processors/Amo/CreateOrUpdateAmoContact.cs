@@ -25,7 +25,8 @@ namespace Integration1C
         private readonly List<int> amo_accounts = new()
         {
             19453687,
-            28395871
+            28395871,
+            29490250
         };
 
         class ContactsComparer : IEqualityComparer<Contact>

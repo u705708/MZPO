@@ -83,6 +83,7 @@ namespace Integration1C
             {
                 int amo_acc = 28395871;
                 if (_lead1C.is_corporate) amo_acc = 19453687;
+                if (_lead1C.organization == "ООО «Первый Профессиональный Институт Эстетики»") amo_acc = 29490250;
 
                 var leadRepo = _amo.GetAccountById(amo_acc).GetRepo<Lead>();
 

@@ -113,6 +113,10 @@ namespace MZPO.AmoRepo
         public class Embedded
         {
             /// <summary>
+            /// Данные тегов, привязанных к сделке.
+            /// </summary>
+            public List<Tag> tags { get; set; }
+            /// <summary>
             /// Данные контактов, привязанных к компании.
             /// </summary>
             public List<Contact> contacts { get; set; }

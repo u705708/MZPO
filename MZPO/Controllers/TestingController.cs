@@ -149,12 +149,39 @@ namespace MZPO.Controllers
         {
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
             //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-
-            //return Ok(contRepo.GetById(33494965));
+            //var contRepo = _amo.GetAccountById(29490250).GetRepo<Contact>();
 
             //return Ok(JsonConvert.SerializeObject(_filter.GetFilterEntries(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
+
+            #region MassTagging
+            //using StreamReader sr = new("comps.json");
+            //List<int> comp_ids = new();
+            //JsonConvert.PopulateObject(sr.ReadToEnd(), comp_ids);
+
+            //var repo = _amo.GetAccountById(19453687).GetRepo<Company>();
+
+            //Parallel.ForEach(
+            //    comp_ids,
+            //    new ParallelOptions { MaxDegreeOfParallelism = 6 },
+            //    c =>
+            //    {
+            //        Company company = new()
+            //        {
+            //            id = c,
+            //            _embedded = new()
+            //            {
+            //                tags = new()
+            //                {
+            //                    new() { id = 1213927 }
+            //                }
+            //            }
+            //        };
+
+            //        repo.Save(company);
+            //    }); 
+            #endregion
 
             #region CorpParse
             //var _spreadsheetId = "1NuP1qpKDuWlQAje0mIA4i73KgfTH6TGi5iLvzMY46pU";
@@ -256,26 +283,34 @@ namespace MZPO.Controllers
             #endregion
 
             #region AddCourses
-            //using StreamReader sr = new("courses.json");
-            //List<Guid> course_ids = new();
-            //JsonConvert.PopulateObject(sr.ReadToEnd(), course_ids);
+            //var repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
+            //var course_ids = repo
+            //                    .GetCEs()
+            //                    .Where(x => x.custom_fields is not null &&
+            //                                x.custom_fields.Any(y => y.id == 710407))
+            //                    .Select(x => { 
+            //                        Guid.TryParse(x.custom_fields.First(y => y.id == 710407).values[0].value, out Guid result); 
+            //                        return result; });
 
-            //int i = 0;
+            //int j = 0;
             //List<Course1C> processedCourses = new();
             //List<(Guid, string)> errorList = new();
 
-            //foreach (var c in course_ids)
-            //{
-            //    i++;
-            //    try
+            //Parallel.ForEach(
+            //    course_ids,
+            //    new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            //    c =>
             //    {
-            //        processedCourses.Add(new PopulateCourses(_amo, _log, _cred1C).Run(c));
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        errorList.Add((c, e.Message));
-            //    }
-            //}
+            //        j++;
+            //        try
+            //        {
+            //            processedCourses.Add(new PopulateCourses(_amo, _log, _cred1C).Run(c));
+            //        }
+            //        catch (Exception e)
+            //        {
+            //            errorList.Add((c, e.Message));
+            //        }
+            //    });
 
             //using StreamWriter sw1 = new StreamWriter("processed_courses.json", false, System.Text.Encoding.Default);
             //sw1.WriteLine(JsonConvert.SerializeObject(processedCourses));
@@ -305,21 +340,8 @@ namespace MZPO.Controllers
                 (1619798400, 1635695999),   //05.2021-10.2021
             };
 
-            //List<Company> companies = new();
-
-            //Parallel.ForEach(
-            //    dataranges,
-            //    new ParallelOptions { MaxDegreeOfParallelism = 6 },
-            //    d =>
-            //    {
-            //        var criteria = $"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads";
-            //        companies.AddRange(compRepo.GetByCriteria(criteria));
-            //    });
-
             List<(int, string, string, string)> abandonedCompaniesResultsList = new();
             DateTime referenceDateTime = DateTime.UtcNow.AddHours(3).AddMonths(-6);
-
-            //companies.Add(compRepo.GetById(46054415));
 
             IEnumerable<Company> companies = null;
 

@@ -46,7 +46,7 @@ namespace Integration1C
 
         private static Guid GetOrCreateContragent(Amo amo, Lead1C lead1C, Cred1C cred1C, int amo_acc, RecentlyUpdatedEntityFilter filter)
         {
-            if (amo_acc != 28395871) return default;
+            if (amo_acc == 19453687) return default;
             
             var client1C = new ClientRepository(cred1C).GetClient((Guid)lead1C.client_id_1C);
 
