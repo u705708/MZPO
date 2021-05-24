@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -149,14 +148,14 @@ namespace MZPO.LeadProcessors
                         new()
                         {
                             responsible_user_id = similarContacts.First(x => x._embedded.companies is not null &&
-                                                            x._embedded.companies.Any())._embedded.companies.First().responsible_user_id,
+                                                                             x._embedded.companies.Any())._embedded.companies.First().responsible_user_id,
                             id = similarContacts.First(x => x._embedded.companies is not null &&
                                                             x._embedded.companies.Any())._embedded.companies.First().id
                         }
                     };
 
                     lead.responsible_user_id = similarContacts.First(x => x._embedded.companies is not null &&
-                                                        x._embedded.companies.Any())._embedded.companies.First().responsible_user_id;
+                                                                          x._embedded.companies.Any())._embedded.companies.First().responsible_user_id;
                 }
 
                 if (similarContacts.Any())
@@ -173,20 +172,12 @@ namespace MZPO.LeadProcessors
                     if (_formRequest.email is not null &&
                         _formRequest.email != "undefined" &&
                         _formRequest.email != "")
-                        contact.custom_fields_values.Add(new Contact.Custom_fields_value()
-                        {
-                            field_id = 33577,
-                            values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = _formRequest.email } }
-                        });
+                        contact.AddNewCF(33577, _formRequest.email);
 
                     if (_formRequest.phone is not null &&
                         _formRequest.phone != "undefined" &&
                         _formRequest.phone != "")
-                        contact.custom_fields_values.Add(new Contact.Custom_fields_value()
-                        {
-                            field_id = 33575,
-                            values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = _formRequest.phone } }
-                        });
+                        contact.AddNewCF(33575, _formRequest.phone);
                 }
 
                 lead._embedded.contacts = new() { contact };
@@ -229,11 +220,7 @@ namespace MZPO.LeadProcessors
                         (string)p.GetValue(_formRequest) != "")
                     {
                         if (lead.custom_fields_values is null) lead.custom_fields_values = new();
-                        lead.custom_fields_values.Add(new Lead.Custom_fields_value()
-                        {
-                            field_id = fieldIds[p.Name],
-                            values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = (string)p.GetValue(_formRequest) } }
-                        });
+                        lead.AddNewCF(fieldIds[p.Name], p.GetValue(_formRequest));
                     }
                 #endregion
 

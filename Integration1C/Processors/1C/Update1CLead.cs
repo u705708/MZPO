@@ -89,7 +89,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update lead {_leadId} in 1C: {e}");
+                _log.Add($"Unable to update lead {_leadId} in 1C: {e.Message}");
                 return default;
             }
         }

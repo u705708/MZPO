@@ -147,9 +147,9 @@ namespace MZPO.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
-            //var contRepo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-            //var contRepo = _amo.GetAccountById(29490250).GetRepo<Contact>();
+            //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
+            //var repo = _amo.GetAccountById(28395871).GetRepo<Contact>();
+            //var repo = _amo.GetAccountById(29490250).GetRepo<Contact>();
 
             //return Ok(JsonConvert.SerializeObject(_filter.GetFilterEntries(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 

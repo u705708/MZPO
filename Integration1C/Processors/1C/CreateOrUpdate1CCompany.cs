@@ -114,7 +114,7 @@ namespace Integration1C
                         new()
                         {
                             field_id = FieldLists.Companies[_amo_acc]["company_id_1C"],
-                            values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = result.ToString("D") } }
+                            values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = result.ToString("D") } }
                         }
                     }
                 };
@@ -129,7 +129,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to create or update company from lead {_leadId} in 1C: {e}");
+                _log.Add($"Unable to create or update company from lead {_leadId} in 1C: {e.Message}");
                 return default;
             }
         }

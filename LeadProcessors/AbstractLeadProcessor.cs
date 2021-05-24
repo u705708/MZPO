@@ -19,7 +19,7 @@ namespace MZPO.LeadProcessors
         protected readonly Log _log;
         protected Lead lead;
         protected List<Tag> tags;
-        protected List<Lead.Custom_fields_value> custom_fields_values;
+        protected List<Custom_fields_value> custom_fields_values;
 
         public AbstractLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)
         {
@@ -82,10 +82,10 @@ namespace MZPO.LeadProcessors
 
             else
             {
-                custom_fields_values.Add(new Lead.Custom_fields_value()
+                custom_fields_values.Add(new Custom_fields_value()
                 {
                     field_id = fieldId,
-                    values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = fieldValue } }
+                    values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = fieldValue } }
                 });
             }
             return fieldValue;

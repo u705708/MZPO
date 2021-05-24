@@ -53,10 +53,10 @@ namespace Integration1C
 
         private static void AddUIDToEntity(Client1C client1C, int acc_id, Contact contact)
         {
-            contact.custom_fields_values.Add(new Contact.Custom_fields_value()
+            contact.custom_fields_values.Add(new Custom_fields_value()
             {
                 field_id = FieldLists.Contacts[acc_id]["client_id_1C"],
-                values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = client1C.client_id_1C.Value.ToString("D") } }
+                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = client1C.client_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -78,10 +78,10 @@ namespace Integration1C
 
                     if (contact.custom_fields_values is null) contact.custom_fields_values = new();
 
-                    contact.custom_fields_values.Add(new Contact.Custom_fields_value()
+                    contact.custom_fields_values.Add(new Custom_fields_value()
                     {
                         field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = value } }
+                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = value } }
                     });
                 }
         }
@@ -207,7 +207,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update contact in amo from 1C: {e}");
+                _log.Add($"Unable to update contact in amo from 1C: {e.Message}");
             }
 
             return _client1C.amo_ids;

@@ -73,10 +73,10 @@ namespace Integration1C
 
                     if (contact.custom_fields_values is null) contact.custom_fields_values = new();
 
-                    contact.custom_fields_values.Add(new Contact.Custom_fields_value()
+                    contact.custom_fields_values.Add(new Custom_fields_value()
                     {
                         field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = value } }
+                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = value } }
                     });
                 }
         }
@@ -180,9 +180,9 @@ namespace Integration1C
         {
             Contact contact = new() {
                 id = amo_id.entity_id,
-                custom_fields_values = new() { new Contact.Custom_fields_value() {
+                custom_fields_values = new() { new Custom_fields_value() {
                         field_id = FieldLists.Contacts[amo_id.account_id]["client_id_1C"],
-                        values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = uid.ToString("D") } }
+                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = uid.ToString("D") } }
             } } };
 
             try
@@ -192,7 +192,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update contact {amo_id.entity_id} in amo {amo_id.account_id}: {e}");
+                throw new Exception($"Unable to update contact {amo_id.entity_id} in amo {amo_id.account_id}: {e.Message}");
             }
         }
 
@@ -317,7 +317,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to create or update client in 1C from lead {_leadId}: {e}");
+                _log.Add($"Unable to create or update client in 1C from lead {_leadId}: {e.Message}");
                 return default;
             }
         }

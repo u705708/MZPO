@@ -197,45 +197,29 @@ namespace MZPO.ReportProcessors
             };
         }
 
-        private Request GetProcessedLeadRequest(Lead lead, int sheetId)
+        private static Request GetProcessedLeadRequest(Lead lead, int sheetId, IAmoRepo<Company> compRepo)
         {
-            #region Field init
-            string A = "";
-            string B = "";
-            int C;
-            string D;
-            int E;
-            string F = "";
-            string G = "";
-            string H = "";
-            int I;
-            int J;
-            string K;
-            #endregion
-
             #region Оганизация
+            string A = "";
             if (lead._embedded.companies.Any())
-                A = _compRepo.GetById(lead._embedded.companies.FirstOrDefault().id).name;
+                A = compRepo.GetById(lead._embedded.companies.FirstOrDefault().id).name;
             #endregion
 
             #region Назначение платежа
-            if (lead.custom_fields_values.Any(x => x.field_id == 118509))
-                B = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 118509).values[0].value;
+            string B = lead.GetCFStringValue(118509);
             #endregion
 
             #region Кол-во человек
-            int students = 1;
-            if (lead.custom_fields_values.Any(x => x.field_id == 611005))
-                if (!int.TryParse((string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 611005).values[0].value, out students)) students = 1;
-            C = students;
+            int C = lead.GetCFIntValue(611005);
+            if (C == 0) C++;
             #endregion
 
             #region Сумма
-            E = (int)lead.price;
+            int E = (int)lead.price;
             #endregion
 
             #region Стоимость
-            D = @"=INDIRECT(""R[0]C[1]"", FALSE)/INDIRECT(""R[0]C[-1]"", FALSE)";
+            string D = @"=INDIRECT(""R[0]C[1]"", FALSE)/INDIRECT(""R[0]C[-1]"", FALSE)";
             #endregion
 
             #region Дата прихода
@@ -244,32 +228,27 @@ namespace MZPO.ReportProcessors
                 payment_date_unix = (long)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 118675).values[0].value;
             else
                 payment_date_unix = 0;
-            F = DateTimeOffset.FromUnixTimeSeconds(payment_date_unix).UtcDateTime.AddHours(3).ToShortDateString();
+            string F = DateTimeOffset.FromUnixTimeSeconds(payment_date_unix).UtcDateTime.AddHours(3).ToShortDateString();
             #endregion
 
             #region Расчет
-            if (lead.custom_fields_values.Any(x => x.field_id == 118545))
-                G = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 118545).values[0].value;
+            string G = lead.GetCFStringValue(118545);
             #endregion
 
             #region Исполнитель
-            if (lead.custom_fields_values.Any(x => x.field_id == 162301))
-                H = (string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 162301).values[0].value;
+            string H = lead.GetCFStringValue(162301);
             #endregion
 
             #region Номер сделки
-            I = lead.id;
+            int I = lead.id;
             #endregion
 
             #region % сделки
-            int percent = 0;
-            if (lead.custom_fields_values.Any(x => x.field_id == 613663))
-                if (!int.TryParse((string)lead.custom_fields_values.FirstOrDefault(x => x.field_id == 613663).values[0].value, out percent)) percent = 0;
-            J = percent;
+            int J = lead.GetCFIntValue(613663);
             #endregion
 
             #region Вознаграждение
-            K = @"=INDIRECT(""R[0]C[-6]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
+            string K = @"=INDIRECT(""R[0]C[-6]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
             #endregion
 
             return GetRowRequest(sheetId, GetCellData(A, B, C, D, E, F, G, H, I, J, K));
@@ -282,8 +261,6 @@ namespace MZPO.ReportProcessors
 
             var allLeads = _leadRepo.GetByCriteria($"filter[statuses][0][pipeline_id]=3558781&filter[statuses][0][status_id]=35001244&filter[responsible_user_id]={manager.Item1}");
 
-            if (allLeads is null) return;
-
             var leads = allLeads.Where(x =>
                 (x.custom_fields_values is not null) &&
                 (x.custom_fields_values.Any(y => y.field_id == 118675)) &&
@@ -293,16 +270,20 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Processing
-            _processQueue.UpdateTaskName($"{_taskId}_{manager.Item2}", $"CorpReport: total leads {leads.Count}");
             List<Request> requestContainer = new();
+
+            int i = 0;
 
             Parallel.ForEach(
                 leads,
-                new ParallelOptions { MaxDegreeOfParallelism = 4 },
+                new ParallelOptions { MaxDegreeOfParallelism = 12 },
                 l => {
-                    var request = GetProcessedLeadRequest(l, manager.Item1);
-                    lock (requestContainer) requestContainer.Add(request);
-            });
+                    i++;
+                    var request = GetProcessedLeadRequest(l, manager.Item1, _compRepo);
+                    requestContainer.Add(request);
+                    if (i % 25 == 0)
+                        GC.Collect();
+                });
             #endregion
 
             requestContainer.Add(GetRowRequest(manager.Item1, GetLastRowCellData()));
@@ -330,11 +311,8 @@ namespace MZPO.ReportProcessors
             {
                 if (_token.IsCancellationRequested) break;
 
-                var m = manager;
-                tasks.Add(Task.Run(() => ProcessManager(m)));
+                await ProcessManager(manager);
             }
-
-            await Task.WhenAll(tasks);
 
             _processQueue.Remove(_taskId);
         }

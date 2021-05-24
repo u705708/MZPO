@@ -12,12 +12,9 @@ namespace MZPO.LeadProcessors
     public class InitialLeadProcessor : AbstractLeadProcessor, ILeadProcessor                                                               //Процессор осуществляет первоначальную обработку сделок
     {
         #region Definition
-        private readonly LeadsSorter _sorter;
-
-        public InitialLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token, LeadsSorter sorter)
+        public InitialLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)
             : base(leadNumber, acc, processQueue, log, token)
         {
-            _sorter = sorter;
         }
 
         private readonly List<string> sites = new()
@@ -312,11 +309,6 @@ namespace MZPO.LeadProcessors
                 }
             }
             #endregion
-
-            //if (lead.responsible_user_id == 2576764 &&                                                                  //Если ответственный Администратор
-            //    !CheckTag("A") &&                                                                                       //И нет тега А
-            //    !CheckTag("B"))                                                                                         //И нет тега В
-            //    SetTag(_sorter.GetLeadChoice() ? "A" : "B");                                                            //По очереди назначаем теги А и В
 
             Lead result = new();
 

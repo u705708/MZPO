@@ -33,10 +33,10 @@ namespace Integration1C
 
         private static void AddUIDToEntity(Lead1C lead1C, int acc_id, Lead lead)
         {
-            lead.custom_fields_values.Add(new Lead.Custom_fields_value()
+            lead.custom_fields_values.Add(new Custom_fields_value()
             {
                 field_id = FieldLists.Leads[acc_id]["lead_id_1C"],
-                values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = lead1C.lead_id_1C.Value.ToString("D") } }
+                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = lead1C.lead_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -49,10 +49,10 @@ namespace Integration1C
                     try { if ((string)p.GetValue(lead1C) == "") continue; }
                     catch { }
 
-                    lead.custom_fields_values.Add(new Lead.Custom_fields_value()
+                    lead.custom_fields_values.Add(new Custom_fields_value()
                     {
                         field_id = FieldLists.Leads[acc_id][p.Name],
-                        values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = p.GetValue(lead1C) } }
+                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = p.GetValue(lead1C) } }
                     });
                 }
         }
@@ -92,7 +92,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update lead {lead_id} in amo: {e}");
+                throw new Exception($"Unable to update lead {lead_id} in amo: {e.Message}");
             }
         }
 
@@ -140,7 +140,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update lead {lead1C.lead_id_1C} in amo: {e}");
+                throw new Exception($"Unable to update lead {lead1C.lead_id_1C} in amo: {e.Message}");
             }
         }
 
@@ -211,7 +211,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to create or update lead {_lead1C.lead_id_1C} in amo: {e}");
+                _log.Add($"Unable to create or update lead {_lead1C.lead_id_1C} in amo: {e.Message}");
             }
 
             return _lead1C.amo_ids;

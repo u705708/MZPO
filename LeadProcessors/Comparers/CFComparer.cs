@@ -8,9 +8,9 @@ using MZPO.Services;
 
 namespace MZPO.LeadProcessors
 {
-    class CFComparer : IEqualityComparer<Lead.Custom_fields_value>
+    class CFComparer : IEqualityComparer<Custom_fields_value>
     {
-        public bool Equals(Lead.Custom_fields_value x, Lead.Custom_fields_value y)
+        public bool Equals(Custom_fields_value x, Custom_fields_value y)
         {
             if (Object.ReferenceEquals(x, y)) return true;
 
@@ -20,7 +20,7 @@ namespace MZPO.LeadProcessors
             return x.field_id == y.field_id;
         }
 
-        public int GetHashCode(Lead.Custom_fields_value cf)
+        public int GetHashCode(Custom_fields_value cf)
         {
             if (cf is null) return 0;
 

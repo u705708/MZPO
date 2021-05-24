@@ -88,7 +88,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update course in amo: {e}");
+                _log.Add($"Unable to update course in amo: {e.Message}");
             }
 
             return _course1C.amo_ids;

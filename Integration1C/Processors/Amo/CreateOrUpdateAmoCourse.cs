@@ -118,7 +118,7 @@ namespace Integration1C
                         }
                         catch (Exception e) 
                         { 
-                            _log.Add($"Unable to update course {_course1C.amo_ids.First(x => x.account_id == a).entity_id} in amo. Creating new. {e}"); 
+                            _log.Add($"Unable to update course {_course1C.amo_ids.First(x => x.account_id == a).entity_id} in amo. Creating new. {e.Message}"); 
                         }
                     _course1C.amo_ids.Add(CreateCourseInAmo(_course1C, _amo.GetAccountById(a).GetRepo<Lead>(), a));
 
@@ -127,7 +127,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update course in amo from 1C: {e}");
+                _log.Add($"Unable to update course in amo from 1C: {e.Message}");
             }
 
             return _course1C.amo_ids;

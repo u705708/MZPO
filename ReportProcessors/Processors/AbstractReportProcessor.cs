@@ -113,15 +113,8 @@ namespace MZPO.ReportProcessors
             int timeOfReference = (int)lead.created_at;
 
             #region Результат звонка
-            if (lead.custom_fields_values is not null)
-            {
-                var cf = lead.custom_fields_values.FirstOrDefault(x => x.field_id == 644675);
-                if (cf is not null)
-                {
-                    var cfValue = (string)cf.values[0].value;
-                    if (cfValue == "Принят" || cfValue == "Ручная сделка") return 0;
-                }
-            }
+            string cfValue = lead.GetCFStringValue(644675);
+            if (cfValue == "Принят" || cfValue == "Ручная сделка") return 0;
             #endregion
 
             #region Время суток

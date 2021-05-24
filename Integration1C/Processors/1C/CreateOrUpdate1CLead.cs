@@ -76,7 +76,7 @@ namespace Integration1C
                         new()
                         {
                             field_id = FieldLists.Contacts[amo_acc]["company_id_1C"],
-                            values = new Contact.Custom_fields_value.Values[] { new Contact.Custom_fields_value.Values() { value = contragentGuid.ToString() } }
+                            values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = contragentGuid.ToString() } }
                         }
                     }
                 };
@@ -199,9 +199,9 @@ namespace Integration1C
         {
             Lead lead = new() {
                 id = leadId,
-                custom_fields_values = new() { new Lead.Custom_fields_value() {
+                custom_fields_values = new() { new Custom_fields_value() {
                         field_id = FieldLists.Leads[amo_acc]["lead_id_1C"],
-                        values = new Lead.Custom_fields_value.Values[] { new Lead.Custom_fields_value.Values() { value = uid.ToString("D") } }
+                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = uid.ToString("D") } }
             } } };
 
             try
@@ -211,7 +211,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update lead {leadId} in amo {amo_acc}: {e}");
+                throw new Exception($"Unable to update lead {leadId} in amo {amo_acc}: {e.Message}");
             }
         }
 

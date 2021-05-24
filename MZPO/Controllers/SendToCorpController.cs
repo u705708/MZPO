@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
-    [Route("wh/sendtocorp")]
+    [Route("ret2corp/{action}")]
     public class SendToCorpController : Controller
     {
         private readonly TaskList _processQueue;
@@ -21,20 +21,15 @@ namespace MZPO.Controllers
             _log = log;
         }
 
-        // POST wh/sendtocorp
+        // POST ret2corp/send
         [HttpPost]
-        public IActionResult Post()
+        public IActionResult Send()
         {
             var col = Request.Form;
             int leadNumber = 0;
 
-            Lazy<ILeadProcessor> leadProcessor;
-            Task task;
-
             CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
-
-            if (!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
 
             if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
             {
@@ -48,11 +43,71 @@ namespace MZPO.Controllers
 
             if (leadNumber == 0) return BadRequest("Incorrect lead number");
 
-            leadProcessor = new Lazy<ILeadProcessor>(() =>                                                                                      //Создаём экземпляр процессора сделки
+            Lazy<SendToCorpProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
                                new SendToCorpProcessor(_amo, _log, _processQueue, leadNumber, token));
 
-            task = Task.Run(() => leadProcessor.Value.Run());
-            _processQueue.AddTask(task, cts, $"ret2corp-{leadNumber}", "ret2corp", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            Task task = Task.Run(() => leadProcessor.Value.Send());
+            _processQueue.AddTask(task, cts, $"ret2corp-{leadNumber}", "ret2corp", "SyncProcessor");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
+
+        // POST ret2corp/success
+        [HttpPost]
+        public IActionResult Success()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            CancellationTokenSource cts = new();
+            CancellationToken token = cts.Token;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return BadRequest("Incorrect lead number");
+
+            Lazy<SendToCorpProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new SendToCorpProcessor(_amo, _log, _processQueue, leadNumber, token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Success());
+            _processQueue.AddTask(task, cts, $"corp2ret-{leadNumber}", "ret2corp", "SyncProcessor");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
+
+        // POST ret2corp/fail
+        [HttpPost]
+        public IActionResult Fail()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            CancellationTokenSource cts = new();
+            CancellationToken token = cts.Token;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return BadRequest("Incorrect lead number");
+
+            Lazy<SendToCorpProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new SendToCorpProcessor(_amo, _log, _processQueue, leadNumber, token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Fail());
+            _processQueue.AddTask(task, cts, $"corp2ret-{leadNumber}", "ret2corp", "SyncProcessor");                                            //Запускаем и добавляем в очередь
             return Ok();
         }
     }

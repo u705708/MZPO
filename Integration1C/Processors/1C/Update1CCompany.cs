@@ -76,7 +76,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update company {_companyId} in 1C: {e}");
+                _log.Add($"Unable to update company {_companyId} in 1C: {e.Message}");
                 return default;
             }
         }

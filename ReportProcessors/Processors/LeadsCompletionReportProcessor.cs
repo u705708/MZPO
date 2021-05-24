@@ -1,4 +1,5 @@
 ﻿using Google.Apis.Sheets.v4.Data;
+using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,6 @@ namespace MZPO.ReportProcessors
             { "K", new CellFormat() { NumberFormat = new NumberFormat() { Type = "TEXT" } } },
             { "L", new CellFormat() { NumberFormat = new NumberFormat() { Type = "TEXT" } } },
             { "M", new CellFormat() { NumberFormat = new NumberFormat() { Type = "TEXT" } } },
-            { "N", new CellFormat() { NumberFormat = new NumberFormat() { Type = "TEXT" } } }
         };
         #endregion
 
@@ -76,7 +76,6 @@ namespace MZPO.ReportProcessors
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Форма обучения"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Тип обучения"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Начало обучения"} },
-                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Конец обучения"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Дата экзамена"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Имя"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Телефон"} },
@@ -89,7 +88,7 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Adjusting column width
-            var width = new List<int>() { 120, 144, 96, 72, 120, 144, 120, 144, 144, 120, 180, 108, 180, 168 };
+            var width = new List<int>() { 120, 144, 96, 72, 120, 144, 120, 144, 120, 180, 108, 180, 168 };
             int i = 0;
 
             foreach (var c in width)
@@ -110,7 +109,7 @@ namespace MZPO.ReportProcessors
             return requestContainer;
         }
 
-        private CellData[] GetCellData(int A, string B, string C, int D, string E, string F, string G, string H, string I, string J, string K, string L, string M, string N)
+        private CellData[] GetCellData(int A, string B, string C, int D, string E, string F, string G, string H, string I, string J, string K, string L, string M)
         {
             return new[]{
                 new CellData(){
@@ -152,9 +151,6 @@ namespace MZPO.ReportProcessors
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ StringValue = M},
                     UserEnteredFormat = columnsFormat["M"] },
-                new CellData(){
-                    UserEnteredValue = new ExtendedValue(){ StringValue = N},
-                    UserEnteredFormat = columnsFormat["N"] },
             };
         }
 
@@ -221,27 +217,15 @@ namespace MZPO.ReportProcessors
 
                     string leadName = l.name;
 
-                    string courseName = "";
-                    if (l.custom_fields_values is not null &&
-                        l.custom_fields_values.Any(x => x.field_id == 357005))
-                        courseName = l.custom_fields_values.First(x => x.field_id == 357005).values[0].value.ToString();
+                    string courseName = l.GetCFStringValue(357005);
 
                     int leadPrice = l.price is null ? 0 : (int)l.price;
 
-                    string educationLength = "";
-                    if (l.custom_fields_values is not null &&
-                        l.custom_fields_values.Any(x => x.field_id == 644757))
-                        educationLength = l.custom_fields_values.First(x => x.field_id == 644757).values[0].value.ToString();
+                    string educationLength = l.GetCFStringValue(644757);
 
-                    string educationForm = "";
-                    if (l.custom_fields_values is not null &&
-                        l.custom_fields_values.Any(x => x.field_id == 643207))
-                        educationForm = l.custom_fields_values.First(x => x.field_id == 643207).values[0].value.ToString();
+                    string educationForm = l.GetCFStringValue(643207);
 
-                    string educationType = "";
-                    if (l.custom_fields_values is not null &&
-                        l.custom_fields_values.Any(x => x.field_id == 644763))
-                        educationType = l.custom_fields_values.First(x => x.field_id == 644763).values[0].value.ToString();
+                    string educationType = l.GetCFStringValue(644763);
 
                     string educationStart = "";
                     if (l.custom_fields_values is not null &&
@@ -249,14 +233,6 @@ namespace MZPO.ReportProcessors
                     {
                         long date = (long)l.custom_fields_values.First(x => x.field_id == 643199).values[0].value;
                         educationStart = $"{DateTimeOffset.FromUnixTimeSeconds(date).UtcDateTime.AddHours(3).ToShortDateString()}";
-                    }
-
-                    string educationEnd = "";
-                    if (l.custom_fields_values is not null &&
-                        l.custom_fields_values.Any(x => x.field_id == 643201))
-                    {
-                        long date = (long)l.custom_fields_values.First(x => x.field_id == 643201).values[0].value;
-                        educationEnd = $"{DateTimeOffset.FromUnixTimeSeconds(date).UtcDateTime.AddHours(3).ToShortDateString()}";
                     }
 
                     string examDate = "";
@@ -305,7 +281,7 @@ namespace MZPO.ReportProcessors
                         responsibleUser = managersRet.First(x => x.Item1 == l.responsible_user_id).Item2;
                     else return;
 
-                    requestContainer.Add(GetRowRequest((int)l.responsible_user_id, GetCellData(leadId, leadName, courseName, leadPrice, educationLength, educationForm, educationType, educationStart, educationEnd, examDate, contactName, contactPhone, contactEmail, responsibleUser)));
+                    requestContainer.Add(GetRowRequest((int)l.responsible_user_id, GetCellData(leadId, leadName, courseName, leadPrice, educationLength, educationForm, educationType, educationStart, examDate, contactName, contactPhone, contactEmail, responsibleUser)));
 
                     if (i % 10 == 0)
                     {

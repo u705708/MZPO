@@ -50,10 +50,10 @@ namespace Integration1C
 
         private static void AddUIDToEntity(Company1C company1C, int amo_acc, Company company)
         {
-            company.custom_fields_values.Add(new Company.Custom_fields_value()
+            company.custom_fields_values.Add(new Custom_fields_value()
             {
                 field_id = FieldLists.Companies[amo_acc]["company_id_1C"],
-                values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = company1C.company_id_1C.Value.ToString("D") } }
+                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = company1C.company_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -66,10 +66,10 @@ namespace Integration1C
                     try { if ((string)p.GetValue(company1C) == "") continue; }
                     catch { }
 
-                    company.custom_fields_values.Add(new Company.Custom_fields_value()
+                    company.custom_fields_values.Add(new Custom_fields_value()
                     {
                         field_id = FieldLists.Companies[amo_acc][p.Name],
-                        values = new Company.Custom_fields_value.Values[] { new Company.Custom_fields_value.Values() { value = p.GetValue(company1C) } }
+                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = p.GetValue(company1C) } }
                     });
                 }
         }
@@ -94,7 +94,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update company {company_id} in amo: {e}");
+                throw new Exception($"Unable to update company {company_id} in amo: {e.Message}");
             }
         }
 
@@ -120,7 +120,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to create company in amo: {e}");
+                throw new Exception($"Unable to create company in amo: {e.Message}");
             }
         }
 
@@ -198,7 +198,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update company in amo from 1C: {e}");
+                _log.Add($"Unable to update company in amo from 1C: {e.Message}");
             }
 
             return _company1C.amo_ids;

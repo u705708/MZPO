@@ -92,7 +92,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                _log.Add($"Unable to update client in 1C from contact {_contactId}: {e}");
+                _log.Add($"Unable to update client in 1C from contact {_contactId}: {e.Message}");
                 return default;
             }
         }
