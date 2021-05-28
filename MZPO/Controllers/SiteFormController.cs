@@ -17,12 +17,14 @@ namespace MZPO.Controllers
         private readonly TaskList _processQueue;
         private readonly Amo _amo;
         private readonly Log _log;
+        private readonly GSheets _gSheets;
 
-        public SiteFormController(Amo amo, TaskList processQueue, Log log)
+        public SiteFormController(Amo amo, TaskList processQueue, Log log, GSheets gSheets)
         {
             _amo = amo;
             _processQueue = processQueue;
             _log = log;
+            _gSheets = gSheets;
         }
 
         // POST: siteform/retail
@@ -56,7 +58,7 @@ namespace MZPO.Controllers
             CancellationToken token = cts.Token;
 
             var leadProcessor = new Lazy<ILeadProcessor>(() =>
-                   new SiteFormRetailProcessor(_amo.GetAccountById(28395871), _log, formRequest, _processQueue, token));
+                   new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, token, _gSheets));
 
             Task task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, $"FormSiteRet", "ret2corp", "LeadProcessor");                                            //Запускаем и добавляем в очередь

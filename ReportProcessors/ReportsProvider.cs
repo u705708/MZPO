@@ -52,6 +52,9 @@ namespace MZPO.ReportProcessors
         public static void StartReport(Reports rep, Amo amo, TaskList processQueue, GSheets gSheets, long dateFrom, long dateTo)
         {
             var reportParams = ReportParameters[rep];
+
+            if (processQueue.CheckIfRunning(reportParams.TaskId)) return;
+
             var acc = amo.GetAccountById(reportParams.AmoAccount);
 
             CancellationTokenSource cts = new();

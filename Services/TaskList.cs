@@ -98,5 +98,7 @@ namespace MZPO.Services
                 if (_taskList.Contains(line)) line.Item2.Cancel();
             }
         }
+
+        public bool CheckIfRunning(string id) => _taskList.Any(x => x.Item3 == id);
     }
 }

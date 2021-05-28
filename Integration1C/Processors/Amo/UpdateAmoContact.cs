@@ -22,11 +22,7 @@ namespace Integration1C
 
         private static void AddUIDToEntity(Client1C client1C, int acc_id, Contact contact)
         {
-            contact.custom_fields_values.Add(new Custom_fields_value()
-            {
-                field_id = FieldLists.Contacts[acc_id]["client_id_1C"],
-                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = client1C.client_id_1C.Value.ToString("D") } }
-            });
+            contact.AddNewCF(FieldLists.Contacts[acc_id]["client_id_1C"], client1C.client_id_1C.Value.ToString("D"));
         }
 
         private static void PopulateCFs(Client1C client1C, int acc_id, Contact contact)
@@ -42,16 +38,14 @@ namespace Integration1C
                         value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
                     }
 
+                    if (p.Name == "phone" || p.Name == "email") continue;
+
                     try { if ((string)value == "") continue; }
                     catch { }
 
                     if (contact.custom_fields_values is null) contact.custom_fields_values = new();
 
-                    contact.custom_fields_values.Add(new Custom_fields_value()
-                    {
-                        field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = value } }
-                    });
+                    contact.AddNewCF(FieldLists.Contacts[acc_id][p.Name], value);
                 }
         }
 
@@ -86,6 +80,9 @@ namespace Integration1C
                 if (_client1C.amo_ids is not null)
                     foreach (var c in _client1C.amo_ids)
                     {
+                        if (!_filter.CheckEntityIsValid(c.entity_id))
+                            continue;
+
                         UpdateContactInAmo(_client1C, _amo.GetAccountById(c.account_id).GetRepo<Contact>(), c.entity_id, c.account_id, _filter);
                         
                         _log.Add($"Updated contact {c.entity_id} in amo {c.account_id}.");

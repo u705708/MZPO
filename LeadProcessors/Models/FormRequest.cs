@@ -25,6 +25,10 @@
         public string utm_term { get; set; }
         public string utm_content { get; set; }
         public string utm_campaign { get; set; }
+        public string webinar { get; set; }
+        public string events { get;set; }
+        public string date { get; set; }
+        public string price { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

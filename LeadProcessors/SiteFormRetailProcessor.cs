@@ -1,4 +1,5 @@
-﻿using MZPO.AmoRepo;
+﻿using Google.Apis.Sheets.v4;
+using MZPO.AmoRepo;
 using MZPO.Services;
 using Newtonsoft.Json;
 using System;
@@ -11,6 +12,8 @@ namespace MZPO.LeadProcessors
 {
     public class SiteFormRetailProcessor : ILeadProcessor
     {
+        private readonly Amo _amo;
+        private readonly GSheets _gSheets;
         private readonly IAmoRepo<Lead> _leadRepo;
         private readonly IAmoRepo<Contact> _contRepo;
         private readonly Log _log;
@@ -18,14 +21,16 @@ namespace MZPO.LeadProcessors
         private readonly TaskList _processQueue;
         private readonly CancellationToken _token;
 
-        public SiteFormRetailProcessor(AmoAccount acc, Log log, FormRequest formRequest, TaskList processQueue, CancellationToken token)
+        public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, TaskList processQueue, CancellationToken token, GSheets gSheets)
         {
-            _leadRepo = acc.GetRepo<Lead>();
-            _contRepo = acc.GetRepo<Contact>();
+            _amo = amo;
+            _leadRepo = amo.GetAccountById(28395871).GetRepo<Lead>();
+            _contRepo = amo.GetAccountById(28395871).GetRepo<Contact>();
             _log = log;
             _formRequest = formRequest;
             _processQueue = processQueue;
             _token = token;
+            _gSheets = gSheets;
         }
 
         private readonly Dictionary<string, int> fieldIds = new() {
@@ -46,6 +51,150 @@ namespace MZPO.LeadProcessors
             { "utm_content", 643437 },
             { "utm_campaign", 640701 },
         };
+
+        private class ContactsComparer : IEqualityComparer<Contact>
+        {
+            public bool Equals(Contact x, Contact y)
+            {
+                if (ReferenceEquals(x, y)) return true;
+
+                if (x is null || y is null)
+                    return false;
+
+                return x.id == y.id;
+            }
+
+            public int GetHashCode(Contact c)
+            {
+                if (c is null) return 0;
+
+                int hashProductCode = (int)c.id;
+
+                return hashProductCode;
+            }
+        }
+
+        private static void PopulateCFs(Lead lead, FormRequest formRequest, Dictionary<string, int> fieldIds)
+        {
+            foreach (var p in formRequest.GetType().GetProperties())
+                if (fieldIds.ContainsKey(p.Name) &&
+                    p.GetValue(formRequest) is not null &&
+                    (string)p.GetValue(formRequest) != "undefined" &&
+                    (string)p.GetValue(formRequest) != "")
+                {
+                    if (lead.custom_fields_values is null) lead.custom_fields_values = new();
+                    lead.AddNewCF(fieldIds[p.Name], p.GetValue(formRequest));
+                }
+        }
+
+        private static IEnumerable<int> AddNewLead(List<Contact> similarContacts, int price, bool webinar, bool events, FormRequest formRequest, Dictionary<string, int> fieldIds, IAmoRepo<Lead> leadRepo, Log log)
+        {
+            Lead lead = new()
+            {
+                name = "Новая сделка",
+                price = price,
+                responsible_user_id = 2576764,
+                _embedded = new()
+            };
+
+            Contact contact = new()
+            {
+                name = formRequest.name,
+                responsible_user_id = 2576764,
+            };
+
+            if (similarContacts.Any())
+            {
+                contact.id = similarContacts.First().id;
+                contact.responsible_user_id = similarContacts.First().responsible_user_id;
+                lead.responsible_user_id = similarContacts.First().responsible_user_id;
+                log.Add($"Найден похожий контакт: {contact.id}.");
+            }
+            else
+            {
+                contact.custom_fields_values = new();
+
+                if (formRequest.email is not null &&
+                    formRequest.email != "undefined" &&
+                    formRequest.email != "")
+                    contact.AddNewCF(264913, formRequest.email);
+
+                if (formRequest.phone is not null &&
+                    formRequest.phone != "undefined" &&
+                    formRequest.phone != "")
+                    contact.AddNewCF(264911, formRequest.phone);
+            }
+
+            lead._embedded.contacts = new() { contact };
+
+            #region Setting Pipelines
+            int pipeline = 0;
+            int status = 0;
+
+            if (formRequest.pipeline is not null &&
+                formRequest.pipeline != "undefined" &&
+                formRequest.pipeline != "")
+            {
+                int.TryParse(formRequest.pipeline, out pipeline);
+
+                if (formRequest.status is not null &&
+                    formRequest.status != "undefined" &&
+                    formRequest.status != "")
+                    int.TryParse(formRequest.status, out status);
+            }
+
+            if (pipeline > 0)
+            {
+                lead.pipeline_id = pipeline;
+                if (status > 0)
+                    lead.status_id = status;
+            }
+            else
+            {
+                lead.pipeline_id = 3198184;
+                lead.status_id = 32532880;
+            }
+            #endregion
+
+            #region Add tags
+            if (webinar)
+            {
+                if (lead._embedded.tags is null) lead._embedded.tags = new();
+                lead._embedded.tags.Add(new() { id = 276829 });
+            }
+
+            if (events)
+            {
+                if (lead._embedded.tags is null) lead._embedded.tags = new();
+                lead._embedded.tags.Add(new() { id = 276831 });
+            } 
+            #endregion
+
+            PopulateCFs(lead, formRequest, fieldIds);
+
+            IEnumerable<int> processedIds = leadRepo.AddNewComplex(lead);
+
+            log.Add($"Создана новая сделка {processedIds.First()}");
+
+            return processedIds;
+        }
+
+        private static IEnumerable<int> UpdateFoundLead(Lead oldLead, FormRequest formRequest, Dictionary<string, int> fieldIds, IAmoRepo<Lead> leadRepo, Log log)
+        {
+            Lead lead = new()
+            {
+                id = oldLead.id,
+            };
+
+            PopulateCFs(lead, formRequest, fieldIds);
+
+            IEnumerable<int> processedIds = leadRepo.Save(lead).Select(x => x.id);
+
+            log.Add($"Обновлена сделка {processedIds.First()}");
+
+            return processedIds;
+        }
+
 
         public Task Run()
         {
@@ -76,116 +225,81 @@ namespace MZPO.LeadProcessors
                     _formRequest.phone = _formRequest.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
                 #endregion
 
-                Lead lead = new()
-                {
-                    name = "Новая сделка",
-                    responsible_user_id = 2576764,
-                    _embedded = new()
-                };
-
-                #region Creating contact
+                #region Getting similar contact
                 List<Contact> similarContacts = new();
                 try
                 {
                     if (_formRequest.phone is not null &&
                         _formRequest.phone != "undefined" &&
                         _formRequest.phone != "")
-                        similarContacts.AddRange(_contRepo.GetByCriteria($"query={_formRequest.phone}"));
+                        similarContacts.AddRange(_contRepo.GetByCriteria($"query={_formRequest.phone}&with=leads"));
 
                     if (_formRequest.email is not null &&
                         _formRequest.email != "undefined" &&
                         _formRequest.email != "")
-                        similarContacts.AddRange(_contRepo.GetByCriteria($"query={_formRequest.email}"));
+                        similarContacts.AddRange(_contRepo.GetByCriteria($"query={_formRequest.email}&with=leads"));
                 }
-                catch (Exception e) { _log.Add($"Не удалось осуществить поиск похожих контактов: {e}"); }
+                catch (Exception e) { _log.Add($"Не удалось осуществить поиск похожих контактов: {e.Message}"); }
+                #endregion
 
-                Contact contact = new()
-                {
-                    name = _formRequest.name,
-                    responsible_user_id = 2576764,
-                };
+                #region Getting similar leads
+                List<Lead> similarLeads = new();
 
                 if (similarContacts.Any())
                 {
-                    contact.id = similarContacts.First().id;
-                    contact.responsible_user_id = similarContacts.First().responsible_user_id;
-                    lead.responsible_user_id = similarContacts.First().responsible_user_id;
-                    _log.Add($"Найден похожий контакт: {contact.id}.");
-                }
-                else
-                {
-                    contact.custom_fields_values = new();
+                    List<int> leadIds = new();
 
-                    if (_formRequest.email is not null &&
-                        _formRequest.email != "undefined" &&
-                        _formRequest.email != "")
-                        contact.AddNewCF(264913, _formRequest.email);
+                    foreach (var c in similarContacts)
+                        if (c._embedded is not null &&
+                            c._embedded.leads is not null)
+                            leadIds.AddRange(c._embedded.leads.Select(x => x .id));
 
-                    if (_formRequest.phone is not null &&
-                        _formRequest.phone != "undefined" &&
-                        _formRequest.phone != "")
-                        contact.AddNewCF(264911, _formRequest.phone);
-                }
-
-                lead._embedded.contacts = new() { contact };
-                #endregion
-
-                #region Setting pipeline and status if any
-                int pipeline = 0;
-                int status = 0;
-
-                if (_formRequest.pipeline is not null &&
-                    _formRequest.pipeline != "undefined" &&
-                    _formRequest.pipeline != "")
-                {
-                    int.TryParse(_formRequest.pipeline, out pipeline);
-
-                    if (_formRequest.status is not null &&
-                        _formRequest.status != "undefined" &&
-                        _formRequest.status != "")
-                        int.TryParse(_formRequest.status, out status);
-                }
-
-                if (pipeline > 0)
-                {
-                    lead.pipeline_id = pipeline;
-                    if (status > 0)
-                        lead.status_id = status;
-                }
-                else
-                {
-                    lead.pipeline_id = 3198184;
-                    lead.status_id = 32532880;
+                    if (leadIds.Any())
+                        similarLeads.AddRange(_leadRepo.BulkGetById(leadIds.Distinct()).Where(x => x.status_id != 142 && x.status_id != 143));
                 }
                 #endregion
 
-                #region Setting custom fields
-                foreach (var p in _formRequest.GetType().GetProperties())
-                    if (fieldIds.ContainsKey(p.Name) &&
-                        p.GetValue(_formRequest) is not null &&
-                        (string)p.GetValue(_formRequest) != "undefined" &&
-                        (string)p.GetValue(_formRequest) != "")
-                    {
-                        if (lead.custom_fields_values is null) lead.custom_fields_values = new();
-                        lead.AddNewCF(fieldIds[p.Name], p.GetValue(_formRequest));
-                    }
+                #region Parsing webinars and events
+                bool.TryParse(_formRequest.webinar, out bool webinar);
+                bool.TryParse(_formRequest.events, out bool events);
+                int.TryParse(_formRequest.price, out int price);
                 #endregion
 
                 try
                 {
-                    var created = _leadRepo.AddNewComplex(lead);
+                    IEnumerable<int> processedIds;
 
-                    if (created.Any() &&
+                    if (similarLeads.Any() &&
+                        price == 0)
+                        processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log);
+                    else
+                        processedIds = AddNewLead(similarContacts, price, webinar, events, _formRequest, fieldIds, _leadRepo, _log);
+
+                    if (processedIds.Any() &&
                         _formRequest.comment is not null &&
                         _formRequest.comment != "undefined" &&
                         _formRequest.comment != "")
-                        _leadRepo.AddNotes(new Note() { entity_id = created.First(), note_type = "common", parameters = new Note.Params() { text = $"{_formRequest.comment}" } });
+                    {
+                        _leadRepo.AddNotes(new Note() { entity_id = processedIds.First(), note_type = "common", parameters = new Note.Params() { text = $"{_formRequest.comment}" } });
+                        _log.Add($"Добавлены комментарии в сделку {processedIds.First()}");
 
-                    _log.Add($"Создана новая сделка {created.First()}");
+                        if (webinar)
+                        {
+                            GSheetsProcessor leadProcessor = new(processedIds.First(), _amo, _gSheets, _processQueue, _log, _token);
+                            leadProcessor.Webinar(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email).Wait();
+                        }
+                        if (events)
+                        {
+                            GSheetsProcessor leadProcessor = new(processedIds.First(), _amo, _gSheets, _processQueue, _log, _token);
+                            leadProcessor.Events(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email).Wait();
+                        }
+
+                        _log.Add($"Добавлены данные о сделке {processedIds.First()} в таблицу.");
+                    }
                 }
                 catch (Exception e)
                 {
-                    _log.Add($"Не получилось сохранить данные в амо: {e}.");
+                    _log.Add($"Не получилось сохранить данные в амо: {e.Message}.");
                     _log.Add($"POST: {JsonConvert.SerializeObject(_formRequest, Formatting.Indented)}");
                 }
 
@@ -194,7 +308,7 @@ namespace MZPO.LeadProcessors
             }
             catch (Exception e)
             {
-                _log.Add($"Не получилось добавить заявку с сайта: {e}.");
+                _log.Add($"Не получилось добавить заявку с сайта: {e.Message}.");
                 _processQueue.Remove($"FormSiteRet");
                 return Task.FromException(e);
             }

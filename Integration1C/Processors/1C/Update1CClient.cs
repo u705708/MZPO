@@ -84,6 +84,8 @@ namespace Integration1C
                     var client1C = UpdateClientIn1C(client_id_1C, contact, _amo_acc, _repo1C);
                     _log.Add($"Updated client in 1C {client_id_1C}.");
 
+                    _filter.AddEntity(_contactId);
+
                     new UpdateAmoContact(client1C, _amo, _log, _filter).Run();
                 }
                 #endregion

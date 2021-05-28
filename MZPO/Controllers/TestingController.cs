@@ -148,8 +148,10 @@ namespace MZPO.Controllers
         public IActionResult Get()
         {
             //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
-            //var repo = _amo.GetAccountById(28395871).GetRepo<Contact>();
+            var repo = _amo.GetAccountById(28395871).GetRepo<Contact>();
             //var repo = _amo.GetAccountById(29490250).GetRepo<Contact>();
+
+            return Ok(repo.GetById(33636543));
 
             //return Ok(JsonConvert.SerializeObject(_filter.GetFilterEntries(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
