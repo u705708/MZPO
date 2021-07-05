@@ -47,6 +47,8 @@ namespace Integration1C
 
             if (company1C == default) throw new Exception($"Unable to update company in 1C. 1C returned no company {company_id_1C}.");
 
+            company1C.name = company.name;
+
             PopulateCFs(company, amo_acc, company1C);
 
             repo1C.UpdateCompany(company1C);

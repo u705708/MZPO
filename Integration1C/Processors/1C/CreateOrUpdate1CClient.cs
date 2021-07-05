@@ -62,10 +62,11 @@ namespace Integration1C
                     p.GetValue(client1C) is not null)
                 {
                     var value = p.GetValue(client1C);
-                    if (p.Name == "dob")
+                    if (p.Name == "dob" ||
+                        p.Name == "pass_issued_at")
                     {
-                        DateTime dob = (DateTime)p.GetValue(client1C);
-                        value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
+                        DateTime dt = (DateTime)p.GetValue(client1C);
+                        value = ((DateTimeOffset)dt.AddHours(3)).ToUnixTimeSeconds();
                     }
 
                     try { if ((string)value == "") continue; }
@@ -96,9 +97,12 @@ namespace Integration1C
                             continue;
                         }
 
-                        if (p.PropertyType == typeof(DateTime?))
+                        if (p.PropertyType == typeof(DateTime?) ||
+                            p.PropertyType == typeof(DateTime))
                         {
-                            p.SetValue(client1C, DateTimeOffset.FromUnixTimeSeconds((long)value).UtcDateTime.AddHours(3));
+                            if ((long)value < -2208996153) value = -2208996153;
+                            var dt = DateTimeOffset.FromUnixTimeSeconds((long)value).UtcDateTime.AddDays(1);
+                            p.SetValue(client1C, new DateTime(dt.Year, dt.Month, dt.Day, 0, 0, 0 ));
                             continue;
                         }
 
@@ -165,6 +169,8 @@ namespace Integration1C
             if (client1C == default) throw new Exception($"Unable to add client to 1C. 1C returned no client {client_id_1C}.");
 
             PopulateClientCFs(contact, amo_acc, client1C);
+
+            client1C.name = contact.name;
 
             repo1C.UpdateClient(client1C);
         }
@@ -256,14 +262,14 @@ namespace Integration1C
                     List<Contact> similarContacts = new();
                     if (client1C.phone is not null &&
                         client1C.phone != "")
-                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.phone}"));
+                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "")}"));
 
                     if (client1C.email is not null &&
                         client1C.email != "")
-                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.email}"));
+                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.email.Trim().Replace(" ", "")}"));
 
                     if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
-                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()), Formatting.Indented)}");
+                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { id = x.id, account_id = x.account_id }), Formatting.Indented)}");
                     #endregion
 
                     #region Check for UIDs

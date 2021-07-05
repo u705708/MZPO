@@ -12,12 +12,15 @@ namespace MZPO.ReportProcessors
     internal class CorpReportProcessor : AbstractReportProcessor, IReportProcessor
     {
         #region Definition
+        private readonly object _locker;
+
         /// <summary>
         /// Формирует отчёт по продажам для корпоративного отдела.
         /// </summary>
         internal CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token) 
         {
+            _locker = new();
         }
         #endregion
 
@@ -266,7 +269,7 @@ namespace MZPO.ReportProcessors
                 (x.custom_fields_values.Any(y => y.field_id == 118675)) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value >= _dateFrom) &&
                 ((long)x.custom_fields_values.FirstOrDefault(y => y.field_id == 118675).values[0].value <= _dateTo)
-                ).ToList();
+                );
             #endregion
 
             #region Processing
@@ -280,7 +283,7 @@ namespace MZPO.ReportProcessors
                 l => {
                     i++;
                     var request = GetProcessedLeadRequest(l, manager.Item1, _compRepo);
-                    requestContainer.Add(request);
+                    lock (_locker) requestContainer.Add(request);
                     if (i % 25 == 0)
                         GC.Collect();
                 });
@@ -304,8 +307,6 @@ namespace MZPO.ReportProcessors
             }
 
             await PrepareSheets();
-
-            List<Task> tasks = new();
 
             foreach (var manager in managersCorp)
             {

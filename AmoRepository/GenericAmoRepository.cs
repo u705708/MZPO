@@ -32,40 +32,6 @@ namespace MZPO.AmoRepo
         #endregion
 
         #region Supplementary methods
-        #region Old realization --to delete
-        public IEnumerable<T> GetEmbedded(EntityList entity)
-        {
-            if ((entity is not null) && (entity._embedded is not null))
-                return (List<T>)entity.GetType().GetNestedType("Embedded").GetField(_entityLink).GetValue(entity._embedded);
-            return new List<T>();
-        }
-
-        private EntityList GetList(string uri)
-        {
-            EntityList entityList = new() { _links = new Dictionary<string, EntityList.Links>() };
-            entityList._links.Add("next", new EntityList.Links() { href = uri });
-
-            while (entityList._links.ContainsKey("next"))
-            {
-                AmoRequest request = new("GET", entityList._links["next"].href, _auth);
-                string response;
-
-                var next = entityList._links["next"].href;
-                try { response = request.GetResponseAsync().Result; }
-                catch (Exception e) { /*throw new Exception($"Unable to get response from amo: {e}");*/ break; }
-
-                if (response == "") break;
-
-                try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), entityList); }
-                catch { break; }
-
-                if (entityList._links.ContainsKey("next") && next == entityList._links["next"].href) break;
-            }
-
-            return entityList;
-        } 
-        #endregion
-
         private static O GetResult<O>(AmoRequest request, O o)
         {
             try 

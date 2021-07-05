@@ -24,7 +24,7 @@ namespace MZPO.ReportProcessors
         protected readonly int _dateTo;
         protected readonly string _taskId;
 
-        protected List<(int?, int, int, int?)> _longAnsweredLeads;
+        protected List<(int?, int, long, int?)> _longAnsweredLeads;
 
         internal AbstractReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskId, CancellationToken token)
         {
@@ -48,14 +48,12 @@ namespace MZPO.ReportProcessors
             (2976226, "Вера Гладкова"),
             (3835801, "Наталья Кубышина"),
             (6158035, "Анастасия Матюк"),
-            (6769426, "Рюмина Наталья"),
-            (6929800, "Саида Исмаилова"),
             (2375152, "Карен Оганисян"),
             (3813670, "Федорова Александра"),
             (6102562, "Валерия Лукьянова"),
-            //(6410290, "Вероника Бармина"),
             (6872548, "Оксана Полукеева"),
-            //(6890059, "Аскер Абулгазинов"),
+            (6929800, "Саида Исмаилова"),
+            (7087360, "Наталия Завгородняя"),
         };
 
         protected static readonly List<(int, string)> managersCorp = new()
@@ -106,11 +104,11 @@ namespace MZPO.ReportProcessors
         /// <param name="leadRepo">Репозиторий сделок.</param>
         /// <param name="contRepo">Репозиторий контактов.</param>
         /// <returns>Время ответа клиенту в секундах</returns>
-        protected static int GetLeadResponseTime(Lead lead, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
+        protected static long GetLeadResponseTime(Lead lead, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
         {
-            List<int> replyTimestamps = new();
+            List<long> replyTimestamps = new();
 
-            int timeOfReference = (int)lead.created_at;
+            long timeOfReference = (long)lead.created_at;
 
             #region Результат звонка
             string cfValue = lead.GetCFStringValue(644675);
@@ -120,9 +118,9 @@ namespace MZPO.ReportProcessors
             #region Время суток
             var dt = DateTimeOffset.FromUnixTimeSeconds(timeOfReference).UtcDateTime;
             if (dt.Hour > 17)
-                timeOfReference = (int)((DateTimeOffset)new DateTime(dt.Year, dt.Month, dt.Day, 11, 0, 0).AddDays(1)).ToUnixTimeSeconds();
+                timeOfReference = ((DateTimeOffset)new DateTime(dt.Year, dt.Month, dt.Day, 11, 0, 0).AddDays(1)).ToUnixTimeSeconds();
             else if (dt.Hour < 6)
-                timeOfReference = (int)((DateTimeOffset)new DateTime(dt.Year, dt.Month, dt.Day, 11, 0, 0)).ToUnixTimeSeconds();
+                timeOfReference = ((DateTimeOffset)new DateTime(dt.Year, dt.Month, dt.Day, 11, 0, 0)).ToUnixTimeSeconds();
             #endregion
 
             var allEvents = leadRepo.GetEntityEvents(lead.id).ToList();
@@ -133,11 +131,11 @@ namespace MZPO.ReportProcessors
 
             if (responsibilityChangeVents.Any(x => x.value_before[0].responsible_user.id == 2576764 &&                                          //Если меняли ответственного с Администартора
                 x.value_after[0].responsible_user.id == lead.responsible_user_id))                                                              //На текущего
-                timeOfReference = (int)responsibilityChangeVents.First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
+                timeOfReference = (long)responsibilityChangeVents.First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
 
             else if (responsibilityChangeVents.Any(x => x.value_after[0].responsible_user.id == lead.responsible_user_id) &&                    //Если меняли на текущего
                 responsibilityChangeVents.Any(x => x.value_before[0].responsible_user.id == 2576764))                                           //И с Администратора
-                timeOfReference = (int)responsibilityChangeVents.First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
+                timeOfReference = (long)responsibilityChangeVents.First(x => x.value_before[0].responsible_user.id == 2576764).created_at;
             #endregion
 
             #region Собираем данные из контактов
@@ -152,13 +150,13 @@ namespace MZPO.ReportProcessors
             #region Cообщения в чат
             foreach (var e in allEvents)
                 if (e.type == "outgoing_chat_message" || e.type == "incoming_chat_message")
-                    replyTimestamps.Add((int)e.created_at);
+                    replyTimestamps.Add((long)e.created_at);
             #endregion
 
             #region Исходящее письмо
             foreach (var n in allNotes)
                 if (n.note_type == "amomail_message" && n.parameters.income != true)
-                    replyTimestamps.Add((int)n.created_at);
+                    replyTimestamps.Add((long)n.created_at);
             #endregion
 
             #region Звонки
@@ -175,7 +173,7 @@ namespace MZPO.ReportProcessors
                 if (callNote.parameters is not null && callNote.parameters.duration > 0)
                     duration = (int)callNote.parameters.duration;
 
-                int actualCallTime = (int)e.created_at - duration;
+                long actualCallTime = (long)e.created_at - duration;
 
                 if ((e.type == "outgoing_call") && (actualCallTime > lead.created_at))
                     replyTimestamps.Add(actualCallTime);
@@ -197,9 +195,9 @@ namespace MZPO.ReportProcessors
         /// <param name="leadRepo">Репозиторий сделок.</param>
         /// <param name="contRepo">Репозиторий контактов.</param>
         /// <returns>Среднее время ответа клиенту в секундах</returns>
-        protected static double GetAverageResponseTime(IEnumerable<Lead> leads, List<(int?, int, int, int?)> longAnsweredLeads, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
+        protected static double GetAverageResponseTime(IEnumerable<Lead> leads, List<(int?, int, long, int?)> longAnsweredLeads, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
         {
-            List<int> responseTimes = new();
+            List<long> responseTimes = new();
 
             Parallel.ForEach(
                 leads,
@@ -232,7 +230,7 @@ namespace MZPO.ReportProcessors
         /// <returns>Среднее время ответа клиенту в секундах</returns>
         protected static double GetAverageResponseTime(IEnumerable<Lead> leads, IAmoRepo<Lead> leadRepo, IAmoRepo<Contact> contRepo)
         {
-            List<int> responseTimes = new();
+            List<long> responseTimes = new();
 
             Parallel.ForEach(
                 leads,

@@ -1,0 +1,156 @@
+﻿using MZPO.AmoRepo;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MZPO.LeadProcessors
+{
+    internal static class TagList
+    {
+        private static List<Tag> tags = new()
+        {
+            new() { id = 126173, name = "AmoCRMKarbuh" },
+            new() { id = 139175, name = "Заявка с сайта" },
+            new() { id = 203033, name = "insta" },
+            new() { id = 217501, name = "whatsapp" },
+            new() { id = 246111, name = "skillbank.su" },
+            new() { id = 246137, name = "mzpo-s.ru" },
+            new() { id = 246139, name = "Обратный звонок" },
+            new() { id = 246141, name = "mzpokurs.com" },
+            new() { id = 246165, name = "mirk.msk.ru" },
+            new() { id = 246169, name = "Заявки из корзины" },
+            new() { id = 246171, name = "mzpo.education" },
+            new() { id = 246195, name = "cruche-academy.ru" },
+            new() { id = 246263, name = "Оставьте заявку" },
+            new() { id = 246292, name = "Коллтрекинг" },
+            new() { id = 246296, name = "Обратная связь" },
+            new() { id = 246481, name = "JivoSite" },
+            new() { id = 247089, name = "Консультация (БП)" },
+            new() { id = 247149, name = "Кузнецкий мост" },
+            new() { id = 247157, name = "Пушкинская" },
+            new() { id = 247161, name = "Менделеевская" },
+            new() { id = 247887, name = "Прямой звонок" },
+            new() { id = 250295, name = "Емейлтрекинг" },
+            new() { id = 250349, name = "Записаться на курсы сестринского дела" },
+            new() { id = 255851, name = "Повторные продажи" },
+            new() { id = 260779, name = "Академ" },
+            new() { id = 261313, name = "Допродажа" },
+            new() { id = 261321, name = "Повторная продажа" },
+            new() { id = 261879, name = "obr-mast.ru" },
+            new() { id = 263379, name = "inst-s.ru" },
+            new() { id = 264021, name = "WZ (mzpokurs.com_WA)" },
+            new() { id = 264023, name = "WZ (mirk.msk_WA)" },
+            new() { id = 264027, name = "WZ (cruche-academy_WA)" },
+            new() { id = 264031, name = "WZ (mzpo.education_WA)" },
+            new() { id = 264061, name = "WZ (mzpo-s.ru_WA)" },
+            new() { id = 264265, name = "WZ (skillbank_WA)" },
+            new() { id = 264293, name = "курсы-сестринского-дела.рф" },
+            new() { id = 264383, name = "Ручная" },
+            new() { id = 264543, name = "Уволенный менеджер" },
+            new() { id = 264863, name = "vkontakte" },
+            new() { id = 265395, name = "telegram" },
+            new() { id = 265935, name = "obr-byx.ru" },
+            new() { id = 265941, name = "zoon" },
+            new() { id = 266015, name = "2gis" },
+            new() { id = 266771, name = "Отложенный спрос" },
+            new() { id = 267095, name = "Актуализация" },
+            new() { id = 267135, name = "Взято в работу" },
+            new() { id = 267137, name = "Отправлено КП" },
+            new() { id = 267301, name = "obr-men.ru" },
+            new() { id = 267303, name = "obr-komp.ru" },
+            new() { id = 267307, name = "obr-sek.ru" },
+            new() { id = 267309, name = "obr-diz.ru" },
+            new() { id = 267353, name = "Реанимация" },
+            new() { id = 267355, name = "Вызревание" },
+            new() { id = 267359, name = "Распределение" },
+            new() { id = 267417, name = "Промоутер" },
+            new() { id = 267971, name = "курсы-косметологии.рф" },
+            new() { id = 268655, name = "NPS" },
+            new() { id = 268981, name = "8-11" },
+            new() { id = 269475, name = "mirk.vrach.kosmetolog" },
+            new() { id = 269611, name = "Обзвон" },
+            new() { id = 269973, name = "mzpo2amo" },
+            new() { id = 270109, name = "https://app.jivosite.com" },
+            new() { id = 270157, name = "WZ" },
+            new() { id = 270277, name = "skillbank.ru" },
+            new() { id = 270681, name = "Тест" },
+            new() { id = 270683, name = "facebook" },
+            new() { id = 270809, name = "WZ (mzpo-s.ru_whatsapp)" },
+            new() { id = 271285, name = "Рассылка логопедический массаж" },
+            new() { id = 271741, name = "Рассылка фитнес-инструктор" },
+            new() { id = 272389, name = "Рассылка логопедический массаж 07" },
+            new() { id = 272529, name = "Акция" },
+            new() { id = 272531, name = "Новый продукт" },
+            new() { id = 272595, name = "дубль" },
+            new() { id = 272649, name = "дв" },
+            new() { id = 272717, name = "Рассылка классический массаж группа на 19.02.2021" },
+            new() { id = 272745, name = "le" },
+            new() { id = 272777, name = "ммц" },
+            new() { id = 272807, name = "акция" },
+            new() { id = 272823, name = "#акция" },
+            new() { id = 272857, name = "ДОД 25.02.2021" },
+            new() { id = 272921, name = "Коллтрекинг mzpo.education" },
+            new() { id = 272931, name = "Мастер пирсинга (классический и интимный)" },
+            new() { id = 273127, name = "ucheba.ru" },
+            new() { id = 273177, name = "ак" },
+            new() { id = 273187, name = "ПРИНИМАЕТ РЕШЕНИЕ" },
+            new() { id = 273189, name = "БУДЕТ ОБУЧАТЬСЯ ПОЗЖЕ" },
+            new() { id = 273191, name = "ОЖИДАНИЕ ОПЛАТЫ" },
+            new() { id = 273359, name = "Вебинар НМО неврология" },
+            new() { id = 273375, name = "_test" },
+            new() { id = 273457, name = "ДОД 18.03.2021" },
+            new() { id = 273459, name = "ДОД" },
+            new() { id = 273475, name = "WZ (mzpo-s)" },
+            new() { id = 273657, name = "допродажа" },
+            new() { id = 273659, name = "ucheba" },
+            new() { id = 274055, name = "ДОД 13.04.2021" },
+            new() { id = 274089, name = "B" },
+            new() { id = 274091, name = "A" },
+            new() { id = 275147, name = "WZ (mirkmsk)" },
+            new() { id = 275165, name = "FB_vrach-kosmetolog" },
+            new() { id = 275191, name = "1C" },
+            new() { id = 275209, name = "fb3820367318058247" },
+            new() { id = 275217, name = "FB_dod" },
+            new() { id = 275219, name = "Fb_fitnes-instruktor" },
+            new() { id = 275317, name = "fb898143201038966" },
+            new() { id = 275327, name = "!I" },
+            new() { id = 275443, name = "Промо" },
+            new() { id = 275451, name = "WeGym" },
+            new() { id = 275555, name = "Тайский массаж мешочками" },
+            new() { id = 275597, name = "0,2в " },
+            new() { id = 275599, name = "321" },
+            new() { id = 275601, name = ",ЭЮЖ ячитьб" },
+            new() { id = 275635, name = "#ДОД" },
+            new() { id = 275643, name = "ЛФК пояс конечностей" },
+            new() { id = 275655, name = "Fb_buhgalterskiekursy" },
+            new() { id = 275709, name = "fb1003231000213141" },
+            new() { id = 275737, name = "СКК-Д" },
+            new() { id = 275757, name = "#ДОД в ППИЭ" },
+            new() { id = 275839, name = "WZ (OS_1_WA)" },
+            new() { id = 275841, name = "WZ (OS_2_WA)" },
+            new() { id = 276305, name = "ДОД 20.05.2021" },
+            new() { id = 276321, name = "#" },
+            new() { id = 276629, name = "#рассрочка" },
+            new() { id = 276785, name = "#акция " },
+            new() { id = 276829, name = "Вебинар" },
+            new() { id = 276831, name = "Мероприятие" },
+            new() { id = 277073, name = "#акция 1" },
+        };
+
+        public static Tag GetTagByName(string name)
+        {
+            if (!tags.Any(x => x.name == name)) return null;
+
+            return tags.First(x => x.name == name);
+        }
+
+        public static Tag GetTagByid(int id)
+        {
+            if (!tags.Any(x => x.id == id)) return null;
+
+            return tags.First(x => x.id == id);
+        }
+    }
+}

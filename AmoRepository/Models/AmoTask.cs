@@ -19,7 +19,7 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Дата создания задачи, передается в Unix Timestamp.
         /// </summary>
-        public int? created_at { get; set; }
+        public long? created_at { get; set; }
         /// <summary>
         /// ID пользователя, обновившего задачу.
         /// </summary>
@@ -27,7 +27,7 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Дата обновления задачи, передается в Unix Timestamp.
         /// </summary>
-        public int? updated_at { get; set; }
+        public long? updated_at { get; set; }
         /// <summary>
         /// ID пользователя, ответственного за задачу.
         /// </summary>
@@ -64,7 +64,7 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Дата, когда задача должна быть завершена, передается в Unix Timestamp
         /// </summary>
-        public int complete_till { get; set; }
+        public long complete_till { get; set; }
         /// <summary>
         /// Результат выполнения задачи.
         /// </summary>

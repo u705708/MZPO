@@ -65,8 +65,7 @@ namespace MZPO.LeadProcessors
             if (custom_fields_values.Any(x => x.field_id == fieldId))
                 return (string)custom_fields_values.First(x => x.field_id == fieldId).values[0].value;
 
-            else if (lead.custom_fields_values is not null &&
-                    lead.custom_fields_values.Any(x => x.field_id == fieldId))
+            else if (lead.HasCF(fieldId))
                 return (string)lead.custom_fields_values.First(x => x.field_id == fieldId).values[0].value;
 
             else return null;
@@ -93,10 +92,15 @@ namespace MZPO.LeadProcessors
 
         protected string SetTag(string tagValue)
         {
-            if (!tags.Any(x => x.name == tagValue))
-                tags.Add(new Tag() { name = tagValue });
+            Tag tag = TagList.GetTagByName(tagValue);
 
-            return tagValue;
+            if (tag is not null)
+            {
+                tags.Add(tag);
+                return tag.name;
+            }
+
+            return "";
         }
 
         protected bool CheckTag(string tagValue) => tags.Any(x => x.name == tagValue);
@@ -146,6 +150,21 @@ namespace MZPO.LeadProcessors
         {
             try { _leadRepo.AddNotes(note); }
             catch (Exception e) { throw new Exception($"Error adding note: {e}"); }
+        }
+
+        protected void ProcessInstaName()
+        {
+            if (lead._embedded is not null &&
+                lead._embedded.contacts is not null)
+            {
+                var contRepo = _acc.GetRepo<Contact>();
+                var contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
+                if (contact.HasCF(640695))
+                {
+                    var instaWZ = contact.GetCFStringValue(640695);
+                    contRepo.AddNotes(new Note() { entity_id = contact.id, note_type = "common", parameters = new Note.Params() { text = $"https://www.instagram.com/{instaWZ.Replace("@", "").Trim()}/" } });
+                }
+            }
         }
         #endregion
 

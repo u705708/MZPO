@@ -17,11 +17,11 @@ namespace MZPO.AmoRepo
 		/// <summary>
 		/// Дата создания элемента списка, передается в Unix Timestamp.
 		/// </summary>
-		public int created_at { get; set; }
+		public long created_at { get; set; }
 		/// <summary>
 		/// Дата изменения элемента списка, передается в Unix Timestamp.
 		/// </summary>
-		public int updated_at { get; set; }
+		public long updated_at { get; set; }
 		/// <summary>
 		/// ID каталога, которому принадлежит элемент.
 		/// </summary>

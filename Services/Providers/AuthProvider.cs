@@ -6,6 +6,7 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MZPO.Services
 {
@@ -99,8 +100,11 @@ namespace MZPO.Services
 
             try
             {
-                HttpResponseMessage responseMessage = httpClient.SendAsync(request).Result;
-                return responseMessage.Content.ReadAsStringAsync().Result;
+                _amoConnectionsSemaphore.Wait();
+                var responseMessage = httpClient.SendAsync(request);
+                Task.Delay(1000).Wait();
+                _amoConnectionsSemaphore.Release();
+                return responseMessage.Result.Content.ReadAsStringAsync().Result;
             }
             catch (Exception e)
             {

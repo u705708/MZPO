@@ -40,9 +40,12 @@ namespace Integration1C
                             continue;
                         }
 
-                        if (p.PropertyType == typeof(DateTime?))
+                        if (p.PropertyType == typeof(DateTime?) ||
+                            p.PropertyType == typeof(DateTime))
                         {
-                            p.SetValue(client1C, DateTimeOffset.FromUnixTimeSeconds((long)value).UtcDateTime.AddHours(3));
+                            if ((long)value < -2208996153) value = -2208996153;
+                            var dt = DateTimeOffset.FromUnixTimeSeconds((long)value).UtcDateTime.AddDays(1);
+                            p.SetValue(client1C, new DateTime(dt.Year, dt.Month, dt.Day, 0, 0, 0));
                             continue;
                         }
 
@@ -56,6 +59,8 @@ namespace Integration1C
             if (client1C == default) throw new Exception($"Unable to update client to 1C. 1C returned no client {client_id_1C}.");
 
             PopulateClientCFs(contact, amo_acc, client1C);
+
+            client1C.name = contact.name;
 
             repo1C.UpdateClient(client1C);
 

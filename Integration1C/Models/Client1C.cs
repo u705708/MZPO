@@ -13,13 +13,29 @@ namespace Integration1C
         public string email { get; set; }
         public string phone { get; set; }
         public string name { get; set; }
-        [JsonConverter(typeof(DateFormatConverter))]
-        public DateTime? dob { get; set; }
+        //[JsonConverter(typeof(DateFormatConverter))]
+        //public DateTime? dob { get; set; }
         public string pass_serie { get; set; }
         public string pass_number { get; set; }
         public string pass_issued_by { get; set; }
-        public string pass_issued_at { get; set; }
         public string pass_dpt_code { get; set; }
+
+        private DateTime _pass_issued_at;
+        [JsonConverter(typeof(DateFormatConverter))]
+        public DateTime pass_issued_at {
+            get
+            {
+                if (_pass_issued_at < new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc))
+                    return new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                return _pass_issued_at;
+            }
+            set
+            {
+                if (value < DateTime.UnixEpoch)
+                    _pass_issued_at = DateTime.UnixEpoch;
+                else _pass_issued_at = value;
+            }
+        }
 #pragma warning restore IDE1006 // Naming Styles    
 
         public class DateFormatConverter : IsoDateTimeConverter

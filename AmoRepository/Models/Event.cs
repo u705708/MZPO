@@ -31,7 +31,7 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Дата создания события, передается в Unix Timestamp.
         /// </summary>
-        public int? created_at { get; set; }
+        public long? created_at { get; set; }
         /// <summary>
         /// Список с изменениями по событию.
         /// </summary>

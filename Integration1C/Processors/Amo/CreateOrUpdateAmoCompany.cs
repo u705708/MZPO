@@ -130,7 +130,7 @@ namespace Integration1C
 
             try
             {
-                #region Checking if company already linked to entity and updationg if possible
+                #region Checking if company already linked to entity and updating if possible
                 if (_company1C.amo_ids.Any(x => x.account_id == _amo_acc))
                 {
                     foreach (var c in _company1C.amo_ids.Where(x => x.account_id == _amo_acc))
@@ -153,15 +153,15 @@ namespace Integration1C
                 List<Company> similarCompanies = new();
                 if (_company1C.INN is not null &&
                     _company1C.INN != "")
-                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.INN}"));
+                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.INN.Trim().Replace(" ", "")}"));
 
                 if (_company1C.phone is not null &&
                     _company1C.phone != "")
-                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.phone}"));
+                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "")}"));
 
                 if (_company1C.email is not null &&
                     _company1C.email != "")
-                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.email}"));
+                    similarCompanies.AddRange(_compRepo.GetByCriteria($"query={_company1C.email.Trim().Replace(" ", "")}"));
                 #endregion
 
                 #region Updating found company

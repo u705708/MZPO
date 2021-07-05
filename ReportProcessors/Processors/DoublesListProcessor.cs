@@ -12,11 +12,13 @@ namespace MZPO.ReportProcessors
     internal class DoublesListProcessor : AbstractReportProcessor, IReportProcessor
     {
         private readonly(int, int) dataRange;
+        private readonly object _locker;
 
         internal DoublesListProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
             dataRange =((int)dateFrom, (int)dateTo);
+            _locker = new();
         }
 
         //private readonly List<(int, int)> dataRanges = new()
@@ -135,9 +137,9 @@ namespace MZPO.ReportProcessors
                                 contactsWithSimilarMail.AddRange(contRepo.GetByCriteria($"query={v.value}").Select(x => (int)x.id));
 
                     if (contactsWithSimilarPhone.Distinct().Count() > 1)
-                        doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264911).values[0].value));
+                        lock (_locker) doubleContacts.Add(((int)c.id, c.GetCFStringValue(264911).Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "")));
                     if (contactsWithSimilarMail.Distinct().Count() > 1)
-                        doubleContacts.Add(((int)c.id, (string)c.custom_fields_values.First(x => x.field_id == 264913).values[0].value));
+                        lock (_locker) doubleContacts.Add(((int)c.id, c.GetCFStringValue(264913).Trim()));
                 });
 
             _processQueue.UpdateTaskName($"{_taskId}", $"Doubles check: {dates}, finalizing results");
@@ -148,7 +150,7 @@ namespace MZPO.ReportProcessors
             List<Request> requestContainer = new();
 
             foreach (var l in l2)
-                requestContainer.Add(GetRowRequest(0, GetCellData(l.cid, l.cont.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", ""))));
+                requestContainer.Add(GetRowRequest(0, GetCellData(l.cid, l.cont)));
 
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
 

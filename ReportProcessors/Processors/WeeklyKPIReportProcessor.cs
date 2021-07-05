@@ -322,7 +322,7 @@ namespace MZPO.ReportProcessors
             if (finishedLeads > 0)
                 averageTime = allLeads.AsParallel()
                     .Where(x => (x.status_id == 142) || (x.status_id == 143))
-                    .Select(x => (int)x.closed_at - (int)x.created_at).Average() / 86400;
+                    .Select(x => (long)x.closed_at - (long)x.created_at).Average() / 86400;
 
             List<Request> requestContainer = new();
 
@@ -340,7 +340,7 @@ namespace MZPO.ReportProcessors
             foreach (var m in managersRet)
             {
                 #region Prepare Data
-                List<(int?, int, int, int?)> leads = new();
+                List<(int?, int, long, int?)> leads = new();
                 if (_longAnsweredLeads.Any(x => x.Item1 == m.Item1))
                     leads.AddRange(_longAnsweredLeads.Where(x => x.Item1 == m.Item1));
                 var rows = new List<RowData>();

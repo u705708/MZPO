@@ -204,13 +204,13 @@ namespace MZPO.LeadProcessors
         #region Ожидание телефонии
         private async Task CallResultWaiter()                                                                                 //Метод проверяет, была ли сделка из телефонии, если да, то ждёт полчаса
         {
-            var source = GetFieldValue(639085);
-            var application = GetFieldValue(639075);
-            if (source is null) return;
-            if (source.Contains("Прямой") ||
-                source.Contains("Коллтрекинг") ||
-                (source.Contains("instagram") && (application is null || !application.Contains("instagram"))))
-            {
+            //var source = GetFieldValue(639085);
+            //var application = GetFieldValue(639075);
+            //if (source is null) return;
+            //if (source.Contains("Прямой") ||
+            //    source.Contains("Коллтрекинг") ||
+            //    (source.Contains("instagram") && (application is null || !application.Contains("instagram"))))
+            //{
                 for (int i = 1; i <= 60; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
@@ -219,7 +219,7 @@ namespace MZPO.LeadProcessors
                     try { await Task.Delay((int)TimeSpan.FromSeconds(30).TotalMilliseconds, _token); }
                     catch { _log.Add($"LeadProcessor {_leadNumber}: Task cancelled."); }
                 }
-            }
+            //}
             return;
         }
         #endregion
@@ -343,8 +343,8 @@ namespace MZPO.LeadProcessors
                     (3812128, new List<string>(){"mirk.msk.ru", "facebook"}, "mirk.msk.ru", "mirk.msk.ru-facebook", "facebook", 2576764),
                     (3812131, new List<string>(){"mzpo.education", "facebook"}, "mzpo.education", "mzpo.education-facebook", "facebook", 2576764),
                     (3812134, new List<string>(){"skillbank.su", "facebook"}, "skillbank.su", "skillbank.su-facebook", "facebook", 2576764),
-                    (3812137, new List<string>(){ "cruche-academy.ru", "facebook"}, "cruche-academy.ru", "cruche-academy.ru-facebook", "facebook", 2576764),
-                    (4065031, new List<string>(){ "ucheba.ru"}, "ucheba.ru", "Заявка с почты", "Заявка с почты uchebaru@mzpo-s.ru", 2576764),
+                    (3812137, new List<string>(){"cruche-academy.ru", "facebook"}, "cruche-academy.ru", "cruche-academy.ru-facebook", "facebook", 2576764),
+                    (4065031, new List<string>(){"ucheba.ru"}, "ucheba.ru", "Заявка с почты", "Заявка с почты uchebaru@mzpo-s.ru", 2576764),
                 };                            //Список воронок соцсетей и соответствующих значений полей
 
             if (pipelines.Any(x => x.Item1 == lead.pipeline_id))                                                        //Если сделка в одной из воронок из списка
@@ -358,6 +358,9 @@ namespace MZPO.LeadProcessors
                 SetFieldValue(639085, line.Item4);                                                                      //Источник(Маркер)
                 SetFieldValue(639075, line.Item5);                                                                      //Тип обращения
                 SetFieldValue(644675, line.Item5);                                                                      //Результат звонка
+
+                if (line.Item5 == "instagram")
+                    ProcessInstaName();
 
                 Lead result = new() { responsible_user_id = line.Item6 };                                               //Создаём экземпляр сделки для передачи в амо
 
@@ -393,11 +396,13 @@ namespace MZPO.LeadProcessors
                 if (lead.pipeline_id == 2231320 ||                                                                          //Если сделка в корп. воронке
                     lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
                 {
+                    bool sip = lead.name.Contains("sip");
+                    
                     FormName();
                     PhaseOne();
                     AddNote("Phase 1 finished.");
-
-                    await CallResultWaiter();
+                    if (sip)
+                        await CallResultWaiter();
 
                     UpdateLeadFromAmo();                                                                                    //Обновляем информацию о сделке, если она изменилась за время ожидания
 

@@ -16,7 +16,7 @@ namespace Integration1C
                                 { "pass_serie", 715535 },
                                 { "pass_number", 715537 },
                                 { "pass_issued_by", 650841 },
-                                { "pass_issued_at", 715539 },
+                                { "pass_issued_at", 718557 },
                                 { "pass_dpt_code", 710419 },
                             }
             },
@@ -29,7 +29,7 @@ namespace Integration1C
                                 { "pass_serie", 748393 },
                                 { "pass_number", 748395 },
                                 { "pass_issued_by", 748399 },
-                                { "pass_issued_at", 751223 },
+                                { "pass_issued_at", 753403 },
                                 { "pass_dpt_code", 748401 },
                             }
             },
@@ -43,7 +43,7 @@ namespace Integration1C
                                 { "pass_serie", 657479 },
                                 { "pass_number", 657483 },
                                 { "pass_issued_by", 657487 },
-                                { "pass_issued_at", 657485 },
+                                { "pass_issued_at", 996939 },
                                 { "pass_dpt_code", 657537 },
                             }
             },

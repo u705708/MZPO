@@ -15,37 +15,6 @@ namespace Integration1C
             _cred1C = cred1C;
         }
 
-        private readonly Course1C _mockCourse = new Course1C()
-        {
-            product_id_1C = new Guid("1205f8a9-0a5a-47d1-99e2-30a2d2823948"),
-            amo_ids = new()
-            {
-                new()
-                {
-                    account_id = 19453687,
-                    entity_id = 1795667
-                },
-                new()
-                {
-                    account_id = 28395871,
-                    entity_id = 1463133
-                }
-            },
-            name = "Тестовый курс",
-            short_name = "Тест",
-            ItemPrices = new() { new() { 
-                Price = 10000,
-                UID = new Guid("5bba5dc3-580c-11eb-86f0-82172a65d31e"),
-                PriceType = "Основная цена"
-            } },
-            duration = 144,
-            format = "Очный",
-            //program_id = "",
-            //group = "",
-            //requirements = "Нет",
-            supplementary_info = "Проверка"
-        };
-
         public class Result
         {
             public Guid product_id_1C { get; set; }

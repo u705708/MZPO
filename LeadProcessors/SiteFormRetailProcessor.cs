@@ -270,7 +270,9 @@ namespace MZPO.LeadProcessors
                     IEnumerable<int> processedIds;
 
                     if (similarLeads.Any() &&
-                        price == 0)
+                        price == 0 &&
+                        _formRequest.pipeline is null &&
+                        _formRequest.status is null)
                         processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log);
                     else
                         processedIds = AddNewLead(similarContacts, price, webinar, events, _formRequest, fieldIds, _leadRepo, _log);
@@ -287,14 +289,14 @@ namespace MZPO.LeadProcessors
                         {
                             GSheetsProcessor leadProcessor = new(processedIds.First(), _amo, _gSheets, _processQueue, _log, _token);
                             leadProcessor.Webinar(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email).Wait();
+                            _log.Add($"Добавлены данные о сделке {processedIds.First()} в таблицу.");
                         }
                         if (events)
                         {
                             GSheetsProcessor leadProcessor = new(processedIds.First(), _amo, _gSheets, _processQueue, _log, _token);
-                            leadProcessor.Events(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email).Wait();
+                            leadProcessor.Events(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email, processedIds.First()).Wait();
+                            _log.Add($"Добавлены данные о сделке {processedIds.First()} в таблицу.");
                         }
-
-                        _log.Add($"Добавлены данные о сделке {processedIds.First()} в таблицу.");
                     }
                 }
                 catch (Exception e)

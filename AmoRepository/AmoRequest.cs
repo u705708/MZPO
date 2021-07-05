@@ -54,6 +54,12 @@ namespace MZPO.AmoRepo
 
             var getResponse = httpClient.SendAsync(request);
 
+            //Task.Run(() =>
+            //{
+            //    Task.Delay(1000).Wait();
+            //    ss.Release();
+            //});
+
             await Task.Delay(1000);
 
             ss.Release();

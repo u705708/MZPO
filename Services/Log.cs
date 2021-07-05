@@ -1,27 +1,25 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
 
 namespace MZPO.Services
 {
     public class Log
     {
-        private readonly SemaphoreSlim _ss;
+        private readonly object _locker;
 
         public Log()
         {
-            _ss = new(1, 1);
+            _locker = new();
         }
 
         public void Add(string message)
         {
-            _ss.Wait();
-
-            using StreamWriter sw = new("log.txt", true, System.Text.Encoding.Default);
-            sw.Write("{0} : ", DateTime.Now.ToString());
-            sw.WriteLine(message);
-
-            _ss.Release();
+            lock (_locker)
+            {
+                using StreamWriter sw = new("log.txt", true, System.Text.Encoding.Default);
+                sw.Write("{0} : ", DateTime.Now.ToString());
+                sw.WriteLine(message);
+            }
         }
 
         public string GetLog()

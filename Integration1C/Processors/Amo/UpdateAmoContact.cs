@@ -32,10 +32,11 @@ namespace Integration1C
                     p.GetValue(client1C) is not null)
                 {
                     var value = p.GetValue(client1C);
-                    if (p.Name == "dob")
+                    if (p.Name == "dob" ||
+                        p.Name == "pass_issued_at")
                     {
-                        DateTime dob = (DateTime)p.GetValue(client1C);
-                        value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
+                        DateTime dt = (DateTime)p.GetValue(client1C);
+                        value = ((DateTimeOffset)dt.AddHours(3)).ToUnixTimeSeconds();
                     }
 
                     if (p.Name == "phone" || p.Name == "email") continue;

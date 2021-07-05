@@ -67,10 +67,11 @@ namespace Integration1C
                     p.GetValue(client1C) is not null)
                 {
                     var value = p.GetValue(client1C);
-                    if (p.Name == "dob")
+                    if (p.Name == "dob" ||
+                        p.Name == "pass_issued_at")
                     {
-                        DateTime dob = (DateTime)p.GetValue(client1C);
-                        value = ((DateTimeOffset)dob.AddHours(3)).ToUnixTimeSeconds();
+                        DateTime dt = (DateTime)p.GetValue(client1C);
+                        value = ((DateTimeOffset)dt.AddHours(3)).ToUnixTimeSeconds();
                     }
 
                     try { if ((string)value == "") continue; }
@@ -166,14 +167,14 @@ namespace Integration1C
                     List<Contact> similarContacts = new();
                     if (_client1C.phone is not null &&
                         _client1C.phone != "")
-                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.phone}"));
+                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "")}"));
 
                     if (_client1C.email is not null &&
                         _client1C.email != "")
-                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.email}"));
+                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.email.Trim().Replace(" ", "")}"));
 
                     if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
-                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
+                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { id = x.id, account_id = x.account_id }), Formatting.Indented)}");
                     #endregion
 
                     #region Updating found contact

@@ -175,6 +175,71 @@ namespace MZPO.LeadProcessors
             return requestContainer;
         }
 
+        private static List<Request> GetEventsHeaderRequests(int sheetId, string title)
+        {
+            List<Request> requestContainer = new();
+
+            #region Creating CellFormat for header
+            var centerAlignment = new CellFormat()
+            {
+                TextFormat = new TextFormat()
+                {
+                    Bold = true,
+                    FontSize = 10
+                },
+                HorizontalAlignment = "CENTER",
+                VerticalAlignment = "MIDDLE"
+            };
+            #endregion
+
+            #region Adding header
+            requestContainer.Add(new Request()
+            {
+                UpdateCells = new UpdateCellsRequest()
+                {
+
+                    Fields = "*",
+                    Start = new GridCoordinate() { ColumnIndex = 0, RowIndex = 0, SheetId = sheetId },
+                    Rows = new List<RowData>() { new RowData() { Values = new List<CellData>(){
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Дата обращения"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Номер сделки"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Дата мероприятия"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Название мероприятия"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Стоимость"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "ФИО слушателя"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Телефон слушателя"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Email слушателя"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Комментарий"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "ВА/-"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Да/Нет"} },
+                            } }
+                        }
+                }
+            });
+            #endregion
+
+            #region Adjusting column width
+            var width = new List<int>() { 120, 108, 132, 360, 84, 144, 144, 144, 120, 64, 64 };
+            int i = 0;
+
+            foreach (var c in width)
+            {
+                requestContainer.Add(new Request()
+                {
+                    UpdateDimensionProperties = new UpdateDimensionPropertiesRequest()
+                    {
+                        Fields = "PixelSize",
+                        Range = new DimensionRange() { SheetId = sheetId, Dimension = "COLUMNS", StartIndex = i, EndIndex = i + 1 },
+                        Properties = new DimensionProperties() { PixelSize = c }
+                    }
+                });
+                i++;
+            }
+            #endregion
+
+            return requestContainer;
+        }
+
         private static int GetWebinarSheetId(string title, SheetsService service, string spreadsheetId)
         {
             #region Retrieving spreadsheet
@@ -182,8 +247,8 @@ namespace MZPO.LeadProcessors
             #endregion
 
             #region Deleting existing sheets except first
-            if (spreadsheet.Sheets.Any(x => x.Properties.Title == title))
-                return (int)spreadsheet.Sheets.First(x => x.Properties.Title == title).Properties.SheetId;
+            if (spreadsheet.Sheets.Any(x => x.Properties.Title.Contains(title)))
+                return (int)spreadsheet.Sheets.First(x => x.Properties.Title.Contains(title)).Properties.SheetId;
             #endregion
 
             MD5 md5Hasher = MD5.Create();
@@ -211,6 +276,56 @@ namespace MZPO.LeadProcessors
             #endregion
 
             requestContainer.AddRange(GetWebinarHeaderRequests(sheetId, title));
+
+            var batchRequest = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = requestContainer
+            };
+
+            service.Spreadsheets.BatchUpdate(batchRequest, spreadsheetId).Execute();
+
+            return sheetId;
+        }
+
+        private static int GetEventsSheetId(string title, SheetsService service, string spreadsheetId)
+        {
+            #region Retrieving spreadsheet
+            var spreadsheet = service.Spreadsheets.Get(spreadsheetId).Execute();
+            #endregion
+
+            #region Deleting existing sheets except first
+            if (spreadsheet.Sheets.Any(x => x.Properties.Title.Contains(title)))
+                return (int)spreadsheet.Sheets.First(x => x.Properties.Title.Contains(title)).Properties.SheetId;
+            #endregion
+
+            MD5 md5Hasher = MD5.Create();
+            var hashed = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(title));
+            int sheetId = BitConverter.ToUInt16(hashed, 0) + BitConverter.ToUInt16(hashed, 3) + BitConverter.ToUInt16(hashed, 6) + BitConverter.ToUInt16(hashed, 8);
+
+            #region Adding sheet
+            List<Request> requestContainer = new()
+            {
+                new()
+                {
+                    AddSheet = new AddSheetRequest()
+                    {
+                        Properties = new SheetProperties()
+                        {
+                            GridProperties = new GridProperties()
+                            {
+                                ColumnCount = 11,
+                                FrozenRowCount = 1,
+                                RowCount = 1000
+                            },
+                            Title = title,
+                            SheetId = sheetId
+                        }
+                    }
+                }
+            };
+            #endregion
+
+            requestContainer.AddRange(GetEventsHeaderRequests(sheetId, title));
 
             var batchRequest = new BatchUpdateSpreadsheetRequest
             {
@@ -493,7 +608,7 @@ namespace MZPO.LeadProcessors
             }
         }
 
-        public async Task Events(string inDate, string inName, int inPrice, string inPerson, string inPhone, string inEmail)
+        public async Task Events(string inDate, string inName, int inPrice, string inPerson, string inPhone, string inEmail, int leadId)
         {
             if (_token.IsCancellationRequested)
             {
@@ -502,19 +617,18 @@ namespace MZPO.LeadProcessors
             try
             {
                 string spreadsheetId = "1G0podkeCiVDku2phod_2BgphfjUgWBPlmlFnZTWaqP8";
-                int sheetId = 972104398;
+                int sheetId = DateTime.TryParse(inDate, out DateTime DT) ? GetEventsSheetId(DT.ToShortDateString(), _service, spreadsheetId) : 0;
 
-                string applicationDate = $"{DateTime.UtcNow.AddHours(3).ToShortDateString()} {DateTime.UtcNow.AddHours(3).ToShortTimeString()}";
-                FormulaCell leadId = new() { formula = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{_leadNumber}"", ""{_leadNumber}"")" };
-                //string date = inDate is null ? "" : inDate;
-                string date = DateTime.TryParse(inDate, out DateTime DT)? DT.ToShortDateString() : inDate is null ? "" : inDate;
-                string name = inName is null ? "" : inName;
-                string price = inPrice == 0 ? "бесплатно" : inPrice.ToString();
-                string person = inPerson is null ? "" : inPerson;
-                string phone = inPhone is null ? "" : inPhone;
-                string email = inEmail is null ? "" : inEmail;
+                string A = DateTime.UtcNow.AddHours(3).ToShortDateString();
+                FormulaCell B = new() { formula = $@"=HYPERLINK(""https://mzpoeducationsale.amocrm.ru/leads/detail/{leadId}"", ""{leadId}"")" };
+                string C = inDate;
+                string D = inName is null ? "" : inName; 
+                string E = inPrice == 0 ? "бесплатно" : inPrice.ToString();
+                string F = inPerson is null ? "" : inPerson;
+                string G = inPhone is null ? "" : inPhone;
+                string H = inEmail is null ? "" : inEmail;
 
-                await SaveData(_service, spreadsheetId, sheetId, applicationDate, leadId, date, name, price, person, phone, email);
+                await SaveData(_service, spreadsheetId, sheetId, A, B, C, D, E, F, G, H);
             }
             catch (Exception e)
             {

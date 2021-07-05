@@ -22,7 +22,7 @@ namespace MZPO.Controllers
             _log = log;
         }
 
-        // POST wh/leadprocessor
+        // POST wh/ppie
         [HttpPost]
         public IActionResult Post()
         {
@@ -49,17 +49,6 @@ namespace MZPO.Controllers
             else if (col["unsorted[delete][0][action]"] == "accept")                                                                            //Сделка принята из Неразобранного
             {
                 if (!Int32.TryParse(col["unsorted[delete][0][accept_result][leads][0]"], out leadNumber)) return BadRequest("Incorrect lead number.");
-            }
-            else if (col.ContainsKey("unsorted[add][0][source_data][service]") &&                                                               //Сделка создана в Неразобранном
-                     col["unsorted[add][0][source_data][service]"] != "com.wazzup24.wz" &&                                                      //Не из Wazzup
-                     col["unsorted[add][0][source_data][service]"] != "com.wazzup24.insta")                                                     //Не из Wazzup
-            {
-                leadProcessor = new Lazy<ILeadProcessor>(() =>
-                    new UnsortedProcessor(col["unsorted[add][0][uid]"], acc, _processQueue, _log, token));
-
-                task = Task.Run(() => leadProcessor.Value.Run());
-                _processQueue.AddTask(task, cts, col["unsorted[add][0][uid]"], acc.name, "UnsortedProcessor");
-                return Ok();
             }
             else return Ok();
             #endregion

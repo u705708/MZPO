@@ -16,7 +16,8 @@ namespace MZPO.ReportProcessors
         WeeklyReport,
         KPI_monthly,
         Doubles,
-        Cards
+        Cards,
+        Uber
     }
 
     public static class ReportsProvider
@@ -31,6 +32,7 @@ namespace MZPO.ReportProcessors
             { Reports.KPI_monthly, new("1fpmsI3KdC5eN_LOPg_poe6Tixv5v3cl0xS-RoacB6mM", "KPI_monthly", "report_kpi_monthly", 28395871) },
             { Reports.Doubles, new("1xKFENCBv9af16yx5SiNxviglBhWukOdqtVJRuqGrthY", "Doubles", "report_doubles_monthly", 28395871) },
             { Reports.Cards, new("1nyq_aub7I85oOe4bq5mp0RSvrwTlqeHnrcRUglBB5BA", "Cards", "report_cards_completion", 28395871) },
+            { Reports.Uber, new("1bRqUIHgN0VOcwdVv5iAIqinF1iW4arFMUPu7kgLJF5M", "Uber", "report_uber_distribution", 28395871) },
         };
 
         private static IReportProcessor ReportFactory(ReportParams reportParams, AmoAccount acc, TaskList processQueue, GSheets gSheets, long dateFrom, long dateTo, CancellationToken token)
@@ -45,6 +47,7 @@ namespace MZPO.ReportProcessors
                 "KPI_monthly" => new MonthlyKPIProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Doubles" => new DoublesListProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Cards" => new LeadscompletionReportProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
+                "Uber" => new UberLeadsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 _ => throw new Exception($"Unknown report type: {reportParams.ReportName}"),
             };
         }

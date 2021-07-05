@@ -59,15 +59,15 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Дата закрытия сделки, передается в Unix Timestamp.
         /// </summary>
-        public int? closed_at { get; set; }
+        public long? closed_at { get; set; }
         /// <summary>
         /// Дата создания сделки, передается в Unix Timestamp.
         /// </summary>
-        public int? created_at { get; set; }
+        public long? created_at { get; set; }
         /// <summary>
         /// Дата изменения сделки, передается в Unix Timestamp.
         /// </summary>
-        public int? updated_at { get; set; }
+        public long? updated_at { get; set; }
         /// <summary>
         /// Дата ближайшей задачи к выполнению, передается в Unix Timestamp.
         /// </summary>
@@ -101,41 +101,6 @@ namespace MZPO.AmoRepo
         /// </summary>
         public Embedded _embedded { get; set; }
 
-        //public class Custom_fields_value
-        //{
-        //    /// <summary>
-        //    /// ID поля.
-        //    /// </summary>
-        //    public int field_id { get; set; }
-        //    /// <summary>
-        //    /// Название поля.
-        //    /// </summary>
-        //    public string field_name { get; set; }
-        //    /// <summary>
-        //    /// Код поля.
-        //    /// </summary>
-        //    public string field_code { get; set; }
-        //    /// <summary>
-        //    /// Тип поля.
-        //    /// </summary>
-        //    public string field_type { get; set; }
-        //    /// <summary>
-        //    /// Массив значений поля.
-        //    /// </summary>
-        //    public Values[] values { get; set; }
-
-        //    public class Values
-        //    {
-        //        /// <summary>
-        //        /// Значение поля.
-        //        /// </summary>
-        //        [JsonProperty(NullValueHandling = NullValueHandling.Include)]
-        //        public object value { get; set; }
-        //        public int? enum_id { get; set; }
-        //        public string enum_code { get; set; }
-        //    }
-        //}
-
         public class Links
         {
             public Link self { get; set; }
@@ -145,7 +110,6 @@ namespace MZPO.AmoRepo
                 public string href { get; set; }
             }
         }
-
 
         public class Embedded
         {

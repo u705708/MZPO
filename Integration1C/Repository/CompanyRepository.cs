@@ -19,31 +19,6 @@ namespace Integration1C
             public Guid company_id_1C { get; set; }
         }
 
-        private readonly Guid _mockGuid = new Guid("f4369528-14ba-4968-8a9c-6e8a3126378c");
-        private readonly Company1C _mockCompany = new Company1C()
-        {
-            company_id_1C = new Guid("f4369528-14ba-4968-8a9c-6e8a3126378c"),
-            amo_ids = new()
-            {
-                new()
-                {
-                    account_id = 19453687,
-                    entity_id = 46776835
-                }
-            },
-            name = "Тестовая компания",
-            email = "test@email.com",
-            phone = "+79001112233",
-            signee = "Подписант",
-            OGRN = "13223131326",
-            INN = "5465454654",
-            acc_no = "4654654654654654",
-            KPP = "546546465",
-            BIK = "45654654",
-            address = "ул. Пушкина, 10",
-            post_address = "ул. Колотушкина, 11"
-        };
-
         internal Company1C GetCompany(Company1C company) => GetCompany((Guid)company.company_id_1C);
 
         internal Company1C GetCompany(Guid company_id)

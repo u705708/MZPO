@@ -102,8 +102,6 @@ namespace Integration1C
             {
                 name = "Новая сделка",
                 price = lead1C.price,
-                //pipeline_id = 3198184,
-                //status_id = 33625285,
                 responsible_user_id = UserList.GetAmoUser(lead1C.responsible_user),
                 custom_fields_values = new(),
                 _embedded = new() { tags = new() { new() { name = "1C"} } }

@@ -284,7 +284,7 @@ namespace MZPO.ReportProcessors
             foreach (var m in managersRet)
             {
                 #region Prepare Data
-                List<(int?, int, int, int?)> leads = new();
+                List<(int?, int, long, int?)> leads = new();
                 if (_longAnsweredLeads.Any(x => x.Item1 == m.Item1))
                     leads.AddRange(_longAnsweredLeads.Where(x => x.Item1 == m.Item1));
                 var rows = new List<RowData>();

@@ -8,6 +8,7 @@ using MZPO.LeadProcessors;
 using MZPO.Services;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -29,6 +30,8 @@ namespace MZPO.Controllers
         private readonly Cred1C _cred1C;
         private readonly RecentlyUpdatedEntityFilter _filter;
 
+        private Object locker;
+
         public TestingController(Amo amo, TaskList processQueue, GSheets gSheets, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
@@ -37,6 +40,7 @@ namespace MZPO.Controllers
             _log = log;
             _cred1C = cred1C;
             _filter = filter;
+            locker = new();
         }
 
         public class Entry
@@ -70,7 +74,7 @@ namespace MZPO.Controllers
             return id.ToString();
         }
 
-        private static bool CheckEventsRecent(List<(string, int)> events, DateTime refDT, out int lastContactEventTime)
+        private static bool CheckEventsRecent(List<(string, long)> events, DateTime refDT, out long lastContactEventTime)
         {
             lastContactEventTime = 0;
 
@@ -90,7 +94,7 @@ namespace MZPO.Controllers
             return DateTimeOffset.FromUnixTimeSeconds(lastContactEventTime).UtcDateTime.AddHours(3) > refDT;
         }
 
-        private static bool CheckNotesRecent(List<(string, int)> notes, DateTime refDT, out int lastNoteEventTime)
+        private static bool CheckNotesRecent(List<(string, long)> notes, DateTime refDT, out long lastNoteEventTime)
         {
             lastNoteEventTime = 0;
             
@@ -104,26 +108,26 @@ namespace MZPO.Controllers
             return DateTimeOffset.FromUnixTimeSeconds(lastNoteEventTime).UtcDateTime.AddHours(3) > refDT;
         }
 
-        private static bool CheckLeadRecent(Lead lead, DateTime refDT, out int leadCreatedTime)
+        private static bool CheckLeadRecent(Lead lead, DateTime refDT, out long leadCreatedTime)
         {
             leadCreatedTime = 0;
 
             if (lead.created_at is null)
                 return false;
 
-            leadCreatedTime = (int)lead.created_at;
+            leadCreatedTime = (long)lead.created_at;
 
             return DateTimeOffset.FromUnixTimeSeconds(leadCreatedTime).UtcDateTime.AddHours(3) > refDT;
         }
 
-        private static bool CheckCompanyRecent(Company company, DateTime refDT, out int companyCreatedTime)
+        private static bool CheckCompanyRecent(Company company, DateTime refDT, out long companyCreatedTime)
         {
             companyCreatedTime = 0;
 
             if (company.created_at is null)
                 return false;
 
-            companyCreatedTime = (int)company.created_at;
+            companyCreatedTime = (long)company.created_at;
 
             return DateTimeOffset.FromUnixTimeSeconds(companyCreatedTime).UtcDateTime.AddHours(3) > refDT;
         }
@@ -142,18 +146,23 @@ namespace MZPO.Controllers
             );
         }
 
+        public class IdDate
+        {
+            public int id;
+            public string date;
+        }
+
+
         // GET: api/testing
         [EnableCors]
         [HttpGet]
         public IActionResult Get()
         {
             //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
-            var repo = _amo.GetAccountById(28395871).GetRepo<Contact>();
+            //var repo = _amo.GetAccountById(28395871).GetRepo<Contact>();
             //var repo = _amo.GetAccountById(29490250).GetRepo<Contact>();
 
-            return Ok(repo.GetById(33636543));
-
-            //return Ok(JsonConvert.SerializeObject(_filter.GetFilterEntries(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+            //return Ok(JsonConvert.SerializeObject(repo.GetEntityEvents(24463527), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
@@ -325,7 +334,6 @@ namespace MZPO.Controllers
             #endregion
 
             #region AbandonedCompanies
-
             string startDT = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
 
             var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
@@ -370,8 +378,8 @@ namespace MZPO.Controllers
                     if (i % 60 == 0)
                         GC.Collect();
 
-                    List<int> timeStamps = new();
-                    int contactTime = 0;
+                    List<long> timeStamps = new();
+                    long contactTime = 0;
 
                     #region Collecting company notes and events
                     if (CheckCompanyRecent(c, referenceDateTime, out contactTime))
@@ -381,11 +389,11 @@ namespace MZPO.Controllers
                     if (CheckCompanyTasks(compRepo.GetEntityTasks(c.id)))
                         return;
 
-                    if (CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
+                    if (CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
                         return;
                     timeStamps.Add(contactTime);
 
-                    if (CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
+                    if (CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
                         return;
                     timeStamps.Add(contactTime);
                     #endregion
@@ -398,11 +406,11 @@ namespace MZPO.Controllers
                                 return;
                             timeStamps.Add(contactTime);
 
-                            if (CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
+                            if (CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
 
-                            if (CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
+                            if (CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
                         }
@@ -412,11 +420,11 @@ namespace MZPO.Controllers
                     if (c._embedded.contacts is not null)
                         foreach (var contact in c._embedded.contacts.OrderByDescending(x => x.id))
                         {
-                            if (CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
+                            if (CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
 
-                            if (CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (int)x.created_at)).ToList(), referenceDateTime, out contactTime))
+                            if (CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
                                 return;
                             timeStamps.Add(contactTime);
                         }
@@ -436,7 +444,7 @@ namespace MZPO.Controllers
             foreach (var ac in abandonedCompaniesResultsList)
                 sw.WriteLine($"{ac.Item1};{ac.Item2};{ac.Item3};{ac.Item4}");
 
-            return Ok(abandonedCompaniesResultsList.Count); 
+            return Ok(abandonedCompaniesResultsList.Count);
             #endregion
         }
 

@@ -14,34 +14,6 @@ namespace Integration1C
             _cred1C = cred1C;
         }
 
-        private readonly Guid _mockGuid = new Guid("2da8d74a-a672-45b8-8f90-cfd076392b40");
-        private readonly Client1C _mockClient = new Client1C()
-        {
-            client_id_1C = new Guid("2da8d74a-a672-45b8-8f90-cfd076392b40"),
-            amo_ids = new()
-            {
-                new()
-                {
-                    account_id = 19453687,
-                    entity_id = 46776565
-                },
-                new()
-                {
-                    account_id = 28395871,
-                    entity_id = 33336001
-                }
-            },
-            email = "no@email.test.test",
-            phone = "+79001112233",
-            name = "Тестовый контакт",
-            dob = DateTime.Now,
-            pass_serie = "1234",
-            pass_number = "556677",
-            pass_issued_by = "some text",
-            pass_issued_at = "Date as string",
-            pass_dpt_code = "123132"
-        };
-
         public class Result
         {
             public Guid client_id_1C { get; set; }

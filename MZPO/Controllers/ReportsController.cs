@@ -50,7 +50,7 @@ namespace MZPO.Controllers.ReportProcessors
         }
 
         #region CorporateSales
-        // GET reports/corporatesales/1617224400,1619816399
+        // GET reports/corporatesales/1619816400,1622494799
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult CorporateSales(string from, string to)
         {
@@ -230,7 +230,7 @@ namespace MZPO.Controllers.ReportProcessors
         #endregion
 
         #region DoublesList
-        // GET reports/doubleslist/1617224400,1619816399
+        // GET reports/doubleslist/1622494800,1625086799
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult DoublesList(string from, string to)
         {
@@ -266,7 +266,7 @@ namespace MZPO.Controllers.ReportProcessors
         #endregion
 
         #region Cards
-        // GET reports/cards/1617224400,1619816399
+        // GET reports/cards/1619816400,1622494799
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult Cards(string from, string to)
         {
@@ -277,7 +277,7 @@ namespace MZPO.Controllers.ReportProcessors
 
             return Ok("Requested.");
         }
-        // GET reports/cards/1619816399
+        // GET reports/cards/1622494799
         [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult Cards(string to)
         {
@@ -298,7 +298,43 @@ namespace MZPO.Controllers.ReportProcessors
             ReportsProvider.StartReport(Reports.Cards, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
 
             return Ok("Requested.");
-        } 
+        }
+        #endregion
+
+        #region Uber
+        // GET reports/uber/1598907600,1623963300
+        [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult Uber(string from, string to)
+        {
+            if (!long.TryParse(from, out long dateFrom) &
+                !long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            ReportsProvider.StartReport(Reports.Uber, _amo, _processQueue, _gSheets, dateFrom, dateTo);
+
+            return Ok("Requested.");
+        }
+        // GET reports/uber/1622494799
+        [HttpGet("{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
+        public IActionResult Uber(string to)
+        {
+            if (!long.TryParse(to, out long dateTo)) return BadRequest("Incorrect dates");
+
+            var dates = GetDates(dateTo);
+
+            ReportsProvider.StartReport(Reports.Uber, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
+        // GET: reports/uber/
+        [HttpGet]
+        public IActionResult Uber()
+        {
+            var dates = GetDates();
+
+            ReportsProvider.StartReport(Reports.Uber, _amo, _processQueue, _gSheets, dates.Item1, dates.Item2);
+
+            return Ok("Requested.");
+        }
         #endregion
     }
 }

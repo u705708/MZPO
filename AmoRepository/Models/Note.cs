@@ -27,11 +27,11 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Дата создания примечания, передается в Unix Timestamp.
         /// </summary>
-        public int? created_at { get; set; }
+        public long? created_at { get; set; }
         /// <summary>
         /// Дата изменения примечания, передается в Unix Timestamp.
         /// </summary>
-        public int? updated_at { get; set; }
+        public long? updated_at { get; set; }
         /// <summary>
         /// ID пользователя, ответственного за примечание.
         /// </summary>
