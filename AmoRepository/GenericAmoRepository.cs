@@ -275,7 +275,7 @@ namespace MZPO.AmoRepo
             return new List<AmoTask>();
         }
         public IEnumerable<AmoTask> AddTasks(AmoTask task) => AddTasks(new List<AmoTask>() { task });
-        public IEnumerable<AmoTask> AddTasks(int entity_id, string text, int complete_till) => AddTasks(new AmoTask()
+        public IEnumerable<AmoTask> AddTasks(int entity_id, string text, long complete_till) => AddTasks(new AmoTask()
         {
             entity_id = entity_id,
             text = text,

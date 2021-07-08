@@ -1,9 +1,6 @@
 ﻿using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +9,6 @@ namespace MZPO.LeadProcessors
     public class PPIELeadsProcessor : ILeadProcessor
     {
         private readonly IAmoRepo<Lead> _leadRepo;
-        private readonly AmoAccount _acc;
         private readonly TaskList _processQueue;
         private readonly CancellationToken _token;
         private readonly int _leadNumber;
@@ -24,7 +20,6 @@ namespace MZPO.LeadProcessors
             _leadRepo = acc.GetRepo<Lead>();
             _processQueue = processQueue;
             _token = token;
-            _acc = acc;
             _leadNumber = leadNumber;
             _log = log;
 

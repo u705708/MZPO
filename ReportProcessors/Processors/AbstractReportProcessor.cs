@@ -53,7 +53,7 @@ namespace MZPO.ReportProcessors
             (6102562, "Валерия Лукьянова"),
             (6872548, "Оксана Полукеева"),
             (6929800, "Саида Исмаилова"),
-            (7087360, "Наталия Завгородняя"),
+            //(7087360, "Наталия Завгородняя"),
         };
 
         protected static readonly List<(int, string)> managersCorp = new()

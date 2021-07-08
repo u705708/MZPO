@@ -57,7 +57,7 @@ namespace Integration1C
             Company company = new()
             {
                 id = company_id,
-                name = company1C.name,
+                //name = company1C.name,
                 custom_fields_values = new()
             };
 

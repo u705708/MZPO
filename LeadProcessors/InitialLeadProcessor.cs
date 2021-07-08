@@ -393,8 +393,11 @@ namespace MZPO.LeadProcessors
                     _log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                     return;
                 }
-                if (lead.pipeline_id == 2231320 ||                                                                          //Если сделка в корп. воронке
-                    lead.pipeline_id == 3198184)                                                                            //Если сделка в основной воронке
+                if (lead.pipeline_id == 3198184 || //основная воронка
+                    lead.pipeline_id == 2231320 || //корп. отдел
+                    lead.pipeline_id == 3338257 || //обучение очное
+                    lead.pipeline_id == 4234969    //обучение дист
+                    )
                 {
                     bool sip = lead.name.Contains("sip");
                     

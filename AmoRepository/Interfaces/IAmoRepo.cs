@@ -86,6 +86,79 @@ namespace MZPO.AmoRepo
         public IEnumerable<Event> GetEventsByCriteria(string criteria);
 
         /// <summary>
+        /// Возвращает из amoCRM список задач сущности.
+        /// </summary>
+        /// <param name="id">Id сущности.</param>
+        /// <returns>Список задач сущности.</returns>
+        public IEnumerable<AmoTask> GetEntityTasks(int id);
+
+        /// <summary>
+        /// Возвращает из amoCRM список задач по критерию.
+        /// </summary>
+        /// <param name="criteria">Критерии поиска.</param>
+        /// <returns>Список найденных задач.</returns>
+        public IEnumerable<AmoTask> GetTasksByCriteria(string criteria);
+
+        /// <summary>
+        /// Возвращает из amoCRM конкретную задачу. Возвращает null если задача не найдена.
+        /// </summary>
+        /// <param name="id">Id задачи.</param>
+        /// <returns>Объект найденной задачи или null.</returns>
+        public AmoTask GetTaskById(int id);
+
+        /// <summary>
+        /// Возвращает из amoCRM список задач. Принимает список id задач. Запрашивает пакетно по 10 штук.
+        /// </summary>
+        /// <param name="ids">Список id задач.</param>
+        /// <returns>Список найденных задач.</returns>
+        public IEnumerable<AmoTask> BulkGetTasksById(IEnumerable<int> ids);
+
+        /// <summary>
+        /// Добавляет в amoCRM задачи. Принимает список задач. Возвращает список добавленных задач.
+        /// </summary>
+        /// <param name="payload">Список задач.</param>
+        /// <returns>Список содержащий добавленные задачи.</returns>
+        public IEnumerable<AmoTask> AddTasks(IEnumerable<AmoTask> payload);
+
+        /// <summary>
+        /// Добавляет в amoCRM задачу. Принимает объект задачи. Возвращает список, содержащий добавленную задачу.
+        /// </summary>
+        /// <param name="note">Объект задачи.</param>
+        /// <returns>Список содержащий добавленную задачу.</returns>
+        public IEnumerable<AmoTask> AddTasks(AmoTask task);
+
+        /// <summary>
+        /// Добавляет к сущности amoCRM задачу. Принимает id сущности, текст задачи и срок выполнения. Возвращает список, содержащий добавленную задачу.
+        /// </summary>
+        /// <param name="id">Id сущности.</param>
+        /// <param name="text">Текст задачи.</param>
+        /// <param name="complete_till">Срок выполнения (в unix timestamp).</param>
+        /// <returns>Список содержащий добавленную задачу.</returns>
+        public IEnumerable<AmoTask> AddTasks(int entity_id, string text, long complete_till);
+
+        /// <summary>
+        /// Изменяет в amoCRM задачи. Принимает список задач. Возвращает список измененных задач.
+        /// </summary>
+        /// <param name="payload">Список задач.</param>
+        /// <returns>Список содержащий измененные задачи.</returns>
+        public IEnumerable<AmoTask> EditTasks(IEnumerable<AmoTask> payload);
+
+        /// <summary>
+        /// Изменяет в amoCRM задачу. Принимает объект задачи. Возвращает список, содержащий измененную задачу.
+        /// </summary>
+        /// <param name="note">Объект задачи.</param>
+        /// <returns>Список содержащий изменнённую задачу.</returns>
+        public IEnumerable<AmoTask> EditTasks(AmoTask task);
+
+        /// <summary>
+        /// Выполняет в amoCRM задачу. Принимает id задачи и результат выполнения. Возвращает список, содержащий выполненную задачу.
+        /// </summary>
+        /// <param name="id">Id задачи.</param>
+        /// <param name="result_text">Результат выполнения задачи.</param>
+        /// <returns>Список содержащий выполненную задачу.</returns>
+        public IEnumerable<AmoTask> CompleteTask(int id, string result_text);
+
+        /// <summary>
         /// Возвращает из amoCRM список примечаний к сущности.
         /// </summary>
         /// <param name="id">Id сущности.</param>
