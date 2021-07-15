@@ -294,7 +294,8 @@ namespace MZPO.LeadProcessors
                         if (events)
                         {
                             GSheetsProcessor leadProcessor = new(processedIds.First(), _amo, _gSheets, _processQueue, _log, _token);
-                            leadProcessor.Events(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email, processedIds.First()).Wait();
+                            //leadProcessor.Events(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email, processedIds.First()).Wait();
+                            leadProcessor.Webinar(_formRequest.date, _formRequest.comment, price, _formRequest.name, _formRequest.phone, _formRequest.email).Wait();
                             _log.Add($"Добавлены данные о сделке {processedIds.First()} в таблицу.");
                         }
                     }
