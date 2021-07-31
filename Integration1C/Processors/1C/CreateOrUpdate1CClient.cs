@@ -136,7 +136,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update contact {contact_id} in amo: {e}");
+                throw new Exception($"1C ERROR: Unable to update contact {contact_id} in amo: {e}");
             }
         }
 
@@ -166,7 +166,7 @@ namespace Integration1C
         private static void UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, Amo amo, Log log, ClientRepository repo1C)
         {
             var client1C = repo1C.GetClient(client_id_1C);
-            if (client1C == default) throw new Exception($"Unable to add client to 1C. 1C returned no client {client_id_1C}.");
+            if (client1C == default) throw new Exception($"1C ERROR: Unable to add client to 1C. 1C returned default client_id.");
 
             PopulateClientCFs(contact, amo_acc, client1C);
 
@@ -178,7 +178,7 @@ namespace Integration1C
         private static void CreateClientIn1C(Client1C client1C, ClientRepository repo1C)
         {
             var result = repo1C.AddClient(client1C);
-            if (result == default) throw new Exception("Unable to add client to 1C. 1C returned no amo_ids.");
+            if (result == default) throw new Exception("1C ERROR: Unable to add client to 1C. 1C returned default client_id.");
             client1C.client_id_1C = result;
         }
 
@@ -198,7 +198,7 @@ namespace Integration1C
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update contact {amo_id.entity_id} in amo {amo_id.account_id}: {e.Message}");
+                throw new Exception($"amo ERROR: Unable to update contact {amo_id.entity_id} in amo {amo_id.account_id}: {e.Message}");
             }
         }
 

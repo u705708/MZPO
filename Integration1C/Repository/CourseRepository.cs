@@ -27,7 +27,9 @@ namespace Integration1C
             string method = $"EditCourse?uid={course_id:D}";
             Request1C request = new("GET", method, _cred1C);
             Course1C result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
+            var response = request.GetResponse();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), result); }
+            catch (Exception e) { throw new Exception($"Unable to process response from 1C: {e.Message}, Response: {response}"); }
             return result;
         }
 
@@ -42,8 +44,9 @@ namespace Integration1C
             Request1C request = new("POST", method, content, _cred1C);
 
             Result result = new();
-            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result); }
-            catch (Exception e) { return default; }
+            var response = request.GetResponse();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), result); }
+            catch (Exception e) { throw new Exception($"Unable to process response from 1C: {e.Message}, Response: {response}"); }
             return result.product_id_1C;
         }
 
@@ -54,7 +57,9 @@ namespace Integration1C
             string method = "";
             Request1C request = new("GET", method, _cred1C);
             List<Course1C> result = new();
-            JsonConvert.PopulateObject(WebUtility.UrlDecode(request.GetResponse()), result);
+            var response = request.GetResponse();
+            try { JsonConvert.PopulateObject(WebUtility.UrlDecode(response), result); }
+            catch (Exception e) { throw new Exception($"Unable to process response from 1C: {e.Message}, Response: {response}"); }
             return result;
         }
     }

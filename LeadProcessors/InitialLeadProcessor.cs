@@ -12,9 +12,14 @@ namespace MZPO.LeadProcessors
     public class InitialLeadProcessor : AbstractLeadProcessor, ILeadProcessor                                                               //Процессор осуществляет первоначальную обработку сделок
     {
         #region Definition
-        public InitialLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)
+        private readonly GSheets _gSheets;
+        private readonly Amo _amo;
+
+        public InitialLeadProcessor(int leadNumber, AmoAccount acc, Amo amo, GSheets gSheets, TaskList processQueue, Log log, CancellationToken token)
             : base(leadNumber, acc, processQueue, log, token)
         {
+            _gSheets = gSheets;
+            _amo = amo;
         }
 
         private readonly List<string> sites = new()
@@ -50,6 +55,27 @@ namespace MZPO.LeadProcessors
             ( "WZ (inst-s_WA)", "inst-s.ru" )
         };                                     //Список каналов whatsapp
         #endregion
+
+        private void AddToChampionate()
+        {
+            if (lead is not null &&
+                lead._embedded is not null &&
+                lead._embedded.contacts is not null &&
+                lead._embedded.contacts.Any())
+            {
+                var repo = _acc.GetRepo<Contact>();
+
+                var contact = repo.GetById((int)lead._embedded.contacts.First().id);
+
+                string name = contact.name;
+                string phone = contact.GetCFStringValue(264911);
+                string email = contact.GetCFStringValue(264913);
+
+                GSheetsProcessor leadProcessor = new(_leadNumber, _amo, _gSheets, _processQueue, _log, _token);
+                leadProcessor.Webinar("21.08.2021", "Всероссийский чемпионат по массажу и реабилитации 21-22 августа", 0, name, phone, email).Wait();
+                _log.Add($"Добавлены данные о сделке {_leadNumber} в таблицу.");
+            }
+        }
 
         #region Realization
         #region Название формы
@@ -91,6 +117,15 @@ namespace MZPO.LeadProcessors
                 SetFieldValue(639081, "mirk.vrach.kosmetolog");                                                     //Устанавливаем сайт
                 //SetFieldValue(639075, "");                                                                        //И тип обращения
             }
+            #endregion
+
+            #region Чемпионат
+            if (pageURL is not null &&
+               (pageURL.Contains("https://www.mzpo-s.ru/activities/vserossiyskiy-chempionat-po-massazhu-i-reabilitacii-21-22-avgusta") ||
+                pageURL.Contains("https://mirk.msk.ru/21-22-avgusta-chempionat-po-massazhu-i-reabilitacii")))
+                AddToChampionate();
+            else if (tags.Any(x => x.name == "Fb_insta-chempionat"))
+                AddToChampionate(); 
             #endregion
 
             #region Фитнес-инструктор

@@ -131,6 +131,13 @@ namespace MZPO.LeadProcessors
             int pipeline = 0;
             int status = 0;
 
+            if (price == 0 &&
+                webinar)
+            {
+                pipeline = 3199819;
+                status = 32544562;
+            }
+
             if (formRequest.pipeline is not null &&
                 formRequest.pipeline != "undefined" &&
                 formRequest.pipeline != "")
@@ -271,6 +278,7 @@ namespace MZPO.LeadProcessors
 
                     if (similarLeads.Any() &&
                         price == 0 &&
+                        !webinar &&
                         _formRequest.pipeline is null &&
                         _formRequest.status is null)
                         processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log);

@@ -50,7 +50,7 @@ namespace MZPO.Controllers.ReportProcessors
         }
 
         #region CorporateSales
-        // GET reports/corporatesales/1619816400,1622494799
+        // GET reports/corporatesales/1625086800,1627765199
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult CorporateSales(string from, string to)
         {

@@ -75,7 +75,7 @@ namespace MZPO.ReportProcessors
                         {
                             GridProperties = new GridProperties()
                             {
-                                ColumnCount = 11,
+                                ColumnCount = 12,
                                 FrozenRowCount = 1
                             },
                             Title = m.Item2,
@@ -100,6 +100,7 @@ namespace MZPO.ReportProcessors
                             new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Стоимость, руб."} },
                             new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Сумма, руб."} },
                             new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Дата прихода"} },
+                            new CellData(){ UserEnteredFormat = leftAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Номер квитанции"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Расчет"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Исполнитель"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Номер сделки"} },
@@ -112,7 +113,7 @@ namespace MZPO.ReportProcessors
                 #endregion
 
                 #region Adjusting column width
-                var width = new List<int>() { 370, 95, 60, 84, 93, 107, 89, 107, 115, 79, 131 };
+                var width = new List<int>() { 370, 95, 60, 84, 93, 107, 107, 89, 107, 115, 79, 131 };
                 int i = 0;
 
                 foreach (var c in width)
@@ -134,7 +135,7 @@ namespace MZPO.ReportProcessors
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private static CellData[] GetCellData(string A, string B, int C, string D, int E, string F, string G, string H, int I, int J, string K)
+        private static CellData[] GetCellData(string A, string B, int C, string D, int E, string F, string G, string H, string I, int J, int K, string L)
         {
             return new []{
                 new CellData(){
@@ -160,15 +161,18 @@ namespace MZPO.ReportProcessors
                     UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ StringValue = H},
-                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
                 new CellData(){
-                    UserEnteredValue = new ExtendedValue(){ NumberValue = I},
+                    UserEnteredValue = new ExtendedValue(){ StringValue = I},
                     UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ NumberValue = J},
+                    UserEnteredFormat = new CellFormat(){ HorizontalAlignment = "CENTER", NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ NumberValue = K},
                     UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER" }} },
                 new CellData(){
-                    UserEnteredValue = new ExtendedValue() { FormulaValue = K},
+                    UserEnteredValue = new ExtendedValue() { FormulaValue = L},
                     UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "# ### ###.00" } } }
             };
         }
@@ -190,6 +194,7 @@ namespace MZPO.ReportProcessors
                 new CellData(){
                     UserEnteredValue = new ExtendedValue(){ FormulaValue = @"=AVERAGE(E2:INDIRECT(""R[-1]C[-1]"", FALSE))"},
                     UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "NUMBER", Pattern = "Средняя # ### ###.00" }, TextFormat = new TextFormat(){ Bold = true } } },
+                new CellData(),
                 new CellData(),
                 new CellData(),
                 new CellData(),
@@ -234,27 +239,31 @@ namespace MZPO.ReportProcessors
             string F = DateTimeOffset.FromUnixTimeSeconds(payment_date_unix).UtcDateTime.AddHours(3).ToShortDateString();
             #endregion
 
+            #region Номер квитанции
+            string G = lead.GetCFStringValue(118609);
+            #endregion
+
             #region Расчет
-            string G = lead.GetCFStringValue(118545);
+            string H = lead.GetCFStringValue(118545);
             #endregion
 
             #region Исполнитель
-            string H = lead.GetCFStringValue(162301);
+            string I = lead.GetCFStringValue(162301);
             #endregion
 
             #region Номер сделки
-            int I = lead.id;
+            int J = lead.id;
             #endregion
 
             #region % сделки
-            int J = lead.GetCFIntValue(613663);
+            int K = lead.GetCFIntValue(613663);
             #endregion
 
             #region Вознаграждение
-            string K = @"=INDIRECT(""R[0]C[-6]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
+            string L = @"=INDIRECT(""R[0]C[-6]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
             #endregion
 
-            return GetRowRequest(sheetId, GetCellData(A, B, C, D, E, F, G, H, I, J, K));
+            return GetRowRequest(sheetId, GetCellData(A, B, C, D, E, F, G, H, I, J, K, L));
         }
 
         private async Task ProcessManager((int, string) manager)

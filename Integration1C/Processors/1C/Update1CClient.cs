@@ -56,7 +56,7 @@ namespace Integration1C
         private static Client1C UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, ClientRepository repo1C)
         {
             var client1C = repo1C.GetClient(client_id_1C);
-            if (client1C == default) throw new Exception($"Unable to update client to 1C. 1C returned no client {client_id_1C}.");
+            if (client1C == default) throw new Exception($"1C ERROR: Unable to update client to 1C. 1C returned default client_id.");
 
             PopulateClientCFs(contact, amo_acc, client1C);
 

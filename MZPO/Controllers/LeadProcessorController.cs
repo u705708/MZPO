@@ -14,12 +14,14 @@ namespace MZPO.Controllers
         private readonly TaskList _processQueue;
         private readonly Amo _amo;
         private readonly Log _log;
+        private readonly GSheets _gSheets;
 
-        public LeadProcessorController(Amo amo, TaskList processQueue, Log log)
+        public LeadProcessorController(Amo amo, TaskList processQueue, Log log, GSheets gSheets)
         {
             _amo = amo;
             _processQueue = processQueue;
             _log = log;
+            _gSheets = gSheets;
         }
 
         // GET wh/leadprocessor/5
@@ -33,7 +35,7 @@ namespace MZPO.Controllers
             CancellationTokenSource cts = new();
             CancellationToken token = cts.Token;
             Lazy<ILeadProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
-                               new InitialLeadProcessor(leadNumber, acc, _processQueue, _log, token));
+                               new InitialLeadProcessor(leadNumber, acc, _amo, _gSheets, _processQueue, _log, token));
 
             task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, leadNumber.ToString(), acc.name, "LeadProcessor");                                                 //Запускаем и добавляем в очередь
@@ -55,7 +57,7 @@ namespace MZPO.Controllers
             CancellationToken token = cts.Token;
 
             if(!Int32.TryParse(col["account[id]"], out int accNumber)) return BadRequest("Incorrect account number.");
-            
+
             try { acc = _amo.GetAccountById(accNumber); }
             catch (Exception e) { _log.Add(e.Message); return Ok(); }
 
@@ -83,7 +85,7 @@ namespace MZPO.Controllers
             #endregion
 
             leadProcessor = new Lazy<ILeadProcessor>( () =>                                                                                     //Создаём экземпляр процессора сделки
-                                new InitialLeadProcessor(leadNumber, acc, _processQueue, _log, token));
+                                new InitialLeadProcessor(leadNumber, acc, _amo, _gSheets, _processQueue, _log, token));
 
             task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, leadNumber.ToString(), acc.name, "LeadProcessor");                                                 //Запускаем и добавляем в очередь
