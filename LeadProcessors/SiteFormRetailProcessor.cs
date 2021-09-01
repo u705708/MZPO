@@ -18,10 +18,10 @@ namespace MZPO.LeadProcessors
         private readonly IAmoRepo<Contact> _contRepo;
         private readonly Log _log;
         private readonly FormRequest _formRequest;
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
 
-        public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, TaskList processQueue, CancellationToken token, GSheets gSheets)
+        public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token, GSheets gSheets)
         {
             _amo = amo;
             _leadRepo = amo.GetAccountById(28395871).GetRepo<Lead>();
@@ -50,6 +50,7 @@ namespace MZPO.LeadProcessors
             { "utm_term", 640703 },
             { "utm_content", 643437 },
             { "utm_campaign", 640701 },
+            { "date", 724347 },
         };
 
         private class ContactsComparer : IEqualityComparer<Contact>
@@ -82,8 +83,17 @@ namespace MZPO.LeadProcessors
                     (string)p.GetValue(formRequest) != "undefined" &&
                     (string)p.GetValue(formRequest) != "")
                 {
+                    var value = p.GetValue(formRequest);
+
+                    if (p.Name == "date")
+                    {
+                        if (!DateTime.TryParse((string)value, out DateTime dt))
+                                continue;
+                        value = ((DateTimeOffset)dt).ToUnixTimeSeconds();
+                    }
+
                     if (lead.custom_fields_values is null) lead.custom_fields_values = new();
-                    lead.AddNewCF(fieldIds[p.Name], p.GetValue(formRequest));
+                    lead.AddNewCF(fieldIds[p.Name], value);
                 }
         }
 
@@ -191,6 +201,8 @@ namespace MZPO.LeadProcessors
             Lead lead = new()
             {
                 id = oldLead.id,
+                pipeline_id = 3198184,
+                status_id = 32532880
             };
 
             PopulateCFs(lead, formRequest, fieldIds);
@@ -201,7 +213,6 @@ namespace MZPO.LeadProcessors
 
             return processedIds;
         }
-
 
         public Task Run()
         {
@@ -290,7 +301,7 @@ namespace MZPO.LeadProcessors
                         _formRequest.comment != "undefined" &&
                         _formRequest.comment != "")
                     {
-                        _leadRepo.AddNotes(new Note() { entity_id = processedIds.First(), note_type = "common", parameters = new Note.Params() { text = $"{_formRequest.comment}" } });
+                        _leadRepo.AddNotes(new Note() { entity_id = processedIds.First(), note_type = "common", parameters = new Note.Params() { text = $"{_formRequest.date} {_formRequest.comment}" } });
                         _log.Add($"Добавлены комментарии в сделку {processedIds.First()}");
 
                         if (webinar)

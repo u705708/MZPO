@@ -13,12 +13,12 @@ namespace MZPO.LeadProcessors
     {
         private readonly IAmoRepo<Company> _compRepo;
         private readonly CancellationToken _token;
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly int _companyNumber;
         private readonly Log _log;
         private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public SmilarcompaniesCheckProcessor(int companyNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token, RecentlyUpdatedEntityFilter filter)
+        public SmilarcompaniesCheckProcessor(int companyNumber, AmoAccount acc, ProcessQueue processQueue, Log log, CancellationToken token, RecentlyUpdatedEntityFilter filter)
         {
             _companyNumber = companyNumber;
             _compRepo = acc.GetRepo<Company>();

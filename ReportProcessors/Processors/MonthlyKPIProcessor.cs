@@ -17,7 +17,7 @@ namespace MZPO.ReportProcessors
         /// <summary>
         /// Формирует отчёт KPI для отдела розницы. Собирает показатели по каждому менеджеру по итогам месяца.
         /// </summary>
-        internal MonthlyKPIProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+        internal MonthlyKPIProcessor(AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
             dataRange = ((int)dateFrom, (int)dateTo);

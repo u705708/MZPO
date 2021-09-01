@@ -17,7 +17,7 @@ namespace MZPO.ReportProcessors
         /// <summary>
         /// Формирует отчёт для отдела розницы. Проверяет в сделках время ответа клиента. Выводит список сделок, где время ответа больше часа.
         /// </summary>
-        internal LongLeadsProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+        internal LongLeadsProcessor(AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
             dataRange = ((int)dateFrom, (int)dateTo);

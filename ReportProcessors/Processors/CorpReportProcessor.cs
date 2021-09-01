@@ -17,7 +17,7 @@ namespace MZPO.ReportProcessors
         /// <summary>
         /// Формирует отчёт по продажам для корпоративного отдела.
         /// </summary>
-        internal CorpReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+        internal CorpReportProcessor(AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token) 
         {
             _locker = new();
@@ -260,7 +260,7 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Вознаграждение
-            string L = @"=INDIRECT(""R[0]C[-6]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
+            string L = @"=INDIRECT(""R[0]C[-7]"", FALSE)*INDIRECT(""R[0]C[-1]"", FALSE)/100";
             #endregion
 
             return GetRowRequest(sheetId, GetCellData(A, B, C, D, E, F, G, H, I, J, K, L));

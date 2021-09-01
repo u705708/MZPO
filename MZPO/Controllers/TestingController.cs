@@ -23,7 +23,7 @@ namespace MZPO.Controllers
     [ApiController]
     public class TestingController : ControllerBase
     {
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly Amo _amo;
         private readonly GSheets _gSheets;
         private readonly Log _log;
@@ -32,7 +32,7 @@ namespace MZPO.Controllers
 
         private Object locker;
 
-        public TestingController(Amo amo, TaskList processQueue, GSheets gSheets, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
+        public TestingController(Amo amo, ProcessQueue processQueue, GSheets gSheets, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _processQueue = processQueue;
@@ -163,6 +163,8 @@ namespace MZPO.Controllers
             //var repo = _amo.GetAccountById(29490250).GetRepo<Contact>();
 
             //return Ok(JsonConvert.SerializeObject(repo.GetEntityEvents(24463527), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+
+            //var leads = ucheba.ru.LeadSource.GetLeads();
 
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
@@ -334,117 +336,117 @@ namespace MZPO.Controllers
             #endregion
 
             #region AbandonedCompanies
-            string startDT = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
+            //string startDT = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
 
-            var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
-            var compRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
-            var leadRepo = _amo.GetAccountById(19453687).GetRepo<Lead>();
+            //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
+            //var compRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
+            //var leadRepo = _amo.GetAccountById(19453687).GetRepo<Lead>();
 
-            List<(int, int)> dataranges = new()
-            {
-                (1525104000, 1541001599),   //05.2018-10.2018
-                (1541001600, 1572537599),   //11.2018-10.2019
-                (1572537600, 1588262399),   //11.2019-04.2020
-                (1588262400, 1604159999),   //05.2020-10.2020
-                (1604160000, 1619798399),   //11.2020-04.2021
-                (1619798400, 1635695999),   //05.2021-10.2021
-            };
+            //List<(int, int)> dataranges = new()
+            //{
+            //    (1525104000, 1541001599),   //05.2018-10.2018
+            //    (1541001600, 1572537599),   //11.2018-10.2019
+            //    (1572537600, 1588262399),   //11.2019-04.2020
+            //    (1588262400, 1604159999),   //05.2020-10.2020
+            //    (1604160000, 1619798399),   //11.2020-04.2021
+            //    (1619798400, 1635695999),   //05.2021-10.2021
+            //};
 
-            List<(int, string, string, string)> abandonedCompaniesResultsList = new();
-            DateTime referenceDateTime = DateTime.UtcNow.AddHours(3).AddMonths(-6);
+            //List<(int, string, string, string)> abandonedCompaniesResultsList = new();
+            //DateTime referenceDateTime = DateTime.UtcNow.AddHours(3).AddMonths(-6);
 
-            IEnumerable<Company> companies = null;
+            //IEnumerable<Company> companies = null;
 
-            foreach (var d in dataranges)
-            {
-                if (companies is null)
-                {
-                    companies = compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads");
-                    continue;
-                }
+            //foreach (var d in dataranges)
+            //{
+            //    if (companies is null)
+            //    {
+            //        companies = compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads");
+            //        continue;
+            //    }
 
-                companies = companies.Concat(compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads"));
-            }
+            //    companies = companies.Concat(compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads"));
+            //}
 
-            int i = 0;
+            //int i = 0;
 
-            Parallel.ForEach(
-                companies,
-                new ParallelOptions { MaxDegreeOfParallelism = 12 },
-                c =>
-                {
-                    i++;
+            //Parallel.ForEach(
+            //    companies,
+            //    new ParallelOptions { MaxDegreeOfParallelism = 12 },
+            //    c =>
+            //    {
+            //        i++;
 
-                    if (i % 60 == 0)
-                        GC.Collect();
+            //        if (i % 60 == 0)
+            //            GC.Collect();
 
-                    List<long> timeStamps = new();
-                    long contactTime = 0;
+            //        List<long> timeStamps = new();
+            //        long contactTime = 0;
 
-                    #region Collecting company notes and events
-                    if (CheckCompanyRecent(c, referenceDateTime, out contactTime))
-                        return;
-                    timeStamps.Add(contactTime);
+            //        #region Collecting company notes and events
+            //        if (CheckCompanyRecent(c, referenceDateTime, out contactTime))
+            //            return;
+            //        timeStamps.Add(contactTime);
 
-                    if (CheckCompanyTasks(compRepo.GetEntityTasks(c.id)))
-                        return;
+            //        if (CheckCompanyTasks(compRepo.GetEntityTasks(c.id)))
+            //            return;
 
-                    if (CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
-                        return;
-                    timeStamps.Add(contactTime);
+            //        if (CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
+            //            return;
+            //        timeStamps.Add(contactTime);
 
-                    if (CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
-                        return;
-                    timeStamps.Add(contactTime);
-                    #endregion
+            //        if (CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
+            //            return;
+            //        timeStamps.Add(contactTime);
+            //        #endregion
 
-                    #region Collecting associated leads notes and events
-                    if (c._embedded.leads is not null)
-                        foreach (var lead in c._embedded.leads.OrderByDescending(x => x.id))
-                        {
-                            if (CheckLeadRecent(leadRepo.GetById(lead.id), referenceDateTime, out contactTime))
-                                return;
-                            timeStamps.Add(contactTime);
+            //        #region Collecting associated leads notes and events
+            //        if (c._embedded.leads is not null)
+            //            foreach (var lead in c._embedded.leads.OrderByDescending(x => x.id))
+            //            {
+            //                if (CheckLeadRecent(leadRepo.GetById(lead.id), referenceDateTime, out contactTime))
+            //                    return;
+            //                timeStamps.Add(contactTime);
 
-                            if (CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
-                                return;
-                            timeStamps.Add(contactTime);
+            //                if (CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
+            //                    return;
+            //                timeStamps.Add(contactTime);
 
-                            if (CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
-                                return;
-                            timeStamps.Add(contactTime);
-                        }
-                    #endregion
+            //                if (CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
+            //                    return;
+            //                timeStamps.Add(contactTime);
+            //            }
+            //        #endregion
 
-                    #region Collecting associated contacts notes and events
-                    if (c._embedded.contacts is not null)
-                        foreach (var contact in c._embedded.contacts.OrderByDescending(x => x.id))
-                        {
-                            if (CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
-                                return;
-                            timeStamps.Add(contactTime);
+            //        #region Collecting associated contacts notes and events
+            //        if (c._embedded.contacts is not null)
+            //            foreach (var contact in c._embedded.contacts.OrderByDescending(x => x.id))
+            //            {
+            //                if (CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
+            //                    return;
+            //                timeStamps.Add(contactTime);
 
-                            if (CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
-                                return;
-                            timeStamps.Add(contactTime);
-                        }
-                    #endregion
+            //                if (CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime))
+            //                    return;
+            //                timeStamps.Add(contactTime);
+            //            }
+            //        #endregion
 
-                    var lastContactTime = DateTimeOffset.FromUnixTimeSeconds(timeStamps.Max()).UtcDateTime.AddHours(3);
+            //        var lastContactTime = DateTimeOffset.FromUnixTimeSeconds(timeStamps.Max()).UtcDateTime.AddHours(3);
 
-                    abandonedCompaniesResultsList.Add((c.id, c.name.Replace(";", " ").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " "), $"{lastContactTime.ToShortDateString()} {lastContactTime.ToShortTimeString()}", GetManager((int)c.responsible_user_id)));
-                });
+            //        abandonedCompaniesResultsList.Add((c.id, c.name.Replace(";", " ").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " "), $"{lastContactTime.ToShortDateString()} {lastContactTime.ToShortTimeString()}", GetManager((int)c.responsible_user_id)));
+            //    });
 
-            using StreamWriter sw = new("AC.csv", true, System.Text.Encoding.Default);
+            //using StreamWriter sw = new("AC.csv", true, System.Text.Encoding.Default);
 
-            sw.WriteLine($"{startDT} -> {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}");
+            //sw.WriteLine($"{startDT} -> {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}");
 
-            sw.WriteLine($"ID компании;Название;Последний контакт;Ответственный");
+            //sw.WriteLine($"ID компании;Название;Последний контакт;Ответственный");
 
-            foreach (var ac in abandonedCompaniesResultsList)
-                sw.WriteLine($"{ac.Item1};{ac.Item2};{ac.Item3};{ac.Item4}");
+            //foreach (var ac in abandonedCompaniesResultsList)
+            //    sw.WriteLine($"{ac.Item1};{ac.Item2};{ac.Item3};{ac.Item4}");
 
-            return Ok(abandonedCompaniesResultsList.Count);
+            //return Ok(abandonedCompaniesResultsList.Count);
             #endregion
         }
 

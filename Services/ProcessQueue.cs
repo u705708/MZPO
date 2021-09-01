@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MZPO.Services
 {
-    public class TaskList
+    public class ProcessQueue
     {
         public class TaskEntry
         {
@@ -19,7 +19,7 @@ namespace MZPO.Services
         
         private readonly List<(Task, CancellationTokenSource, string, string, string, DateTime)> _taskList;
 
-        public TaskList()
+        public ProcessQueue()
         {
             _taskList = new List<(Task, CancellationTokenSource, string, string, string, DateTime)>();
         }

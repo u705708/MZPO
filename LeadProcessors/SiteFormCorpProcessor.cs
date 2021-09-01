@@ -16,10 +16,10 @@ namespace MZPO.LeadProcessors
         private readonly IAmoRepo<Company> _compRepo;
         private readonly Log _log;
         private readonly FormRequest _formRequest;
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
 
-        public SiteFormCorpProcessor(AmoAccount acc, Log log, FormRequest formRequest, TaskList processQueue, CancellationToken token)
+        public SiteFormCorpProcessor(AmoAccount acc, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token)
         {
             _leadRepo = acc.GetRepo<Lead>();
             _contRepo = acc.GetRepo<Contact>();

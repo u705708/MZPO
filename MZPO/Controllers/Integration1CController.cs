@@ -12,16 +12,16 @@ using Newtonsoft.Json;
 
 namespace MZPO.Controllers
 {
-    [Route("integration/1c/{action}")]
+    [Route("integration/1c/[action]")]
     public class Integration1CController : Controller
     {
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly Cred1C _cred1C;
         private readonly RecentlyUpdatedEntityFilter _filter;
 
-        public Integration1CController(Amo amo, TaskList processQueue, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
+        public Integration1CController(Amo amo, ProcessQueue processQueue, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
             _amo = amo;
             _processQueue = processQueue;

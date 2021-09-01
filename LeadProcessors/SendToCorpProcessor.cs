@@ -13,7 +13,7 @@ namespace MZPO.LeadProcessors
     {
         private readonly Log _log;
         private readonly int _leadNumber;
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
 
         private readonly IAmoRepo<Lead> _leadRepo;
@@ -23,7 +23,7 @@ namespace MZPO.LeadProcessors
         private readonly IAmoRepo<Lead> _sourceLeadRepo;
         private readonly IAmoRepo<Contact> _sourceContRepo;
 
-        public SendToCorpProcessor(Amo amo, Log log, TaskList processQueue, int leadNumber, CancellationToken token)
+        public SendToCorpProcessor(Amo amo, Log log, ProcessQueue processQueue, int leadNumber, CancellationToken token)
         {
             _log = log;
             _leadNumber = leadNumber;

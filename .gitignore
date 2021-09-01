@@ -344,3 +344,5 @@ healthchecksdb
 /MZPO/1c_cred.json
 /MZPO/Controllers/TestingController.cs
 /MZPO/AC.csv
+/MZPO/ucheba_cred.json
+/MZPO/ucheba_token.json

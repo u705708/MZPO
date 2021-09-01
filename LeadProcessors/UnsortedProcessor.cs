@@ -10,7 +10,7 @@ namespace MZPO.LeadProcessors
         #region Definition
         private readonly string _uid;
 
-        public UnsortedProcessor(string uid, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)       //Процессор принимает сделку из Неразобранного
+        public UnsortedProcessor(string uid, AmoAccount acc, ProcessQueue processQueue, Log log, CancellationToken token)       //Процессор принимает сделку из Неразобранного
             : base(acc, processQueue, log, token)
         {
             _uid = uid;

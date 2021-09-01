@@ -15,7 +15,7 @@ namespace MZPO.ReportProcessors
         /// <summary>
         /// Формирует отчёт для корпоративного отдела. Выгружает по каждому менеджеру список компаний с незаполненными контактами.
         /// </summary>
-        internal UnfinishedContactsProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+        internal UnfinishedContactsProcessor(AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token) { }
         #endregion
 

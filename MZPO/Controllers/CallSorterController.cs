@@ -4,7 +4,7 @@ using MZPO.Services;
 
 namespace MZPO.Controllers
 {
-    [Route("api/callsorter")]
+    [Route("api/[controller]")]
     [ApiController]
     public class CallSorterController : ControllerBase
     {

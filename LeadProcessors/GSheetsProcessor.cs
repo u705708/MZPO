@@ -15,13 +15,13 @@ namespace MZPO.LeadProcessors
     public class GSheetsProcessor
     {
         private readonly Amo _amo;
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
         private readonly Log _log;
         private readonly int _leadNumber;
         private readonly SheetsService _service;
 
-        public GSheetsProcessor(int leadnumber, Amo amo, GSheets gSheets, TaskList processQueue, Log log, CancellationToken token)
+        public GSheetsProcessor(int leadnumber, Amo amo, GSheets gSheets, ProcessQueue processQueue, Log log, CancellationToken token)
         {
             _processQueue = processQueue;
             _token = token;
@@ -246,7 +246,7 @@ namespace MZPO.LeadProcessors
             var spreadsheet = service.Spreadsheets.Get(spreadsheetId).Execute();
             #endregion
 
-            #region Deleting existing sheets except first
+            #region Checking for existing sheets with same title
             if (spreadsheet.Sheets.Any(x => x.Properties.Title.Contains(title)))
                 return (int)spreadsheet.Sheets.First(x => x.Properties.Title.Contains(title)).Properties.SheetId;
             #endregion
@@ -293,7 +293,7 @@ namespace MZPO.LeadProcessors
             var spreadsheet = service.Spreadsheets.Get(spreadsheetId).Execute();
             #endregion
 
-            #region Deleting existing sheets except first
+            #region Checking for existing sheets with same title
             if (spreadsheet.Sheets.Any(x => x.Properties.Title.Contains(title)))
                 return (int)spreadsheet.Sheets.First(x => x.Properties.Title.Contains(title)).Properties.SheetId;
             #endregion
@@ -335,6 +335,25 @@ namespace MZPO.LeadProcessors
             service.Spreadsheets.BatchUpdate(batchRequest, spreadsheetId).Execute();
 
             return sheetId;
+        }
+
+        private static string ProcessAnswer(string input)
+        {
+            switch (input)
+            {
+                case "1": return "Да";
+                case "+": return "Да";
+                case "Да": return "Да";
+                case "да": return "Да";
+                case "y": return "Да";
+                case "2": return "Нет";
+                case "-": return "Нет";
+                case "Нет": return "Нет";
+                case "нет": return "Нет";
+                case "n": return "Нет";
+                default: return input;
+            }
+               
         }
 
         private static async Task SaveData(SheetsService service, string spreadsheetId, int sheetId, params object[] cellData)
@@ -444,6 +463,57 @@ namespace MZPO.LeadProcessors
             {
                 _processQueue.Remove($"NPS-{_leadNumber}");
                 _log.Add($"Не получилось учесть NPS для сделки {_leadNumber}: {e.Message}");
+                throw;
+            }
+        }
+
+        public async Task Poll()
+        {
+            if (_token.IsCancellationRequested)
+            {
+                _processQueue.Remove($"Poll-{_leadNumber}");
+                return;
+            }
+            try
+            {
+                string spreadsheetId = "1vIQeBXxw2iRexkfYJouzGZtq-xTOiy-pv_DVe-J1N3Q";
+                int sheetId = 0;
+                int accountId = 28395871;
+
+                IAmoRepo<Lead> leadRepo = _amo.GetAccountById(accountId).GetRepo<Lead>();
+                IAmoRepo<Contact> contRepo = _amo.GetAccountById(accountId).GetRepo<Contact>();
+
+                Lead lead = leadRepo.GetById(_leadNumber);
+
+                if (lead is null ||
+                    lead._embedded is null ||
+                    lead._embedded.contacts is null)
+                    return;
+                
+                string answer1 = ProcessAnswer(lead.GetCFStringValue(724245));
+                string answer2 = ProcessAnswer(lead.GetCFStringValue(724247));
+
+                if (answer1 == "" &&
+                    answer2 == "")
+                {
+                    _processQueue.Remove($"Poll-{_leadNumber}");
+                    return;
+                }
+
+                Contact contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
+
+                string name = contact.name;
+                string phone = contact.GetCFStringValue(264911);
+                string course = lead.GetCFStringValue(357005);
+                string educationForm = lead.GetCFStringValue(643207);
+
+                await SaveData(_service, spreadsheetId, sheetId, name, phone, course, educationForm, answer1, answer2);
+                _processQueue.Remove($"Poll-{_leadNumber}");
+            }
+            catch (Exception e)
+            {
+                _processQueue.Remove($"Poll-{_leadNumber}");
+                _log.Add($"Не получилось учесть результат опроса для сделки {_leadNumber}: {e.Message}");
                 throw;
             }
         }
@@ -595,7 +665,7 @@ namespace MZPO.LeadProcessors
                 string E = inPerson is null ? "" : inPerson;
                 string F = inEmail is null ? "" : inEmail;
                 string G = inPhone is null ? "" : inPhone;
-                string H = inName is null ? "" : inName;
+                string H = inName is null ? "" : $"{inName} {DT.ToShortTimeString()}";
                 string I = inPrice == 0 ? "бесплатно" : "";
                 string J = inPrice == 0 ? "" : inPrice.ToString();
 

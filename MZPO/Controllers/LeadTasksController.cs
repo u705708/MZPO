@@ -7,7 +7,7 @@ using System.Net;
 
 namespace MZPO.Controllers
 {
-    [Route("api/leadtasks")]
+    [Route("api/[controller]")]
     public class LeadTaskController : ControllerBase
     {
         public LeadTaskController()
@@ -37,7 +37,7 @@ namespace MZPO.Controllers
             return Ok(te);
         }
 
-        // PUT: api/leadtasks/1
+        // PUT: api/leadtasks/
         [HttpPut]
         public IActionResult Put()
         {

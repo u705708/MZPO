@@ -13,7 +13,7 @@ namespace MZPO.LeadProcessors
         #region Definition
         protected readonly IAmoRepo<Lead> _leadRepo;
         protected readonly AmoAccount _acc;
-        protected readonly TaskList _processQueue;
+        protected readonly ProcessQueue _processQueue;
         protected readonly CancellationToken _token;
         protected readonly int _leadNumber;
         protected readonly Log _log;
@@ -21,7 +21,7 @@ namespace MZPO.LeadProcessors
         protected List<Tag> tags;
         protected List<Custom_fields_value> custom_fields_values;
 
-        public AbstractLeadProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)
+        public AbstractLeadProcessor(int leadNumber, AmoAccount acc, ProcessQueue processQueue, Log log, CancellationToken token)
         {
             _leadRepo = acc.GetRepo<Lead>();
             _processQueue = processQueue;
@@ -47,7 +47,7 @@ namespace MZPO.LeadProcessors
             }
         }
 
-        public AbstractLeadProcessor(AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)
+        public AbstractLeadProcessor(AmoAccount acc, ProcessQueue processQueue, Log log, CancellationToken token)
         {
             _leadRepo = acc.GetRepo<Lead>();
             _processQueue = processQueue;

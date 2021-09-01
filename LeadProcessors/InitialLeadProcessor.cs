@@ -15,7 +15,7 @@ namespace MZPO.LeadProcessors
         private readonly GSheets _gSheets;
         private readonly Amo _amo;
 
-        public InitialLeadProcessor(int leadNumber, AmoAccount acc, Amo amo, GSheets gSheets, TaskList processQueue, Log log, CancellationToken token)
+        public InitialLeadProcessor(int leadNumber, AmoAccount acc, Amo amo, GSheets gSheets, ProcessQueue processQueue, Log log, CancellationToken token)
             : base(leadNumber, acc, processQueue, log, token)
         {
             _gSheets = gSheets;
@@ -239,22 +239,24 @@ namespace MZPO.LeadProcessors
         #region Ожидание телефонии
         private async Task CallResultWaiter()                                                                                 //Метод проверяет, была ли сделка из телефонии, если да, то ждёт полчаса
         {
-            //var source = GetFieldValue(639085);
-            //var application = GetFieldValue(639075);
-            //if (source is null) return;
-            //if (source.Contains("Прямой") ||
-            //    source.Contains("Коллтрекинг") ||
-            //    (source.Contains("instagram") && (application is null || !application.Contains("instagram"))))
-            //{
+            var source = GetFieldValue(639085);
+            var application = GetFieldValue(639075);
+            if (source is null) return;
+            if (source.Contains("Прямой") ||
+                source.Contains("Коллтрекинг") ||
+                (source.Contains("instagram") && (application is null || !application.Contains("instagram"))))
+            {
                 for (int i = 1; i <= 60; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
                     if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
+                    //if (GetFieldValue(644675) != "Пропущенный звонок")
+                    //    return;
                     UpdateLeadFromAmo();                                                                                //Загружаем сделку
                     try { await Task.Delay((int)TimeSpan.FromSeconds(30).TotalMilliseconds, _token); }
                     catch { _log.Add($"LeadProcessor {_leadNumber}: Task cancelled."); }
                 }
-            //}
+            }
             return;
         }
         #endregion
@@ -292,6 +294,7 @@ namespace MZPO.LeadProcessors
                 else if (source.Contains("instagram"))
                 {
                     SetFieldValue(639075, "instagram");
+                    SetTag("insta");
                 }
                 #endregion
             #region Прямой звонок
@@ -431,7 +434,11 @@ namespace MZPO.LeadProcessors
                 if (lead.pipeline_id == 3198184 || //основная воронка
                     lead.pipeline_id == 2231320 || //корп. отдел
                     lead.pipeline_id == 3338257 || //обучение очное
-                    lead.pipeline_id == 4234969    //обучение дист
+                    lead.pipeline_id == 4234969 || //обучение дист
+                    lead.pipeline_id == 3569908 || //отдел сопровождения
+                    lead.pipeline_id == 3245959 || //модели
+                    lead.pipeline_id == 3199819 || //вебинары
+                    lead.pipeline_id == 2263711    //подписка на рассылку
                     )
                 {
                     bool sip = lead.name.Contains("sip");

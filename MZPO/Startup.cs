@@ -52,7 +52,7 @@ namespace MZPO
             services.AddScoped<ICFRepo, CFRepo>();
 
             services.AddSingleton<Amo>();
-            services.AddSingleton<TaskList>();
+            services.AddSingleton<ProcessQueue>();
             services.AddSingleton<LeadsSorter>();
             services.AddSingleton<Cred1C>();
             services.AddSingleton<Log>();

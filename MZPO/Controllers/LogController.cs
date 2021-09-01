@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MZPO.Services;
 using Newtonsoft.Json;
@@ -7,19 +8,20 @@ using Newtonsoft.Json;
 
 namespace MZPO.Controllers
 {
-    [Route("log/{action}")]
+    [Route("[controller]/[action]")]
     public class LogController : ControllerBase
     {
         private readonly Log _log;
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
 
-        public LogController(Log log, TaskList processQueue)
+        public LogController(Log log, ProcessQueue processQueue)
         {
             _log = log;
             _processQueue = processQueue;
         }
-        
+
         // GET: log/leads                                                                                                   //Возвращаем логи операций
+        [ActionName("Leads")]
         [HttpGet]
         public IActionResult Leads()
         {
@@ -27,6 +29,7 @@ namespace MZPO.Controllers
         }
 
         // GET: log/queue
+        [ActionName("Queue")]
         [HttpGet]
         public IActionResult Queue()                                                                                 //Возвращаем очередь обработки сделок
         {
@@ -34,12 +37,13 @@ namespace MZPO.Controllers
         }
 
         // GET log/queue/5
+        [ActionName("Queue")]
         [HttpGet("{id}")]
         public IActionResult Queue(string id)                                                                        //Передаём CancellationToken по номеру сделки из очереди
         {
             try
             {
-                _processQueue.Stop(id);
+                Task.Run(() => _processQueue.Stop(id));
                 return LocalRedirect("~/log/queue/");
             }
             catch (Exception e)

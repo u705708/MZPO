@@ -9,13 +9,13 @@ namespace MZPO.LeadProcessors
     public class PPIELeadsProcessor : ILeadProcessor
     {
         private readonly IAmoRepo<Lead> _leadRepo;
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
         private readonly int _leadNumber;
         private readonly Log _log;
         private Lead lead;
 
-        public PPIELeadsProcessor(int leadNumber, AmoAccount acc, TaskList processQueue, Log log, CancellationToken token)
+        public PPIELeadsProcessor(int leadNumber, AmoAccount acc, ProcessQueue processQueue, Log log, CancellationToken token)
         {
             _leadRepo = acc.GetRepo<Lead>();
             _processQueue = processQueue;

@@ -11,15 +11,15 @@ using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
-    [Route("siteform/{action}")]
+    [Route("[controller]/[action]")]
     public class SiteFormController : Controller
     {
-        private readonly TaskList _processQueue;
+        private readonly ProcessQueue _processQueue;
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly GSheets _gSheets;
 
-        public SiteFormController(Amo amo, TaskList processQueue, Log log, GSheets gSheets)
+        public SiteFormController(Amo amo, ProcessQueue processQueue, Log log, GSheets gSheets)
         {
             _amo = amo;
             _processQueue = processQueue;
@@ -29,6 +29,7 @@ namespace MZPO.Controllers
 
         // POST: siteform/retail
         [EnableCors]
+        [ActionName("Retail")]
         [HttpPost]
         public IActionResult Retail()
         {
@@ -68,6 +69,7 @@ namespace MZPO.Controllers
 
         // POST: siteform/corp
         [EnableCors]
+        [ActionName("Corp")]
         [HttpPost]
         public IActionResult Corp()
         {

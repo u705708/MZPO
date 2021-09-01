@@ -15,7 +15,7 @@ namespace MZPO.ReportProcessors
         /// <summary>
         /// Формирует отчёт для отдела розницы. Собирает среднемесячные показатели по каждому менеджеру.
         /// </summary>
-        internal RetailKPIProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
+        internal RetailKPIProcessor(AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskName, CancellationToken token)
             : base(acc, processQueue, gSheets, spreadsheetId, dateFrom, dateTo, taskName, token)
         {
         }

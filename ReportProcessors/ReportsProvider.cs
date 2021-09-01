@@ -17,7 +17,8 @@ namespace MZPO.ReportProcessors
         KPI_monthly,
         Doubles,
         Cards,
-        Uber
+        Uber,
+        SuccessCalls
     }
 
     public static class ReportsProvider
@@ -33,9 +34,10 @@ namespace MZPO.ReportProcessors
             { Reports.Doubles, new("1xKFENCBv9af16yx5SiNxviglBhWukOdqtVJRuqGrthY", "Doubles", "report_doubles_monthly", 28395871) },
             { Reports.Cards, new("1nyq_aub7I85oOe4bq5mp0RSvrwTlqeHnrcRUglBB5BA", "Cards", "report_cards_completion", 28395871) },
             { Reports.Uber, new("1bRqUIHgN0VOcwdVv5iAIqinF1iW4arFMUPu7kgLJF5M", "Uber", "report_uber_distribution", 28395871) },
+            { Reports.SuccessCalls, new("1Op2AKmTmFO6_NwS9maUwLK-gFKgRaY1fmIHaFj3aWJM", "Calls", "report_success_calls", 28395871) },
         };
 
-        private static IReportProcessor ReportFactory(ReportParams reportParams, AmoAccount acc, TaskList processQueue, GSheets gSheets, long dateFrom, long dateTo, CancellationToken token)
+        private static IReportProcessor ReportFactory(ReportParams reportParams, AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, long dateFrom, long dateTo, CancellationToken token)
         {
             return reportParams.ReportName switch
             {
@@ -48,11 +50,12 @@ namespace MZPO.ReportProcessors
                 "Doubles" => new DoublesListProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Cards" => new LeadscompletionReportProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Uber" => new UberLeadsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
+                "Calls" => new SuccessLeadsCallsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 _ => throw new Exception($"Unknown report type: {reportParams.ReportName}"),
             };
         }
 
-        public static void StartReport(Reports rep, Amo amo, TaskList processQueue, GSheets gSheets, long dateFrom, long dateTo)
+        public static void StartReport(Reports rep, Amo amo, ProcessQueue processQueue, GSheets gSheets, long dateFrom, long dateTo)
         {
             var reportParams = ReportParameters[rep];
 

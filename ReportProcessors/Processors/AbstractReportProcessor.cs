@@ -12,7 +12,7 @@ namespace MZPO.ReportProcessors
 {
     internal abstract class AbstractReportProcessor : IReportProcessor
     {
-        protected readonly TaskList _processQueue;
+        protected readonly ProcessQueue _processQueue;
         protected readonly AmoAccount _acc;
         protected readonly SheetsService _service;
         protected readonly string _spreadsheetId;
@@ -26,7 +26,7 @@ namespace MZPO.ReportProcessors
 
         protected List<(int?, int, long, int?)> _longAnsweredLeads;
 
-        internal AbstractReportProcessor(AmoAccount acc, TaskList processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskId, CancellationToken token)
+        internal AbstractReportProcessor(AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, string spreadsheetId, long dateFrom, long dateTo, string taskId, CancellationToken token)
         {
             _acc = acc;
             _processQueue = processQueue;
@@ -51,24 +51,20 @@ namespace MZPO.ReportProcessors
             (2375152, "Карен Оганисян"),
             (3813670, "Федорова Александра"),
             (6102562, "Валерия Лукьянова"),
-            (6872548, "Оксана Полукеева"),
             (6929800, "Саида Исмаилова"),
-            //(7087360, "Наталия Завгородняя"),
+            (7358368, "Лидия Ковш"),
         };
 
         protected static readonly List<(int, string)> managersCorp = new()
         {
             (2375116, "Киреева Светлана"),
-            (6904255, "Виктория Корчагина"),
-            (6909061, "Оксана Строганова"),
+            (2375122, "Васина Елена"),
+            (7358626, "Саланович Эллада"),
             (2375131, "Алферова Лилия"),
             (6630727, "Елена Зубатых"),
             (6028753, "Алена Федосова"),
             (6697522, "Наталья Филатова"),
             (2884132, "Ирина Сорокина"),
-            //(3770773, "Шталева Лидия"),
-            //(6200629, "Харшиладзе Леван"),
-            //(6346882, "Мусихина Юлия")
         };
 
         protected static readonly List<int> pipelinesRet = new()
