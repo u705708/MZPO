@@ -20,6 +20,7 @@ namespace MZPO.Controllers
         private readonly Log _log;
         private readonly Cred1C _cred1C;
         private readonly RecentlyUpdatedEntityFilter _filter;
+        private readonly string _path;
 
         public Integration1CController(Amo amo, ProcessQueue processQueue, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
         {
@@ -28,6 +29,7 @@ namespace MZPO.Controllers
             _log = log;
             _cred1C = cred1C;
             _filter = filter;
+            _path = $@"logs\1c\{DateTime.Today.Year}-{DateTime.Today.Month}-{DateTime.Today.Day}.log";
         }
 
         // POST: integration/1c/saveclient
@@ -90,7 +92,7 @@ namespace MZPO.Controllers
             Client1C client1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} POST integration/1c/client ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -146,7 +148,7 @@ namespace MZPO.Controllers
             Client1C client1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/client ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -256,7 +258,7 @@ namespace MZPO.Controllers
             Company1C company1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} POST integration/1c/company ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -311,7 +313,7 @@ namespace MZPO.Controllers
             Company1C company1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/company ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -423,7 +425,7 @@ namespace MZPO.Controllers
             Lead1C lead1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} POST integration/1c/lead ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -494,7 +496,7 @@ namespace MZPO.Controllers
             Lead1C lead1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/lead ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -554,7 +556,7 @@ namespace MZPO.Controllers
             Course1C course1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} POST integration/1c/course ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();
@@ -607,7 +609,7 @@ namespace MZPO.Controllers
             Course1C course1C = new();
 
             #region Adding to log
-            using StreamWriter sw = new($"integration1C_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} PATCH integration/1c/course ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(request));
             sw.WriteLine();

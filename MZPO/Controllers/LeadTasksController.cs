@@ -1,17 +1,24 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 
 namespace MZPO.Controllers
 {
     [Route("api/[controller]")]
-    public class LeadTaskController : ControllerBase
+    public class LeadTasksController : ControllerBase
     {
-        public LeadTaskController()
+        private readonly Amo _amo;
+        private readonly IAmoRepo<Lead> _leadRepo;
+
+        public LeadTasksController(Amo amo)
         {
+            _amo = amo;
+            _leadRepo = amo.GetAccountById(28395871).GetRepo<Lead>();
         }
 
         public class TaskEntry
@@ -20,21 +27,20 @@ namespace MZPO.Controllers
             public List<string> variants { get; set; }
         }
 
+        private static List<string> GetVariants(int taskId)
+        {
+            return new List<string>() { "Отправлено КП", "Взято в работу", "Получена оплата" };
+        }
+
         // GET: api/leadtasks/1
         [HttpGet("{id}")]
-        public IActionResult Get(string id)
+        public IActionResult Get(int id)
         {
-            List<TaskEntry> te = new() {
-                new() { 
-                    task_id = 12433799,
-                    variants = new() { "Отправлено КП", "Взято в работу", "Получена оплата" }
-                },
-                new() {
-                    task_id = 12433551,
-                    variants = new() { "СПАМ", "Нецелевой контакт", "Выставлен счёт" }
-                },
-            };
-            return Ok(te);
+            var tasks = _leadRepo.GetEntityTasks(id);
+            var taskEntries = tasks.Where(x => !x.is_completed).Select(x => new TaskEntry() { task_id = x.id, variants = GetVariants(x.id) });
+
+            //return Ok(tasks);
+            return Ok(taskEntries);
         }
 
         // PUT: api/leadtasks/

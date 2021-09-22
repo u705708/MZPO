@@ -68,12 +68,12 @@ namespace MZPO.LeadProcessors
             else if (lead.HasCF(fieldId))
                 return (string)lead.custom_fields_values.First(x => x.field_id == fieldId).values[0].value;
 
-            else return null;
+            else return string.Empty;
         }
 
         protected string SetFieldValue(int fieldId, string fieldValue)
         {
-            if (fieldValue is not null &&
+            if (string.IsNullOrEmpty(fieldValue) &&
                 fieldValue.Length > 255) fieldValue = fieldValue.Remove(255);
             
             if (custom_fields_values.Any(x => x.field_id == fieldId))
@@ -139,6 +139,12 @@ namespace MZPO.LeadProcessors
         protected void SaveLead() => SaveLead(new Lead());
 
         protected void SaveLead(string leadName) => SaveLead(new Lead() { name = leadName });
+
+        protected void AddServiceNote(string note)
+        {
+            try { _leadRepo.AddServiceNotes(_leadNumber, note); }
+            catch (Exception e) { throw new Exception($"Error adding note: {e}"); }
+        }
 
         protected void AddNote(string note)
         {

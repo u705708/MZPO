@@ -16,7 +16,7 @@ namespace MZPO.Services
         {
             lock (_locker)
             {
-                using StreamWriter sw = new("log.txt", true, System.Text.Encoding.Default);
+                using StreamWriter sw = new($@"logs\log_{DateTime.Today.Year}-{DateTime.Today.Month}.txt", true, System.Text.Encoding.Default);
                 sw.Write("{0} : ", DateTime.Now.ToString());
                 sw.WriteLine(message);
             }
@@ -24,7 +24,7 @@ namespace MZPO.Services
 
         public string GetLog()
         {
-            using StreamReader sr = new("log.txt");
+            using StreamReader sr = new($@"logs\log_{DateTime.Today.Year}-{DateTime.Today.Month}.txt");
             return sr.ReadToEnd();
         }
     }

@@ -51,7 +51,7 @@ namespace MZPO.Controllers.ReportProcessors
         }
 
         #region CorporateSales
-        // GET reports/corporatesales/1627765200,1633017599
+        // GET reports/corporatesales/1627765200,1630425599
         [ActionName("CorporateSales")]
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult CorporateSales(string from, string to)
@@ -256,7 +256,7 @@ namespace MZPO.Controllers.ReportProcessors
         #endregion
 
         #region DoublesList
-        // GET reports/doubleslist/1622494800,1625086799
+        // GET reports/doubleslist/1625086799,1633017599
         [ActionName("DoublesList")]
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult DoublesList(string from, string to)
@@ -338,7 +338,7 @@ namespace MZPO.Controllers.ReportProcessors
         #endregion
 
         #region Uber
-        // GET reports/uber/1598907600,1625086799
+        // GET reports/uber/1598907600,1630928600
         [ActionName("Uber")]
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult Uber(string from, string to)

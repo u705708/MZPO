@@ -1,21 +1,12 @@
-﻿using Google.Apis.Sheets.v4;
-using Integration1C;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using MZPO.AmoRepo;
-using MZPO.LeadProcessors;
 using MZPO.Services;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
@@ -27,12 +18,13 @@ namespace MZPO.Controllers
         private readonly Amo _amo;
         private readonly GSheets _gSheets;
         private readonly Log _log;
+        private readonly Uber _uber;
         private readonly Cred1C _cred1C;
         private readonly RecentlyUpdatedEntityFilter _filter;
 
         private Object locker;
 
-        public TestingController(Amo amo, ProcessQueue processQueue, GSheets gSheets, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter)
+        public TestingController(Amo amo, ProcessQueue processQueue, GSheets gSheets, Log log, Cred1C cred1C, RecentlyUpdatedEntityFilter filter, Uber uber)
         {
             _amo = amo;
             _processQueue = processQueue;
@@ -41,6 +33,7 @@ namespace MZPO.Controllers
             _cred1C = cred1C;
             _filter = filter;
             locker = new();
+            _uber = uber;
         }
 
         public class Entry
@@ -57,21 +50,17 @@ namespace MZPO.Controllers
             List<(int, string)> managersCorp = new()
             {
                 (2375116, "Киреева Светлана"),
-                (6904255, "Виктория Корчагина"),
-                (6909061, "Оксана Строганова"),
+                (2375122, "Васина Елена"),
+                (7358626, "Саланович Эллада"),
                 (2375131, "Алферова Лилия"),
                 (6630727, "Елена Зубатых"),
                 (6028753, "Алена Федосова"),
                 (6697522, "Наталья Филатова"),
                 (2884132, "Ирина Сорокина"),
-                //(3770773, "Шталева Лидия"),
-                //(6200629, "Харшиладзе Леван"),
-                //(6346882, "Мусихина Юлия")
+                (2375146, "Администратор")
             };
 
-            if (managersCorp.Any(x => x.Item1 == id))
-                return managersCorp.First(x => x.Item1 == id).Item2;
-            return id.ToString();
+            return managersCorp.Any(x => x.Item1 == id) ? managersCorp.First(x => x.Item1 == id).Item2 : id.ToString();
         }
 
         private static bool CheckEventsRecent(List<(string, long)> events, DateTime refDT, out long lastContactEventTime)
@@ -85,9 +74,9 @@ namespace MZPO.Controllers
                 return false;
 
             lastContactEventTime = events.Where(e => e.Item1 == "outgoing_chat_message" ||
-                                                         e.Item1 == "incoming_chat_message" ||
-                                                         e.Item1 == "outgoing_call" ||
-                                                         e.Item1 == "incoming_call")
+                                                     e.Item1 == "incoming_chat_message" ||
+                                                     e.Item1 == "outgoing_call" ||
+                                                     e.Item1 == "incoming_call")
                                              .Select(x => x.Item2)
                                              .Max();
 
@@ -97,20 +86,23 @@ namespace MZPO.Controllers
         private static bool CheckNotesRecent(List<(string, long)> notes, DateTime refDT, out long lastNoteEventTime)
         {
             lastNoteEventTime = 0;
-            
-            if (!notes.Any(n => n.Item1 == "amomail_message")) 
+
+            if (!notes.Any(n => n.Item1 == "amomail_message"))
                 return false;
 
             lastNoteEventTime = notes.Where(n => n.Item1 == "amomail_message")
-                                         .Select(x => x.Item2)
-                                         .Max();
+                                     .Select(x => x.Item2)
+                                     .Max();
 
             return DateTimeOffset.FromUnixTimeSeconds(lastNoteEventTime).UtcDateTime.AddHours(3) > refDT;
         }
 
-        private static bool CheckLeadRecent(Lead lead, DateTime refDT, out long leadCreatedTime)
+        private static bool CheckLeadRecent(Lead lead, DateTime refDT, out long leadCreatedTime, out bool completed)
         {
             leadCreatedTime = 0;
+            completed = false;
+
+            completed = lead.status_id == 142 || lead.status_id == 35001244 || lead.status_id == 19529785;
 
             if (lead.created_at is null)
                 return false;
@@ -152,23 +144,65 @@ namespace MZPO.Controllers
             public string date;
         }
 
+        private static IEnumerable<(long, long)> GetPeriods()
+        {
+            DateTime fromDate = new DateTime(2021, 4, 8, 0, 0, 0, DateTimeKind.Utc).AddHours(-3);
+            DateTime toDate = fromDate.AddMonths(1).AddSeconds(-1);
+            DateTime now = DateTime.Now;
+
+            while (fromDate < now)
+            {
+                long dateFrom = ((DateTimeOffset)fromDate).ToUnixTimeSeconds();
+                long dateTo = ((DateTimeOffset)toDate).ToUnixTimeSeconds();
+
+                yield return (dateFrom, dateTo);
+
+                fromDate = fromDate.AddMonths(1);
+                toDate = toDate.AddMonths(1);
+            }
+
+            yield break;
+        }
 
         // GET: api/testing
         [EnableCors]
         [HttpGet]
         public IActionResult Get()
         {
-            //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
-            //var repo = _amo.GetAccountById(28395871).GetRepo<Contact>();
-            //var repo = _amo.GetAccountById(29490250).GetRepo<Contact>();
+            //var repo = _amo.GetAccountById(29490250).GetRepo<Lead>();
+            var _repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
+            //var _repo = _amo.GetAccountById(19453687).GetRepo<Contact>();
 
-            //return Ok(JsonConvert.SerializeObject(repo.GetEntityEvents(24463527), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+            //return Ok(JsonConvert.SerializeObject(_repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
-            //var leads = ucheba.ru.LeadSource.GetLeads();
+            //var updater = new UpdateAmoIds(_amo, _log, _cred1C);
+            //var contact = _repo.GetById(34566059);
+
+            //if (contact is not null)
+            //    updater.Run(contact);
+
+            //return Ok();
+
+            int i = 0;
+
+            while (i < 12)
+            {
+                i++;
+                UberLead lead = new() {
+                    leadId = i,
+                    leadName = $"Новая сделка {i}",
+                    leadUri = $"https://mzpoeducationsale.amocrm.ru/leads/detail/{i}"
+                };
+
+                _uber.AddToQueue(lead);
+
+                //Task.Delay(TimeSpan.FromSeconds(20)).Wait();
+            }
 
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");
 
             #region MassTagging
+
             //using StreamReader sr = new("comps.json");
             //List<int> comp_ids = new();
             //JsonConvert.PopulateObject(sr.ReadToEnd(), comp_ids);
@@ -193,10 +227,12 @@ namespace MZPO.Controllers
             //        };
 
             //        repo.Save(company);
-            //    }); 
-            #endregion
+            //    });
+
+            #endregion MassTagging
 
             #region CorpParse
+
             //var _spreadsheetId = "1NuP1qpKDuWlQAje0mIA4i73KgfTH6TGi5iLvzMY46pU";
             //var range = "Сводные!A:F";
             //var _service = _gSheets.GetService();
@@ -228,9 +264,11 @@ namespace MZPO.Controllers
             //    }
 
             //return Ok(JsonConvert.SerializeObject(data, Formatting.Indented));
-            #endregion
+
+            #endregion CorpParse
 
             #region ActualizatonResponsibleCheck
+
             //var leadRepo = _amo.GetAccountById(28395871).GetRepo<Lead>();
 
             //List<(int, string)> managers = new List<(int, string)>
@@ -293,16 +331,18 @@ namespace MZPO.Controllers
             //}
 
             //return Ok();
-            #endregion
+
+            #endregion ActualizatonResponsibleCheck
 
             #region AddCourses
+
             //var repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
             //var course_ids = repo
             //                    .GetCEs()
             //                    .Where(x => x.custom_fields is not null &&
             //                                x.custom_fields.Any(y => y.id == 710407))
-            //                    .Select(x => { 
-            //                        Guid.TryParse(x.custom_fields.First(y => y.id == 710407).values[0].value, out Guid result); 
+            //                    .Select(x => {
+            //                        Guid.TryParse(x.custom_fields.First(y => y.id == 710407).values[0].value, out Guid result);
             //                        return result; });
 
             //int j = 0;
@@ -333,9 +373,11 @@ namespace MZPO.Controllers
             //    sw2.WriteLine($"{e.Item1};{e.Item2}");
 
             //return Ok();
-            #endregion
+
+            #endregion AddCourses
 
             #region AbandonedCompanies
+
             //string startDT = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
 
             //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
@@ -447,7 +489,155 @@ namespace MZPO.Controllers
             //    sw.WriteLine($"{ac.Item1};{ac.Item2};{ac.Item3};{ac.Item4}");
 
             //return Ok(abandonedCompaniesResultsList.Count);
-            #endregion
+
+            #endregion AbandonedCompanies
+
+            #region GetCorpContacts
+
+            //IEnumerable<Contact> contacts = new List<Contact>();
+
+            //foreach (var dataRange in GetPeriods())
+            //{
+            //    contacts = contacts.Concat(_repo.GetByCriteria($"filter[created_at][from]={dataRange.Item1}&filter[created_at][to]={dataRange.Item2}&with=companies"));
+            //}
+
+            //Parallel.ForEach(
+            //    contacts.Where(x => x._embedded is null ||
+            //                        x._embedded.companies is null ||
+            //                        !x._embedded.companies.Any()),
+            //    new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            //    c => {
+            //        if (c.created_by == 0/*2375146*/) return;
+
+            //        string name = c.name.Replace("\n", "").Replace("\r", "");
+            //        string dateCreated = DateTimeOffset.FromUnixTimeSeconds((long)c.created_at).UtcDateTime.AddHours(3).ToShortDateString();
+            //        string phone = c.GetCFStringValue(33575).Replace("\n", "").Replace("\r", "").Replace(" ", "").Trim();
+            //        string email = c.GetCFStringValue(33577).Replace("\n", "").Replace("\r", "").Replace(" ", "").Trim();
+
+            //        if (!phone.Contains("@") &&
+            //            !email.Contains("@"))
+            //            return;
+
+            //        lock (locker)
+            //        {
+            //            using StreamWriter sw = new("contacts.csv", true, System.Text.Encoding.Default);
+            //            sw.WriteLine($"{dateCreated};{name};{phone};{email}");
+            //        }
+            //    });
+
+            #endregion GetCorpContacts
+
+            #region CompaniesLastContact
+
+            //string startDT = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}";
+
+            //var contRepo = _amo.GetAccountById(19453687).GetRepo<Contact>();
+            //var compRepo = _amo.GetAccountById(19453687).GetRepo<Company>();
+            //var leadRepo = _amo.GetAccountById(19453687).GetRepo<Lead>();
+
+            //List<(int, int)> dataranges = new()
+            //{
+            //    (1525104000, 1541001599),   //05.2018-10.2018
+            //    (1541001600, 1572537599),   //11.2018-10.2019
+            //    (1572537600, 1588262399),   //11.2019-04.2020
+            //    (1588262400, 1604159999),   //05.2020-10.2020
+            //    (1604160000, 1619798399),   //11.2020-04.2021
+            //    (1619798400, 1635695999),   //05.2021-10.2021
+            //};
+
+            //List<(int, string, string, string, bool)> abandonedCompaniesResultsList = new();
+            //DateTime referenceDateTime = DateTime.UtcNow.AddHours(3).AddMonths(-6);
+
+            //IEnumerable<Company> companies = null;
+
+            //foreach (var d in dataranges)
+            //{
+            //    if (companies is null)
+            //    {
+            //        companies = compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads");
+            //        continue;
+            //    }
+
+            //    companies = companies.Concat(compRepo.GetByCriteria($"filter[created_at][from]={d.Item1}&filter[created_at][to]={d.Item2}&with=contacts,leads"));
+            //}
+
+            //int i = 0;
+
+            //Parallel.ForEach(
+            //    companies,
+            //    new ParallelOptions { MaxDegreeOfParallelism = 12 },
+            //    c =>
+            //    {
+            //        i++;
+
+            //        if (i % 60 == 0)
+            //            GC.Collect();
+
+            //        List<long> timeStamps = new();
+            //        long contactTime = 0;
+            //        bool completed = false;
+
+            //        #region Collecting company notes and events
+            //        CheckCompanyRecent(c, referenceDateTime, out contactTime);
+            //        timeStamps.Add(contactTime);
+
+            //        CheckEventsRecent(compRepo.GetEntityEvents(c.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime);
+            //        timeStamps.Add(contactTime);
+
+            //        CheckNotesRecent(compRepo.GetEntityNotes(c.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime);
+            //        timeStamps.Add(contactTime);
+            //        #endregion
+
+            //        #region Collecting associated leads notes and events
+            //        if (c._embedded.leads is not null)
+            //            foreach (var lead in c._embedded.leads.OrderByDescending(x => x.id))
+            //            {
+            //                CheckLeadRecent(leadRepo.GetById(lead.id), referenceDateTime, out contactTime, out completed);
+            //                timeStamps.Add(contactTime);
+
+            //                CheckEventsRecent(leadRepo.GetEntityEvents(lead.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime);
+            //                timeStamps.Add(contactTime);
+
+            //                CheckNotesRecent(leadRepo.GetEntityNotes(lead.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime);
+            //                timeStamps.Add(contactTime);
+            //            }
+            //        #endregion
+
+            //        #region Collecting associated contacts notes and events
+            //        if (c._embedded.contacts is not null)
+            //            foreach (var contact in c._embedded.contacts.OrderByDescending(x => x.id))
+            //            {
+            //                CheckEventsRecent(contRepo.GetEntityEvents((int)contact.id).Select(x => (x.type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime);
+            //                timeStamps.Add(contactTime);
+
+            //                CheckNotesRecent(contRepo.GetEntityNotes((int)contact.id).Select(x => (x.note_type, (long)x.created_at)).ToList(), referenceDateTime, out contactTime);
+            //                timeStamps.Add(contactTime);
+            //            }
+            //        #endregion
+
+            //        var lastContactTime = DateTimeOffset.FromUnixTimeSeconds(timeStamps.Max()).UtcDateTime.AddHours(3);
+
+            //        abandonedCompaniesResultsList.Add(
+            //            (c.id,
+            //             c.name.Replace(";", " ").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " "),
+            //             $"{lastContactTime.ToShortDateString()} {lastContactTime.ToShortTimeString()}",
+            //             GetManager((int)c.responsible_user_id),
+            //             completed
+            //            ));
+            //    });
+
+            //using StreamWriter sw = new("AC.csv", true, System.Text.Encoding.Default);
+
+            //sw.WriteLine($"{startDT} -> {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}");
+
+            //sw.WriteLine($"ID компании;Название;Последний контакт;Ответственный;Есть закрытая сделка");
+
+            //foreach (var ac in abandonedCompaniesResultsList)
+            //    sw.WriteLine($"{ac.Item1};{ac.Item2};{ac.Item3};{ac.Item4};{ac.Item5}");
+
+            //return Ok(abandonedCompaniesResultsList.Count);
+
+            #endregion CompaniesLastContact
         }
 
         // POST: api/testing
@@ -463,9 +653,7 @@ namespace MZPO.Controllers
             sw.WriteLine(WebUtility.UrlDecode(hook));
             sw.WriteLine();
 
-            if (Request.Headers["x-requested-with"] == "XMLHttpRequest")
-                return Ok(new { Message = "SUCCESS"});
-            return Ok();
+            return Request.Headers["x-requested-with"] == "XMLHttpRequest" ? Ok(new { Message = "SUCCESS" }) : Ok();
         }
     }
 }

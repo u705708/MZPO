@@ -3,12 +3,19 @@ using Newtonsoft.Json;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace MZPO.ucheba.ru
 {
     internal static class Auth
     {
-        private static string GetResponse(string payload)
+        internal static async Task<Token> GetNewToken()
+        {
+            string payload = JsonConvert.SerializeObject(await CredentialsProvider.GetCredentials(), Formatting.Indented);
+            return ProcessResponse(await GetResponse(payload));
+        }
+
+        private static async Task<string> GetResponse(string payload)
         {
             using var httpClient = new HttpClient();
             using var request = new HttpRequestMessage(new HttpMethod("POST"), new Uri("https://api.ucheba.ru/v1/auth"));
@@ -17,12 +24,12 @@ namespace MZPO.ucheba.ru
 
             try
             {
-                var responseMessage = httpClient.SendAsync(request);
-                return responseMessage.Result.Content.ReadAsStringAsync().Result;
+                var responseMessage = await httpClient.SendAsync(request);
+                return await responseMessage.Content.ReadAsStringAsync();
             }
             catch (Exception e)
             {
-                throw new Exception("Can't get ucheba.ru token: " + e.Message);
+                throw new InvalidOperationException("Can't get ucheba.ru token: " + e.Message);
             }
         }
 
@@ -34,14 +41,8 @@ namespace MZPO.ucheba.ru
             }
             catch (Exception e)
             {
-                throw new Exception("Unable to process ucheba.ru token: " + e.Message);
+                throw new ArgumentException("Unable to process ucheba.ru token: " + e.Message);
             }
-        }
-
-        internal static Token GetNewToken()
-        {
-            string payload = JsonConvert.SerializeObject(CredentialsProvider.GetCredentials(), Formatting.Indented);
-            return ProcessResponse(GetResponse(payload));
         }
     }
 }

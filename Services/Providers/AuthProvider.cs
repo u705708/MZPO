@@ -17,22 +17,22 @@ namespace MZPO.Services
         private const int _concurrentRequestsAmount = 6;
 
         private readonly AmoProvider _amoProvider;
+        private readonly SemaphoreSlim _amoConnectionsSemaphore;
+        private readonly SemaphoreSlim _tokenUpdateSemaphore;
         private AmoAccountAuth _amoAccountAuth;
         private string _authToken;
         private string _refrToken;
         private DateTime _validity;
-        private readonly SemaphoreSlim _amoConnectionsSemaphore;
-        private readonly SemaphoreSlim _tokenUpdateSemaphore;
 
         public AuthProvider(AmoAccountAuth acc, AmoProvider prov)
         {
-            _amoAccountAuth = acc;
             _amoProvider = prov;
+            _amoConnectionsSemaphore = new(_concurrentRequestsAmount, _concurrentRequestsAmount);
+            _tokenUpdateSemaphore = new(1, 1);
+            _amoAccountAuth = acc;
             _authToken = acc.authToken;
             _refrToken = acc.refrToken;
             _validity = acc.validity;
-            _amoConnectionsSemaphore = new(_concurrentRequestsAmount, _concurrentRequestsAmount);
-            _tokenUpdateSemaphore = new(1, 1);
         }
         #endregion
 
@@ -42,31 +42,30 @@ namespace MZPO.Services
             return _validity > DateTime.UtcNow;
         }
 
-        private void Refresh()
+        private async Task Refresh()
         {
             try
             {
                 var content = JsonConvert.SerializeObject(new
-                        {
-                            _amoAccountAuth.client_id,
-                            _amoAccountAuth.client_secret,
-                            grant_type = "refresh_token",
-                            refresh_token = _refrToken,
-                            _amoAccountAuth.redirect_uri
-                        },
+                {
+                    _amoAccountAuth.client_id,
+                    _amoAccountAuth.client_secret,
+                    grant_type = "refresh_token",
+                    refresh_token = _refrToken,
+                    _amoAccountAuth.redirect_uri
+                },
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
-                ProcessResponse(GetResponse(content));
+                ProcessResponse(await GetResponse(content));
 
-                _amoProvider.UpdateAccount(_amoAccountAuth);
+                await _amoProvider.UpdateAccountAsync(_amoAccountAuth);
             }
-            catch
-            {
-                GetNew();
-            }
+            catch (ArgumentException) { await GetNew(); }
+            catch (InvalidOperationException) { await GetNew(); }
+            catch (Exception e){ throw new InvalidOperationException($"Unable to refresh token: {e.Message}"); }
         }
 
-        private void GetNew()
+        private async Task GetNew()
         {
             try
             {
@@ -80,17 +79,17 @@ namespace MZPO.Services
                         },
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
-                ProcessResponse(GetResponse(content));
+                ProcessResponse(await GetResponse(content));
 
-                _amoProvider.UpdateAccount(_amoAccountAuth);
+                await _amoProvider.UpdateAccountAsync(_amoAccountAuth);
             }
             catch (Exception e)
             {
-                throw new Exception($"Unable to update token: {e.Message}");
+                throw new InvalidOperationException($"Unable to get new token: {e.Message}");
             }
         }
 
-        private string GetResponse(string payload)
+        private async Task<string> GetResponse(string payload)
         {
             using var httpClient = new HttpClient();
             using var request = new HttpRequestMessage(new HttpMethod("POST"), $"https://{_amoAccountAuth.subdomain}.amocrm.ru/oauth2/access_token");
@@ -98,18 +97,20 @@ namespace MZPO.Services
             request.Content = new StringContent(payload);
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
 
-            try
-            {
-                _amoConnectionsSemaphore.Wait();
-                var responseMessage = httpClient.SendAsync(request);
-                Task.Delay(1000).Wait();
+            await _amoConnectionsSemaphore.WaitAsync();
+
+            var getResponse = Task.Run(async () => await httpClient.SendAsync(request));
+            var ssRelease = Task.Run(async () => {
+                await Task.Delay(1000);
                 _amoConnectionsSemaphore.Release();
-                return responseMessage.Result.Content.ReadAsStringAsync().Result;
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Can't get token: " + e.Message);
-            }
+            });
+            await Task.WhenAny(getResponse, ssRelease);
+
+            var response = await getResponse;
+
+            if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Incorrect response: {await response.Content.ReadAsStringAsync()}");
+
+            return await response.Content.ReadAsStringAsync();
         }
 
         private void ProcessResponse(string response)
@@ -126,16 +127,16 @@ namespace MZPO.Services
             }
             catch (Exception e)
             {
-                throw new Exception("Unable to update token: " + e.Message);
+                throw new ArgumentException("Unable to process response: " + e.Message);
             }
         }
         #endregion
 
         #region Realization
-        public string GetToken()
+        public async Task<string> GetToken()
         {
-            _tokenUpdateSemaphore.Wait();
-            if (!IsValid()) Refresh();
+            await _tokenUpdateSemaphore.WaitAsync();
+            if (!IsValid()) await Refresh();
             _tokenUpdateSemaphore.Release();
             return _authToken;
         }
@@ -148,6 +149,15 @@ namespace MZPO.Services
         public SemaphoreSlim GetSemaphoreSlim()
         {
             return _amoConnectionsSemaphore;
+        }
+
+        public async Task RefreshAmoAccountFromDBAsync()
+        {
+            var acc = await _amoProvider.GetAmoAccountAsync(_amoAccountAuth.id);
+            _amoAccountAuth = acc;
+            _authToken = acc.authToken;
+            _refrToken = acc.refrToken;
+            _validity = acc.validity;
         }
         #endregion
     }

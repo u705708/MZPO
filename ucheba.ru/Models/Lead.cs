@@ -9,7 +9,8 @@ namespace MZPO.ucheba.ru.Models
         public int id { get; set; }
         public Person person { get; set; }
         public SourceType sourceType { get; set; }
-        public LastActivity lastActivity { get; set; }
+        public List<Activity> activities { get; set; }
+        public Activity lastActivity { get; set; }
         public List<Object> programsOfInterest { get; set; }
 
         public class Person
@@ -29,12 +30,6 @@ namespace MZPO.ucheba.ru.Models
             public List<Object> socialAccounts { get; set; }
             public List<EnrolleeInfo> enrolleeInfo { get; set; }
 
-            public class Location
-            {
-                public int id { get; set; }
-                public string name { get; set; }
-            }
-
             public class LearningInterest
             {
                 public int id { get; set; }
@@ -43,12 +38,6 @@ namespace MZPO.ucheba.ru.Models
                 public List<Object> trainingFormTypes { get; set; }
                 public List<Location> locations { get; set; }
                 public List<Tag> tags { get; set; }
-
-                public class ProgramType
-                { 
-                    public int value { get; set; }
-                    public string name { get; set; }
-                }
 
                 public class Tag
                 {
@@ -72,22 +61,22 @@ namespace MZPO.ucheba.ru.Models
         public class SourceType
         {
             public int id { get; set; }
-            public int name { get; set; }
+            public string name { get; set; }
         }
 
-        public class LastActivity
+        public class Activity
         {
             public int id { get; set; }
             public ActivityType type { get; set; }
             public DateTime activityDoneAt { get; set; }
             public LearningRequest learningRequest { get; set; }
-            public string question { get; set; }
-            public string result { get; set; }
-            public string program { get; set; }
-            public string faculty { get; set; }
-            public string url { get; set; }
-            public string name { get; set; }
-            public string conference { get; set; }
+            public Question question { get; set; }
+            public object result { get; set; }
+            public Program program { get; set; }
+            public object faculty { get; set; }
+            public object url { get; set; }
+            public object name { get; set; }
+            public object conference { get; set; }
 
             public class ActivityType
             {
@@ -98,16 +87,37 @@ namespace MZPO.ucheba.ru.Models
             public class LearningRequest
             {
                 public int id { get; set; }
-                public string program { get; set; }
-                public string faculty { get; set; }
+                public Program program { get; set; }
+                public object faculty { get; set; }
                 public ProgramType programType { get; set; }
-
-                public class ProgramType
-                {
-                    public int value { get; set; }
-                    public string name { get; set; }
-                }
             }
+
+            public class Question
+            {
+                public int id { get; set; }
+                public string text { get; set; }
+                public Program program { get; set; }
+                public object faculty { get; set; }
+            }
+        }
+
+        public class Location
+        {
+            public int id { get; set; }
+            public string name { get; set; }
+        }
+
+        public class Program
+        {
+            public int id { get; set; }
+            public ProgramType programType { get; set; }
+            public string name { get; set; }
+        }
+
+        public class ProgramType
+        {
+            public int value { get; set; }
+            public string name { get; set; }
         }
 #pragma warning restore IDE1006 // Naming Styles
     }

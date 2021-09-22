@@ -47,7 +47,7 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_leadNumber.ToString());
+                _processQueue.Remove($"initial_{_leadNumber}");
                 return Task.FromCanceled(_token);
             }
 
@@ -59,14 +59,14 @@ namespace MZPO.LeadProcessors
                     name = "Новая сделка"
                 });
 
-                _processQueue.Remove(_leadNumber.ToString());
+                _processQueue.Remove($"initial_{_leadNumber}");
                 return Task.CompletedTask;
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to process ppie lead {lead.id}: {e.Message}");
 
-                _processQueue.Remove(_leadNumber.ToString());
+                _processQueue.Remove($"initial_{_leadNumber}");
                 return Task.FromException(e);
             }
         }

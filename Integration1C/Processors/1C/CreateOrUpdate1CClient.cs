@@ -110,6 +110,24 @@ namespace Integration1C
                     }
         }
 
+        private static void UpdateAmoId(Contact contact, Client1C client1C)
+        {
+            if (client1C.amo_ids is null)
+                client1C.amo_ids = new();
+
+            if (!client1C.amo_ids.Any(x => x.account_id == contact.account_id))
+            {
+                client1C.amo_ids.Add(new() { account_id = (int)contact.account_id, entity_id = (int)contact.id });
+                return;
+            }
+
+            if (!client1C.amo_ids.Any(x => x.entity_id == contact.id))
+            {
+                client1C.amo_ids.First(x => x.account_id == contact.account_id).entity_id = (int)contact.id;
+                return;
+            }
+        }
+
         private static Client1C CreateClient(Contact contact, int amo_acc)
         {
             Client1C client1C = new() { name = contact.name };
@@ -172,6 +190,8 @@ namespace Integration1C
 
             client1C.name = contact.name;
 
+            UpdateAmoId(contact, client1C);
+
             repo1C.UpdateClient(client1C);
         }
 
@@ -202,11 +222,18 @@ namespace Integration1C
             }
         }
 
+        private static void AddLeadNote(IAmoRepo<Lead> repo, int leadNumber, string text)
+        {
+            repo.AddNotes(new Note() { entity_id = leadNumber, note_type = "common", parameters = new Note.Params() { text = text } });
+        }
+
         public Guid Run()
         {
             try
             {
-                Lead lead = _amo.GetAccountById(_amo_acc).GetRepo<Lead>().GetById(_leadId);
+                var leadRepo = _amo.GetAccountById(_amo_acc).GetRepo<Lead>();
+
+                Lead lead = leadRepo.GetById(_leadId);
 
                 if (lead._embedded is null ||
                     lead._embedded.contacts is null ||
@@ -218,7 +245,7 @@ namespace Integration1C
 
                 var contRepo = _amo.GetAccountById(_amo_acc).GetRepo<Contact>();
 
-                var contacts = contRepo.BulkGetById(contactIds);
+                var contacts = contRepo.BulkGetById(contactIds).ToList();
 
                 if (!contacts.Any(x => x.custom_fields_values is not null))
                     throw new Exception($"No suitable contacts to add to 1C at lead {_leadId}");
@@ -236,6 +263,12 @@ namespace Integration1C
                         return client_id_1C;
                     }
                 #endregion
+
+                if (contacts.Count > 1)
+                {
+                    AddLeadNote(leadRepo, _leadId, "Ошибка переноса в 1С: в сделке больше одного контакта");
+                    throw new Exception($"Several suitable contacts to add to 1C at lead {_leadId}");
+                }
 
                 #region Creating Client
                 Contact contact = contacts.First(x => x.custom_fields_values is not null);
@@ -260,16 +293,14 @@ namespace Integration1C
 
                     #region Checking contact
                     List<Contact> similarContacts = new();
-                    if (client1C.phone is not null &&
-                        client1C.phone != "")
-                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "")}"));
+                    if (!string.IsNullOrEmpty(client1C.phone))
+                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.phone}"));
 
-                    if (client1C.email is not null &&
-                        client1C.email != "")
-                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.email.Trim().Replace(" ", "")}"));
+                    if (!string.IsNullOrEmpty(client1C.email))
+                        similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.email}"));
 
                     if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
-                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { id = x.id, account_id = x.account_id }), Formatting.Indented)}");
+                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
                     #endregion
 
                     #region Check for UIDs

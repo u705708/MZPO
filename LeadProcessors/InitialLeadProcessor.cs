@@ -22,8 +22,7 @@ namespace MZPO.LeadProcessors
             _amo = amo;
         }
 
-        private readonly List<string> sites = new()
-        {
+        private readonly string[] sites = {
             "mirk.msk.ru",
             "mzpo-s.ru",
             "mzpo.education",
@@ -44,8 +43,7 @@ namespace MZPO.LeadProcessors
             "mirk.vrach.kosmetolog",
             "ucheba.ru"
         };                                                      //Список сайтов компании
-        private readonly List<(string, string)> wz = new()
-        {
+        private readonly (string, string)[] wz = {
             ( "WZ (mirk.msk_WA)", "mirk.msk.ru" ),
             ( "WZ (mzpo-s.ru_WA)", "mzpo-s.ru" ),
             ( "WZ (mzpokurs.com_WA)", "mzpokurs.com" ),
@@ -54,6 +52,18 @@ namespace MZPO.LeadProcessors
             ( "WZ (cruche-academy_WA)", "cruche-academy.ru" ),
             ( "WZ (inst-s_WA)", "inst-s.ru" )
         };                                     //Список каналов whatsapp
+        private readonly int[] pipelinesToProcess = {
+            3198184, //основная воронка
+            2231320, //корп. отдел
+            3338257, //обучение очное
+            4234969, //обучение дист
+            3569908, //отдел сопровождения
+            3245959, //модели
+            3199819, //вебинары
+            4586602, //пробный урок
+            2263711, //подписка на рассылку
+            4666393  //трудоустройство
+        };
         #endregion
 
         private void AddToChampionate()
@@ -84,18 +94,18 @@ namespace MZPO.LeadProcessors
             try
             {
                 string fieldValue = GetFieldValue(644511);
-                if (fieldValue is not null)
+                if (!string.IsNullOrEmpty(fieldValue))
                 {
                     switch (fieldValue)
                     {
                         case "contactForm_tel":
                             {
-                                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Форма: \"Заказать обратный звонок\"" } });
+                                AddNote("Форма: \"Заказать обратный звонок\"");
                                 return;
                             }
                         case "contactForm":
                             {
-                                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Форма: \"Записаться\"" } });
+                                AddNote("Форма: \"Записаться\"");
                                 return;
                             }
                     }
@@ -111,7 +121,7 @@ namespace MZPO.LeadProcessors
             #region Врач-косметолог
             var pageURL = GetFieldValue(639083);
 
-            if (pageURL is not null &&
+            if (!string.IsNullOrEmpty(pageURL) &&
                 pageURL.Contains("vrach-kosmetolog"))                                                               //Если посадочная страница содержит врач-косметолог
             {
                 SetFieldValue(639081, "mirk.vrach.kosmetolog");                                                     //Устанавливаем сайт
@@ -120,20 +130,29 @@ namespace MZPO.LeadProcessors
             #endregion
 
             #region Чемпионат
-            if (pageURL is not null &&
-               (pageURL.Contains("https://www.mzpo-s.ru/activities/vserossiyskiy-chempionat-po-massazhu-i-reabilitacii-21-22-avgusta") ||
-                pageURL.Contains("https://mirk.msk.ru/21-22-avgusta-chempionat-po-massazhu-i-reabilitacii")))
-                AddToChampionate();
-            else if (tags.Any(x => x.name == "Fb_insta-chempionat"))
-                AddToChampionate(); 
+            //if (pageURL is not null &&
+            //   (pageURL.Contains("https://www.mzpo-s.ru/activities/vserossiyskiy-chempionat-po-massazhu-i-reabilitacii-21-22-avgusta") ||
+            //    pageURL.Contains("https://mirk.msk.ru/21-22-avgusta-chempionat-po-massazhu-i-reabilitacii")))
+            //    AddToChampionate();
+            //else if (tags.Any(x => x.name == "Fb_insta-chempionat"))
+            //    AddToChampionate(); 
             #endregion
 
             #region Фитнес-инструктор
-            if (pageURL is not null &&
+            if (!string.IsNullOrEmpty(pageURL) &&
                 pageURL.Contains("rassylkapartnery_instruktor.fitness.promokod"))
             {
-                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Фитнес Инструктор: Промокод 5000." } });
-                AddNote(new Note() { entity_id = lead.id, note_type = "common", parameters = new Note.Params() { text = "Скидка клиенту 5000руб." } });
+                AddNote("Фитнес Инструктор: Промокод 5000.");
+                AddNote("Скидка клиенту 5000руб.");
+                SetTag("WeGym");
+            }
+            #endregion
+
+            #region Пробный урок
+            if (!string.IsNullOrEmpty(pageURL) &&
+                pageURL.Contains("probnyy-urok-po-massazhu"))
+            {
+                AddNote(@"ЗАЯВКА СО СТРАНИЦЫ ""ПРОБНЫЙ УРОК""");
                 SetTag("WeGym");
             }
             #endregion
@@ -142,7 +161,7 @@ namespace MZPO.LeadProcessors
             var site = GetFieldValue(639081);
             var applicationType = GetFieldValue(639075);
 
-            if (site is not null)                                                                                           //Если поле сайт не пустое
+            if (!string.IsNullOrEmpty(site))                                                                                           //Если поле сайт не пустое
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
                 {
@@ -156,7 +175,7 @@ namespace MZPO.LeadProcessors
             #endregion
 
             #region Сайт и тег по типу обращения
-            else if (applicationType is not null)                                                                           //Если тип обращения не пустой
+            else if (!string.IsNullOrEmpty(applicationType))                                                                           //Если тип обращения не пустой
             {
                 foreach (var l in sites)                                                                                //Для каждого значения из списка сайтов
                 {
@@ -185,8 +204,8 @@ namespace MZPO.LeadProcessors
                 try
                 {
                     var city = GetFieldValue(639087);                                                                   //Пытаемся получить поле город
-                    if (city is not null)                                                                               //Если оно не пустое
-                        SetFieldValue(639087, _acc.GetCity(city));                                                      //Подставляем значение из базы городов
+                    if (!string.IsNullOrEmpty(city))                                                                               //Если оно не пустое
+                        SetFieldValue(639087, _acc.GetCityAsync(city).Result);                                          //Подставляем значение из базы городов
                 }
                 catch (Exception e)
                 {
@@ -196,7 +215,7 @@ namespace MZPO.LeadProcessors
             #endregion
 
             #region Акции
-            if (applicationType is not null &&
+            if (!string.IsNullOrEmpty(applicationType) &&
                 applicationType.Contains("Акция"))
             {
                 string[] words = applicationType.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -241,15 +260,15 @@ namespace MZPO.LeadProcessors
         {
             var source = GetFieldValue(639085);
             var application = GetFieldValue(639075);
-            if (source is null) return;
+            if (string.IsNullOrEmpty(source)) return;
             if (source.Contains("Прямой") ||
                 source.Contains("Коллтрекинг") ||
-                (source.Contains("instagram") && (application is null || !application.Contains("instagram"))))
+                (source.Contains("instagram") && (string.IsNullOrEmpty(application) || !application.Contains("instagram"))))
             {
                 for (int i = 1; i <= 60; i++)
                 {
                     if (_token.IsCancellationRequested) return;                                                         //Если получили токен, то завершаем раньше, проверяем раз в минуту
-                    if (GetFieldValue(644675) is not null) return;                                                      //Если Результат звонка заполнен, идём дальше
+                    if (!string.IsNullOrEmpty(GetFieldValue(644675))) return;                                           //Если Результат звонка заполнен, идём дальше
                     //if (GetFieldValue(644675) != "Пропущенный звонок")
                     //    return;
                     UpdateLeadFromAmo();                                                                                //Загружаем сделку
@@ -281,7 +300,7 @@ namespace MZPO.LeadProcessors
 
             #region Коллтрекинг
             var source = GetFieldValue(639085);                                                                         //Источник(Маркер)
-            if (source is not null)
+            if (!string.IsNullOrEmpty(source))
             {
                 if (tags.Any(x => x.name == "Коллтрекинг") || source.Contains("Коллтрекинг"))                           //Если сделка из коллтрекинга
                 {
@@ -316,7 +335,7 @@ namespace MZPO.LeadProcessors
 
             #region Результат звонка
             var applicationType = GetFieldValue(639075);                                                                //Тип обращения
-            if (GetFieldValue(644675) is null)                                                                          //Результат звонка
+            if (string.IsNullOrEmpty(GetFieldValue(644675)))                                                                          //Результат звонка
             {
                 if ((applicationType is not null) && (applicationType.Contains("аявк")))
                 {
@@ -383,6 +402,7 @@ namespace MZPO.LeadProcessors
                     (3812134, new List<string>(){"skillbank.su", "facebook"}, "skillbank.su", "skillbank.su-facebook", "facebook", 2576764),
                     (3812137, new List<string>(){"cruche-academy.ru", "facebook"}, "cruche-academy.ru", "cruche-academy.ru-facebook", "facebook", 2576764),
                     (4065031, new List<string>(){"ucheba.ru"}, "ucheba.ru", "Заявка с почты", "Заявка с почты uchebaru@mzpo-s.ru", 2576764),
+                    (4648717, new List<string>(){"turbo.mirk.msk"}, "turbo.mirk.msk", "turbo.mirk.msk", "Заявка с сайта turbo.mirk.msk", 2576764),
                 };                            //Список воронок соцсетей и соответствующих значений полей
 
             if (pipelines.Any(x => x.Item1 == lead.pipeline_id))                                                        //Если сделка в одной из воронок из списка
@@ -400,6 +420,10 @@ namespace MZPO.LeadProcessors
                 if (line.Item5 == "instagram")
                     ProcessInstaName();
 
+                var referer = GetFieldValue(647449);
+                if (!string.IsNullOrEmpty(referer))
+                    AddNote(referer);
+
                 Lead result = new() { responsible_user_id = line.Item6 };                                               //Создаём экземпляр сделки для передачи в амо
 
                 try { SaveLead(result); }
@@ -409,7 +433,7 @@ namespace MZPO.LeadProcessors
 
                 try { SaveLead(result); }
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }
-                AddNote("Processing finished.");
+                AddServiceNote("Processing finished.");
             }
         }
         #endregion
@@ -420,32 +444,24 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_leadNumber.ToString());
+                _processQueue.Remove($"initial_{_leadNumber}");
                 return;
             }
             try
             {
                 if (lead is null)
                 {
-                    _processQueue.Remove(_leadNumber.ToString());
+                    _processQueue.Remove($"initial_{_leadNumber}");
                     _log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                     return;
                 }
-                if (lead.pipeline_id == 3198184 || //основная воронка
-                    lead.pipeline_id == 2231320 || //корп. отдел
-                    lead.pipeline_id == 3338257 || //обучение очное
-                    lead.pipeline_id == 4234969 || //обучение дист
-                    lead.pipeline_id == 3569908 || //отдел сопровождения
-                    lead.pipeline_id == 3245959 || //модели
-                    lead.pipeline_id == 3199819 || //вебинары
-                    lead.pipeline_id == 2263711    //подписка на рассылку
-                    )
+                if (pipelinesToProcess.Contains((int)lead.pipeline_id))
                 {
                     bool sip = lead.name.Contains("sip");
                     
                     FormName();
                     PhaseOne();
-                    AddNote("Phase 1 finished.");
+                    AddServiceNote("Phase 1 finished.");
                     if (sip)
                         await CallResultWaiter();
 
@@ -453,24 +469,24 @@ namespace MZPO.LeadProcessors
 
                     if (lead is null)
                     {
-                        _processQueue.Remove(_leadNumber.ToString());
+                        _processQueue.Remove($"initial_{_leadNumber}");
                         _log.Add($"Error: No lead returned from amoCRM: {_leadNumber}");
                         return;
                     }
 
                     PhaseTwo();
-                    AddNote("Phase 2 finished.");
+                    AddServiceNote("Phase 2 finished.");
                 }
                 else
                 {
                     SocialNetworks();
                 }
-                _processQueue.Remove(_leadNumber.ToString());
+                _processQueue.Remove($"initial_{_leadNumber}");
                 _log.Add($"Success: Lead {_leadNumber}");
             }
             catch (Exception e) 
             {
-                _processQueue.Remove(_leadNumber.ToString());
+                _processQueue.Remove($"initial_{_leadNumber}");
                 _log.Add($"Error: Unable to process lead {_leadNumber}: {e.Message}");
                 throw;
             }

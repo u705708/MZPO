@@ -14,34 +14,34 @@ namespace MZPO.DBRepository
         }
 
         #region CFs
-        public async Task<List<CF>> GetAllCFs()
+        public async Task<List<CF>> GetAllCFsAsync()
         {
             return await db.CFs.ToListAsync();
         }
 
-        public async Task<CF> GetCFById(int id, int amoId)
+        public async Task<CF> GetCFByIdAsync(int id, int amoId)
         {
             return await db.CFs.FirstOrDefaultAsync(x => (x.Id == id) && (x.AmoId == amoId));
         }
 
-        public async Task<CF> GetCFByName(string name, int amoId)
+        public async Task<CF> GetCFByNameAsync(string name, int amoId)
         {
             return await db.CFs.FirstOrDefaultAsync(x => (x.Name == name) && (x.AmoId == amoId));
         }
 
-        public async Task<int> AddCF(CF cf)
+        public async Task<int> AddCFAsync(CF cf)
         {
             db.CFs.Add(cf);
             return await db.SaveChangesAsync();
         }
 
-        public async Task<int> RemoveCF(CF cf)
+        public async Task<int> RemoveCFAsync(CF cf)
         {
             db.CFs.Remove(cf);
             return await db.SaveChangesAsync();
         }
 
-        public async Task<int> UpdateCF(CF cf)
+        public async Task<int> UpdateCFAsync(CF cf)
         {
             db.CFs.Update(cf);
             return await db.SaveChangesAsync();

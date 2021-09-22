@@ -20,8 +20,9 @@ namespace MZPO.LeadProcessors
         private readonly FormRequest _formRequest;
         private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
+        private readonly string _taskname;
 
-        public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token, GSheets gSheets)
+        public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token, GSheets gSheets, string taskName)
         {
             _amo = amo;
             _leadRepo = amo.GetAccountById(28395871).GetRepo<Lead>();
@@ -31,6 +32,7 @@ namespace MZPO.LeadProcessors
             _processQueue = processQueue;
             _token = token;
             _gSheets = gSheets;
+            _taskname = taskName;
         }
 
         private readonly Dictionary<string, int> fieldIds = new() {
@@ -79,11 +81,9 @@ namespace MZPO.LeadProcessors
         {
             foreach (var p in formRequest.GetType().GetProperties())
                 if (fieldIds.ContainsKey(p.Name) &&
-                    p.GetValue(formRequest) is not null &&
-                    (string)p.GetValue(formRequest) != "undefined" &&
-                    (string)p.GetValue(formRequest) != "")
+                    IsValidField((string)p.GetValue(formRequest)))
                 {
-                    var value = p.GetValue(formRequest);
+                    object value = p.GetValue(formRequest);
 
                     if (p.Name == "date")
                     {
@@ -92,12 +92,11 @@ namespace MZPO.LeadProcessors
                         value = ((DateTimeOffset)dt).ToUnixTimeSeconds();
                     }
 
-                    if (lead.custom_fields_values is null) lead.custom_fields_values = new();
                     lead.AddNewCF(fieldIds[p.Name], value);
                 }
         }
 
-        private static IEnumerable<int> AddNewLead(List<Contact> similarContacts, int price, bool webinar, bool events, FormRequest formRequest, Dictionary<string, int> fieldIds, IAmoRepo<Lead> leadRepo, Log log)
+        private static IEnumerable<int> AddNewLead(List<Contact> similarContacts, int price, bool webinar, bool events, FormRequest formRequest, Dictionary<string, int> fieldIds, IAmoRepo<Lead> leadRepo, Log log, bool demoLesson)
         {
             Lead lead = new()
             {
@@ -124,14 +123,10 @@ namespace MZPO.LeadProcessors
             {
                 contact.custom_fields_values = new();
 
-                if (formRequest.email is not null &&
-                    formRequest.email != "undefined" &&
-                    formRequest.email != "")
+                if (IsValidField(formRequest.email))
                     contact.AddNewCF(264913, formRequest.email);
 
-                if (formRequest.phone is not null &&
-                    formRequest.phone != "undefined" &&
-                    formRequest.phone != "")
+                if (IsValidField(formRequest.phone))
                     contact.AddNewCF(264911, formRequest.phone);
             }
 
@@ -148,15 +143,17 @@ namespace MZPO.LeadProcessors
                 status = 32544562;
             }
 
-            if (formRequest.pipeline is not null &&
-                formRequest.pipeline != "undefined" &&
-                formRequest.pipeline != "")
+            if (demoLesson)
+            {
+                pipeline = 4586602;
+                status = 42430264;
+            }
+
+            if (IsValidField(formRequest.pipeline))
             {
                 int.TryParse(formRequest.pipeline, out pipeline);
 
-                if (formRequest.status is not null &&
-                    formRequest.status != "undefined" &&
-                    formRequest.status != "")
+                if (IsValidField(formRequest.status))
                     int.TryParse(formRequest.status, out status);
             }
 
@@ -196,16 +193,16 @@ namespace MZPO.LeadProcessors
             return processedIds;
         }
 
-        private static IEnumerable<int> UpdateFoundLead(Lead oldLead, FormRequest formRequest, Dictionary<string, int> fieldIds, IAmoRepo<Lead> leadRepo, Log log)
+        private static IEnumerable<int> UpdateFoundLead(Lead oldLead, FormRequest formRequest, Dictionary<string, int> fieldIds, IAmoRepo<Lead> leadRepo, Log log, bool demoLesson)
         {
             Lead lead = new()
             {
                 id = oldLead.id,
-                pipeline_id = 3198184,
-                status_id = 32532880
+                pipeline_id = demoLesson? 4586602 : 3198184,
+                status_id = demoLesson ? 42430264 : 32532880
             };
 
-            PopulateCFs(lead, formRequest, fieldIds);
+            //PopulateCFs(lead, formRequest, fieldIds);
 
             IEnumerable<int> processedIds = leadRepo.Save(lead).Select(x => x.id);
 
@@ -214,32 +211,33 @@ namespace MZPO.LeadProcessors
             return processedIds;
         }
 
+        private static bool IsValidField(string field)
+        {
+            return field is not null &&
+                   field != "undefined" &&
+                   field != "";
+        }
+
         public Task Run()
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove($"FormSiteRet");
+                _processQueue.Remove(_taskname);
                 return Task.FromCanceled(_token);
             }
 
             try
             {
                 #region Checking for contacts
-                if ((_formRequest.email is null ||
-                    _formRequest.email == "undefined" ||
-                    _formRequest.email == "") &&
-                    (_formRequest.phone is null ||
-                    _formRequest.phone == "undefined" ||
-                    _formRequest.phone == ""))
+                if (!IsValidField(_formRequest.email) &&
+                    !IsValidField(_formRequest.phone))
                 {
                     _log.Add("Request without contacts");
-                    _processQueue.Remove($"FormSiteRet");
+                    _processQueue.Remove(_taskname);
                     return Task.CompletedTask;
                 }
 
-                if (_formRequest.phone is not null &&
-                    _formRequest.phone != "undefined" &&
-                    _formRequest.phone != "")
+                if (IsValidField(_formRequest.phone))
                     _formRequest.phone = _formRequest.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
                 #endregion
 
@@ -247,14 +245,10 @@ namespace MZPO.LeadProcessors
                 List<Contact> similarContacts = new();
                 try
                 {
-                    if (_formRequest.phone is not null &&
-                        _formRequest.phone != "undefined" &&
-                        _formRequest.phone != "")
+                    if (IsValidField(_formRequest.phone))
                         similarContacts.AddRange(_contRepo.GetByCriteria($"query={_formRequest.phone}&with=leads"));
 
-                    if (_formRequest.email is not null &&
-                        _formRequest.email != "undefined" &&
-                        _formRequest.email != "")
+                    if (IsValidField(_formRequest.email))
                         similarContacts.AddRange(_contRepo.GetByCriteria($"query={_formRequest.email}&with=leads"));
                 }
                 catch (Exception e) { _log.Add($"Не удалось осуществить поиск похожих контактов: {e.Message}"); }
@@ -281,6 +275,8 @@ namespace MZPO.LeadProcessors
                 bool.TryParse(_formRequest.webinar, out bool webinar);
                 bool.TryParse(_formRequest.events, out bool events);
                 int.TryParse(_formRequest.price, out int price);
+
+                bool demoLesson = _formRequest.form_name_site.Contains("Пробный урок");
                 #endregion
 
                 try
@@ -292,16 +288,18 @@ namespace MZPO.LeadProcessors
                         !webinar &&
                         _formRequest.pipeline is null &&
                         _formRequest.status is null)
-                        processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log);
+                        processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log, demoLesson);
                     else
-                        processedIds = AddNewLead(similarContacts, price, webinar, events, _formRequest, fieldIds, _leadRepo, _log);
+                        processedIds = AddNewLead(similarContacts, price, webinar, events, _formRequest, fieldIds, _leadRepo, _log, demoLesson);
 
                     if (processedIds.Any() &&
-                        _formRequest.comment is not null &&
-                        _formRequest.comment != "undefined" &&
-                        _formRequest.comment != "")
+                        (IsValidField(_formRequest.comment) ||
+                        IsValidField(_formRequest.title)))
                     {
-                        _leadRepo.AddNotes(new Note() { entity_id = processedIds.First(), note_type = "common", parameters = new Note.Params() { text = $"{_formRequest.date} {_formRequest.comment}" } });
+                        if (IsValidField(_formRequest.title))
+                            _leadRepo.AddNotes(processedIds.First(), _formRequest.title);
+                        if (IsValidField(_formRequest.comment))
+                            _leadRepo.AddNotes(new Note() { entity_id = processedIds.First(), note_type = "common", parameters = new Note.Params() { text = $"{_formRequest.date} {_formRequest.comment}" } });
                         _log.Add($"Добавлены комментарии в сделку {processedIds.First()}");
 
                         if (webinar)
@@ -325,13 +323,13 @@ namespace MZPO.LeadProcessors
                     _log.Add($"POST: {JsonConvert.SerializeObject(_formRequest, Formatting.Indented)}");
                 }
 
-                _processQueue.Remove($"FormSiteRet");
+                _processQueue.Remove(_taskname);
                 return Task.CompletedTask;
             }
             catch (Exception e)
             {
                 _log.Add($"Не получилось добавить заявку с сайта: {e.Message}.");
-                _processQueue.Remove($"FormSiteRet");
+                _processQueue.Remove(_taskname);
                 return Task.FromException(e);
             }
         }

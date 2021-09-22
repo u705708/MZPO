@@ -98,7 +98,10 @@ namespace Integration1C
                 !lead._embedded.contacts.Any() ||
                 lead._embedded.catalog_elements is null ||
                 !lead._embedded.catalog_elements.Any())
+            {
+                AddLeadNote(amo.GetAccountById(amo_acc).GetRepo<Lead>(), lead.id, "Не удалось перенести сделку в 1С: отсутствует Товар или Контакт");
                 throw new Exception($"No contacts or catalog elements in lead {lead.id}");
+            }
 
             #region Client
             var clientId = new CreateOrUpdate1CClient(amo, log, lead.id, amo_acc, cred1C, filter).Run();
@@ -208,11 +211,17 @@ namespace Integration1C
             {
                 filter.AddEntity(leadId);
                 leadRepo.Save(lead);
+                AddLeadNote(leadRepo, leadId, $"Сделка перенесена в 1С: {uid}");
             }
             catch (Exception e)
             {
                 throw new Exception($"Unable to update lead {leadId} in amo {amo_acc}: {e.Message}");
             }
+        }
+
+        private static void AddLeadNote(IAmoRepo<Lead> repo, int leadNumber, string text)
+        {
+            repo.AddNotes(new Note() { entity_id = leadNumber, note_type = "common", parameters = new Note.Params() { text = text } });
         }
 
         public Guid Run()

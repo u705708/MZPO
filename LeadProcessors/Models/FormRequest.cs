@@ -6,6 +6,7 @@
         public string name { get; set; }
         public string phone { get; set; }
         public string email { get; set; }
+        public string title { get; set; }
         public string comment { get; set; }
         public string form_name_site { get; set; }
         public string site { get; set; }

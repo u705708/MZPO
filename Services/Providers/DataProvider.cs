@@ -34,227 +34,157 @@ namespace MZPO.Services
         #endregion
 
         #region Cities
-        public string GetRusCityName(string engName)
-        {
-            string result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
-                var cityPair = db.GetCityByEngName(engName).Result;
-                if (cityPair is null) 
-                {
-                    result = engName;
-                }
-                else result = cityPair.RusName;
-            }
-            return result;
-        }
-
-        public City GetCity(string engName)
-        {
-            City result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
-                result = db.GetCityByEngName(engName).Result;
-            }
-            return result;
-        }
-
-        public async void AddNewCity(string engCity, string rusCity)
+        public async Task<string> GetRusCityNameAsync(string engName)
         {
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
-            var city = db.GetCityByEngName(engCity).Result;
+            var cityPair = await db.GetCityByEngName(engName);
+            if (cityPair is null)
+                return engName;
+            return cityPair.RusName;
+        }
+
+        public async Task<City> GetCityAsync(string engName)
+        {
+            var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
+            return await db.GetCityByEngName(engName);
+        }
+
+        public async Task AddNewCityAsync(string engCity, string rusCity)
+        {
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
+            var city = await db.GetCityByEngName(engCity);
             if (city is null)
             {
                 await db.AddCity(new City() { EngName = engCity, RusName = rusCity });
+                return;
             }
-            else
-            {
-                city.RusName = rusCity;
-                await db.UpdateCity(city);
-            }
+            city.RusName = rusCity;
+            await db.UpdateCity(city);
         }
 
-        public List<City> GetCityList()
+        public async Task<List<City>> GetCityListAsync()
         {
-            List<City> result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
-                result = db.GetAllCities().Result;
-            }
-            return result;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICityRepo>();
+            return await db.GetAllCities();
         }
         #endregion
 
         #region Tags
-        public DBRepository.Tag GetTag(int tagId, AmoAccount account)
+        public async Task<DBRepository.Tag> GetTagAsync(int tagId, AmoAccount account)
         {
-            DBRepository.Tag result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
-                result = db.GetTagById(tagId, account.id).Result;
-            }
-            return result;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
+            return await db.GetTagById(tagId, account.id);
         }
 
-        public string GetTagName(int tagId, AmoAccount account)
+        public async Task<string> GetTagNameAsync(int tagId, AmoAccount account)
         {
-            string result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
-                result = db.GetTagById(tagId, account.id).Result.Name;
-            }
-            return result;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
+            var tag = await db.GetTagById(tagId, account.id);
+            return tag.Name;
         }
 
-        public int GetTagId(string tagName, AmoAccount account)
+        public async Task<int> GetTagIdAsync(string tagName, AmoAccount account)
         {
-            int result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
-                var tag = db.GetTagByName(tagName, account.id).Result;
-                if (tag is not null) result = tag.Id;
-                else result = AddNewTag(tagName, account).Result;
-            }
-            return result;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
+            var tag = await db.GetTagByName(tagName, account.id);
+            if (tag is not null)
+                return tag.Id;
+            return await AddNewTagAsync(tagName, account);
         }
 
-        public async Task<int> AddNewTag(string tagName, AmoAccount account)
+        public async Task<int> AddNewTagAsync(string tagName, AmoAccount account)
         {
-            int result;
-            using (var scope = scopeFactory.CreateScope())
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
+            var tag = await db.GetTagByName(tagName, account.id);
+            if (tag is not null) 
+                return tag.Id;
+            try
             {
-                var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
-                var tag = db.GetTagByName(tagName, account.id).Result;
-                if (tag is not null) result = tag.Id;
-                else
-                {
-                    try
-                    {
-                        var leadRepo = account.GetRepo<Lead>();
-                        var newTag = leadRepo.AddTag(tagName).FirstOrDefault();
-                        result = newTag.id;
-                        await db.AddTag(new DBRepository.Tag()
-                        {
-                            Id = newTag.id,
-                            Name = newTag.name,
-                            AmoId = account.id
-                        });
-                    }
-                    catch (Exception e) { throw new Exception($"Unable to add tag {tagName}: {e.Message}"); }
-                }
+                var leadRepo = account.GetRepo<Lead>();
+                var newTag = leadRepo.AddTag(tagName).FirstOrDefault();
+                await db.AddTag(new DBRepository.Tag()
+                                    {
+                                        Id = newTag.id,
+                                        Name = newTag.name,
+                                        AmoId = account.id
+                                    });
+                return newTag.id;
             }
-            return result;
+            catch (Exception e) { throw new InvalidOperationException($"Unable to add tag {tagName}: {e.Message}"); }
         }
 
-        public List<AmoRepo.Tag> GetTagList(AmoAccount account)
+        public async Task<List<AmoRepo.Tag>> GetTagListAsync(AmoAccount account)
         {
-            List<AmoRepo.Tag> result = new(); 
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
-                foreach (var t in db.GetAllTags().Result)
-                {
-                    if (t.AmoId == account.id)
-                        result.Add(new AmoRepo.Tag()
-                        {
-                            id = t.Id,
-                            name = t.Name
-                        });
-                }
-            }
-            return result;
+            List<AmoRepo.Tag> result = new();
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ITagRepo>();
+            var tags = await db.GetAllTags();
+            return tags.Select(x => new AmoRepo.Tag() { id = x.Id, name = x.Name }).ToList();
         }
         #endregion
 
         #region CustomFileds
-        public CF GetCF(int fieldId, AmoAccount acc)
+        public async Task<CF> GetCFAsync(int fieldId, AmoAccount acc)
         {
-            CF result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
-                result = db.GetCFById(fieldId, acc.id).Result;
-            }
-            return result;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
+            return await db.GetCFByIdAsync(fieldId, acc.id);
         }
 
-        public string GetCFName(int fieldId, AmoAccount acc)
+        public async Task<string> GetCFNameAsync(int fieldId, AmoAccount acc)
         {
-            string result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
-                result = db.GetCFById(fieldId, acc.id).Result.Name;
-            }
-            return result;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
+            var cf = await db.GetCFByIdAsync(fieldId, acc.id);
+            return cf.Name;
         }
 
-        public int GetCFId(string fieldName, AmoAccount acc)
+        public async Task<int> GetCFIdAsync(string fieldName, AmoAccount acc)
         {
-            int result;
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
-                var cf = db.GetCFByName(fieldName, acc.id);
-                if (cf is not null) result = cf.Id;
-                else result = AddNewCF(fieldName, acc).Result;
-            }
-            return result;
-
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
+            var cf = await db.GetCFByNameAsync(fieldName, acc.id);
+            if (cf is not null)
+                return cf.Id;
+            return await AddNewCFAsync(fieldName, acc);
         }
 
-        public async Task<int> AddNewCF(string fieldName, AmoAccount acc)
+        public async Task<int> AddNewCFAsync(string fieldName, AmoAccount acc)
         {
-            int result;
-            using (var scope = scopeFactory.CreateScope())
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
+            var cf = await db.GetCFByNameAsync(fieldName, acc.id);
+            if (cf is not null)
+                return cf.Id;
+            try
             {
-                var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
-                var cf = db.GetCFByName(fieldName, acc.id).Result;
-                if (cf is not null) result = cf.Id;
-                else
-                {
-                    try
-                    {
-                        var leadRepo = acc.GetRepo<Lead>();
-                        var newCF = leadRepo.AddField(fieldName).FirstOrDefault();
-                        result = newCF.id;
-                        await db.AddCF(new CF()
-                        {
-                            Id = newCF.id,
-                            Name = newCF.name,
-                            AmoId = acc.id
-                        });
-                    }
-                    catch (Exception e) { throw new Exception($"Unable to add custom field {fieldName}: {e.Message}"); }
-                }
+                var leadRepo = acc.GetRepo<Lead>();
+                var newCF = leadRepo.AddField(fieldName).FirstOrDefault();
+                await db.AddCFAsync(new CF()
+                                        {
+                                            Id = newCF.id,
+                                            Name = newCF.name,
+                                            AmoId = acc.id
+                                        });
+                return newCF.id;
             }
-            return result;
+            catch (Exception e) { throw new InvalidOperationException($"Unable to add custom field {fieldName}: {e.Message}"); }
         }
 
-        public List<CustomField> GetCFList(AmoAccount acc)
+        public async Task<List<CustomField>> GetCFListAsync(AmoAccount acc)
         {
-            List<CustomField> result = new();
-            using (var scope = scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
-                foreach (var c in db.GetAllCFs().Result)
-                {
-                    if (c.AmoId == acc.id)
-                        result.Add(new CustomField()
-                        {
-                            id = c.Id,
-                            name = c.Name
-                        });
-                }
-            }
-            return result;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ICFRepo>();
+            var list = await db.GetAllCFsAsync();
+            return list.Select(x => new CustomField() { id = x.Id, name = x.Name }).ToList();
         }
         #endregion
     }

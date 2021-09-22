@@ -7,7 +7,7 @@ namespace MZPO.ucheba.ru.Models
     {
 #pragma warning disable IDE1006 // Naming Styles
         public int total { get; set; }
-        public List<Lead> items { get; set; }
+        public List<LeadLite> items { get; set; }
         public Facets facets { get; set; }
 
         public class Facets

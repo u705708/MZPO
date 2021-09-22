@@ -195,6 +195,14 @@ namespace MZPO.AmoRepo
         public IEnumerable<Note> AddNotes(int id, string comment);
 
         /// <summary>
+        /// Добавляет к сущности amoCRM сервисное примечание. Принимает id сущности и текст примечания. Возвращает список, содержащий добавленное примечание.
+        /// </summary>
+        /// <param name="id">Id сущности.</param>
+        /// <param name="comment">Текст примечания.</param>
+        /// <returns>Список содержащий добавленное примечание.</returns>
+        public IEnumerable<Note> AddServiceNotes(int id, string comment);
+
+        /// <summary>
         /// Добавляет в amoCRM примечание. Принимает объект примечания. Возвращает список, содержащий добавленное примечание.
         /// </summary>
         /// <param name="note">Объект примечания.</param>

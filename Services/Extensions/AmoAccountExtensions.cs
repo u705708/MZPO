@@ -2,6 +2,7 @@
 using MZPO.DBRepository;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MZPO.Services
 {
@@ -13,63 +14,55 @@ namespace MZPO.Services
         }
 
         #region City
-        public static string GetCity(this AmoAccount acc, string input)
+        public static async Task<string> GetCityAsync(this AmoAccount acc, string input)
         {
-            return acc.dataProvider.GetRusCityName(input);
+            return await acc.dataProvider.GetRusCityNameAsync(input);
         }
 
-        public static void AddNewCity(this AmoAccount acc, string engCity, string rusCity)
+        public static async Task AddNewCityAsync(this AmoAccount acc, string engCity, string rusCity)
         {
-            acc.dataProvider.AddNewCity(engCity, rusCity);
+            await acc.dataProvider.AddNewCityAsync(engCity, rusCity);
         }
 
-        public static List<City> GetCityList(this AmoAccount acc)
+        public static async Task<List<City>> GetCityListAsync(this AmoAccount acc)
         {
-            return acc.dataProvider.GetCityList();
+            return await acc.dataProvider.GetCityListAsync();
         }
         #endregion
 
         #region Tags
-        public static int GetTagId(this AmoAccount acc, string tagName)
+        public static async Task<int> GetTagIdAsync(this AmoAccount acc, string tagName)
         {
-            return acc.dataProvider.GetTagId(tagName, acc);
+            return await acc.dataProvider.GetTagIdAsync(tagName, acc);
         }
 
-        public static int AddNewTag(this AmoAccount acc, string tagName)
+        public static async Task<int> AddNewTagAsync(this AmoAccount acc, string tagName)
         {
-            return acc.dataProvider.AddNewTag(tagName, acc).Result;
+            return await acc.dataProvider.AddNewTagAsync(tagName, acc);
         }
 
-        public static Dictionary<string, int> GetTagDictionary(this AmoAccount acc)
+        public static async Task<Dictionary<string, int>> GetTagDictionaryAsync(this AmoAccount acc)
         {
-            var result = new Dictionary<string, int>();
-            var list = acc.dataProvider.GetTagList(acc);
-            if (list.Any())
-                foreach (var l in list)
-                    result.Add(l.name, l.id);
-            return result;
+            var list = await acc.dataProvider.GetTagListAsync(acc);
+            return list.ToDictionary(x => x.name, x => x.id);
         }
         #endregion
 
         #region Custom fields
-        public static int GetCFId(this AmoAccount acc, string fieldName)
+        public static async Task<int> GetCFIdAsync(this AmoAccount acc, string fieldName)
         {
-            return acc.dataProvider.GetCFId(fieldName, acc);
+            return await acc.dataProvider.GetCFIdAsync(fieldName, acc);
         }
 
-        public static int AddNewCF(this AmoAccount acc, string cfName)
+        public static async Task<int> AddNewCFAsync(this AmoAccount acc, string cfName)
         {
-            return acc.dataProvider.AddNewCF(cfName, acc).Result;
+            return await acc.dataProvider.AddNewCFAsync(cfName, acc);
         }
 
-        public static Dictionary<string, int> GetCFDictionary(this AmoAccount acc)
+        public static async Task<Dictionary<string, int>> GetCFDictionaryAsync(this AmoAccount acc)
         {
-            var result = new Dictionary<string, int>();
-            var list = acc.dataProvider.GetCFList(acc);
-            if (list.Any())
-                foreach (var l in list)
-                    result.Add(l.name, l.id);
-            return result;
+            var list = await acc.dataProvider.GetCFListAsync(acc);
+            return list.ToDictionary(x => x.name, x => x.id);
         }
         #endregion
     }

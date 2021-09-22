@@ -40,7 +40,7 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_companyNumber.ToString());
+                _processQueue.Remove($"compDouble-{_companyNumber}");
                 return Task.FromCanceled(_token);
             }
 
@@ -61,7 +61,7 @@ namespace MZPO.LeadProcessors
 
                 if (criteria.Count == 0)
                 {
-                    _processQueue.Remove(_companyNumber.ToString());
+                    _processQueue.Remove($"compDouble-{_companyNumber}");
                     return Task.CompletedTask;
                 }
 
@@ -76,13 +76,13 @@ namespace MZPO.LeadProcessors
                 _compRepo.AddNotes(new Note() { entity_id = company.id, note_type = "common", parameters = new Note.Params() { text = sb.ToString() } });
 
                 _filter.AddEntity(_companyNumber);
-                _processQueue.Remove(_companyNumber.ToString());
+                _processQueue.Remove($"compDouble-{_companyNumber}");
                 return Task.CompletedTask;
             }
             catch (Exception e)
             {
                 _log.Add($"Unable to check corp company for doubles {_companyNumber}: {e.Message}");
-                _processQueue.Remove(_companyNumber.ToString());
+                _processQueue.Remove($"compDouble-{_companyNumber}");
                 return Task.FromException(e);
             }
         }

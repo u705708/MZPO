@@ -3,6 +3,7 @@ using MZPO.DBRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MZPO.Services
 {
@@ -19,7 +20,7 @@ namespace MZPO.Services
             amoProvider = new AmoProvider(scopeFactory);
             dataProvider = new DataProvider(scopeFactory);
 
-            var authAccounts = amoProvider.GetAmoAccounts();
+            var authAccounts = amoProvider.GetAllAmoAccountsAsync().Result;
 
             _accounts = new List<AmoAccount>();
             if (authAccounts.Any())
@@ -43,18 +44,18 @@ namespace MZPO.Services
         public AmoAccount GetAccountById(int id)
         {
             if (_accounts.Any(x => x.id == id)) return _accounts.Single(x => x.id == id);
-            else throw new Exception($"Error: No such amo account: {id}");
+            else throw new ArgumentException($"Error: No such amo account: {id}");
         }
 
         public AmoAccount GetAccountByName(string name)
         {
             if (_accounts.Any(x => x.name == name)) return _accounts.Single(x => x.name == name);
-            else throw new Exception($"Error: No such amo account: {name}");
+            else throw new ArgumentException($"Error: No such amo account: {name}");
         }
 
-        public void AddAmoAccount(int id, string name, string subdomain, string client_id, string client_secret, string redirect_uri, string code)
+        public async Task AddAmoAccountAsync(int id, string name, string subdomain, string client_id, string client_secret, string redirect_uri, string code)
         {
-            var acc = amoProvider.GetAmoAccount(id);
+            var acc = await amoProvider.GetAmoAccountAsync(id);
             if (acc is not null)
             {
                 acc.name = name;
@@ -63,7 +64,7 @@ namespace MZPO.Services
                 acc.client_secret = client_secret;
                 acc.redirect_uri = redirect_uri;
                 acc.code = code;
-                amoProvider.UpdateAccount(acc);
+                await amoProvider.UpdateAccountAsync(acc);
             }
             else
             {
@@ -76,7 +77,7 @@ namespace MZPO.Services
                     redirect_uri = redirect_uri,
                     code = code
                 };
-                amoProvider.AddAccount(acc);
+                await amoProvider.AddAccountAsync(acc);
             }
             if (_accounts.Any(x => x.id == id))
             {
@@ -97,9 +98,9 @@ namespace MZPO.Services
             }
         }
 
-        public void AddAmoAccount(int id, string name, string subdomain, string client_id, string client_secret, string redirect_uri, string code, string authToken, string refrToken, DateTime validity)
+        public async Task AddAmoAccountAsync(int id, string name, string subdomain, string client_id, string client_secret, string redirect_uri, string code, string authToken, string refrToken, DateTime validity)
         {
-            var acc = amoProvider.GetAmoAccount(id);
+            var acc = await amoProvider.GetAmoAccountAsync(id);
             if (acc is not null)
             {
                 acc.name = name;
@@ -111,7 +112,7 @@ namespace MZPO.Services
                 acc.authToken = authToken;
                 acc.refrToken = refrToken;
                 acc.validity = validity;
-                amoProvider.UpdateAccount(acc);
+                await amoProvider.UpdateAccountAsync(acc);
             }
             else
             {
@@ -128,7 +129,7 @@ namespace MZPO.Services
                     refrToken = refrToken,
                     validity = validity
             };
-                amoProvider.AddAccount(acc);
+                await amoProvider.AddAccountAsync(acc);
             }
             if (_accounts.Any(x => x.id == id))
             {
@@ -149,12 +150,12 @@ namespace MZPO.Services
             }
         }
 
-        public void RemoveAmoAccount(int id)
+        public async Task RemoveAmoAccountAsync(int id)
         {
-            var acc = amoProvider.GetAmoAccount(id);
+            var acc = await amoProvider.GetAmoAccountAsync(id);
             if (acc is not null)
             {
-                amoProvider.RemoveAccount(acc);
+                await amoProvider.RemoveAccountAsync(acc);
             }
             if (_accounts.Any(x => x.id == id))
             {

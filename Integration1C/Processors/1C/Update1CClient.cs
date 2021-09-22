@@ -53,6 +53,24 @@ namespace Integration1C
                     }
         }
 
+        private static void UpdateAmoId(Contact contact, Client1C client1C)
+        {
+            if (client1C.amo_ids is null)
+                client1C.amo_ids = new();
+
+            if (!client1C.amo_ids.Any(x => x.account_id == contact.account_id))
+            {
+                client1C.amo_ids.Add(new() { account_id = (int)contact.account_id, entity_id = (int)contact.id });
+                return;
+            }
+
+            if (!client1C.amo_ids.Any(x => x.entity_id == contact.id))
+            {
+                client1C.amo_ids.First(x => x.account_id == contact.account_id).entity_id = (int)contact.id;
+                return;
+            }
+        }
+
         private static Client1C UpdateClientIn1C(Guid client_id_1C, Contact contact, int amo_acc, ClientRepository repo1C)
         {
             var client1C = repo1C.GetClient(client_id_1C);
@@ -61,6 +79,8 @@ namespace Integration1C
             PopulateClientCFs(contact, amo_acc, client1C);
 
             client1C.name = contact.name;
+
+            UpdateAmoId(contact, client1C);
 
             repo1C.UpdateClient(client1C);
 

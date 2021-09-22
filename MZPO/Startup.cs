@@ -56,6 +56,7 @@ namespace MZPO
             services.AddSingleton<LeadsSorter>();
             services.AddSingleton<Cred1C>();
             services.AddSingleton<Log>();
+            services.AddSingleton<Uber>();
             services.AddSingleton<RecentlyUpdatedEntityFilter>();
             services.AddTransient<GSheets>();
         }
@@ -68,6 +69,8 @@ namespace MZPO
             app.UseRouting();
 
             app.UseCors();
+
+            app.UseWebSockets();
 
             app.UseStaticFiles();
 

@@ -41,13 +41,13 @@ namespace MZPO.ReportProcessors
             _taskId = taskId;
         }
 
-        protected static readonly List<(int, string)> managersRet = new()
-        {
+        protected static readonly (int, string)[] managersRet = {
             (2375107, "Кристина Гребенникова"),
             (2375143, "Екатерина Белоусова"),
             (2976226, "Вера Гладкова"),
             (3835801, "Наталья Кубышина"),
             (6158035, "Анастасия Матюк"),
+            (7448173, "Инна Апостол"),
             (2375152, "Карен Оганисян"),
             (3813670, "Федорова Александра"),
             (6102562, "Валерия Лукьянова"),
@@ -55,8 +55,7 @@ namespace MZPO.ReportProcessors
             (7358368, "Лидия Ковш"),
         };
 
-        protected static readonly List<(int, string)> managersCorp = new()
-        {
+        protected static readonly (int, string)[] managersCorp = {
             (2375116, "Киреева Светлана"),
             (2375122, "Васина Елена"),
             (7358626, "Саланович Эллада"),
@@ -67,8 +66,7 @@ namespace MZPO.ReportProcessors
             (2884132, "Ирина Сорокина"),
         };
 
-        protected static readonly List<int> pipelinesRet = new()
-        {
+        protected static readonly int[] pipelinesRet = {
             3198184,    //Продажи(Розница)
             3566374,    //Отложенные
             3558964,    //Реанимация

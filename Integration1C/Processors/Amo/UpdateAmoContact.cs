@@ -39,7 +39,7 @@ namespace Integration1C
                         value = ((DateTimeOffset)dt.AddHours(3)).ToUnixTimeSeconds();
                     }
 
-                    if (p.Name == "phone" || p.Name == "email") continue;
+                    //if (p.Name == "phone" || p.Name == "email") continue;
 
                     try { if ((string)value == "") continue; }
                     catch { }

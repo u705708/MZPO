@@ -40,7 +40,8 @@ namespace MZPO.AmoRepo
                 if (response == "") return o;
                 JsonConvert.PopulateObject(WebUtility.UrlDecode(response), o); 
             }
-            catch (Exception e) { throw new Exception("Unable to process response : " + e.Message); }
+            catch (InvalidOperationException) { throw; }
+            catch (Exception e) { throw new ArgumentException("Unable to process response : " + e.Message); }
             return o;
         }
 
@@ -64,6 +65,7 @@ namespace MZPO.AmoRepo
 
                 var next = entityList._links["next"].href;
                 try { response = request.GetResponseAsync().Result; }
+                catch(AmoRequest.TooManyRequestsException e) { throw new InvalidOperationException(e.Message); }
                 catch { break; }
 
                 if (response == "") break;
@@ -89,7 +91,7 @@ namespace MZPO.AmoRepo
             if (acc_id == 19453687) return 5111;
             if (acc_id == 28395871) return 12463;
             if (acc_id == 29490250) return 5835;
-            throw new Exception($"No catalog_id for account {acc_id}");
+            throw new ArgumentException($"No catalog_id for account {acc_id}");
         }
         #endregion
 
@@ -180,23 +182,12 @@ namespace MZPO.AmoRepo
 
         public IEnumerable<Event> GetEntityEvents(int id)
         {
-            string entityType;
-
-            switch (_entityLink)
-            {
-                case "leads": 
-                    entityType = "lead";
-                    break;
-                case "contacts":
-                    entityType = "contact";
-                    break;
-                case "companies":
-                    entityType = "company";
-                    break;
-                default:
-                    throw new Exception($"No events for entity {_entityLink}");
-            }
-            
+            string entityType = _entityLink switch {
+                "leads" => "lead",
+                "contacts" => "contact",
+                "companies" => "company",
+                _ => throw new InvalidOperationException($"No events for entity {_entityLink}"),
+            };
             var uri = $"{_apiAddress}events?filter[entity]={entityType}&filter[entity_id][]={id}";
 
             return GetEntities<Event>(uri, "events");
@@ -373,7 +364,16 @@ namespace MZPO.AmoRepo
             return new List<Note>();
         }
         public IEnumerable<Note> AddNotes(Note note) => AddNotes(new List<Note>() { note });
-        public IEnumerable<Note> AddNotes(int id, string comment) => AddNotes(new Note() { 
+        public IEnumerable<Note> AddNotes(int id, string comment) => AddNotes(new Note()
+        {
+            entity_id = id,
+            note_type = "common",
+            parameters = new Note.Params()
+            {
+                text = comment
+            }
+        });
+        public IEnumerable<Note> AddServiceNotes(int id, string comment) => AddNotes(new Note() { 
             entity_id = id, 
             note_type = "service_message", 
             parameters = new Note.Params() 
@@ -385,12 +385,6 @@ namespace MZPO.AmoRepo
         public IEnumerable<Tag> GetTags()
         {
             var uri = $"{_apiAddress}{_entityLink}/tags";
-
-            //var result = GetList(uri);
-
-            //if (result._embedded is not null && result._embedded.tags is not null)
-            //    return result._embedded.tags.ToList();
-            //return new List<Tag>();
 
             return GetEntities<Tag>(uri, "tags");
         }
@@ -413,12 +407,6 @@ namespace MZPO.AmoRepo
         {
             var uri = $"{_apiAddress}{_entityLink}/custom_fields";
 
-            //var result = GetList(uri);
-
-            //if (result._embedded is not null && result._embedded.custom_fields is not null)
-            //    return result._embedded.custom_fields.ToList();
-            //return new List<CustomField>();
-
             return GetEntities<CustomField>(uri, "custom_fields");
         }
         public IEnumerable<CustomField> AddField(IEnumerable<CustomField> payload)
@@ -440,11 +428,6 @@ namespace MZPO.AmoRepo
         {
             int catalog_id = GetCatalogId();
             var uri = $"{_apiAddress[0..^3]}v2/catalog_elements?catalog_id={catalog_id}&id={id}";
-
-            //var result = GetList(uri);
-
-            //if (result._embedded is not null && result._embedded.items is not null)
-            //    return result._embedded.items.First();
 
             var result = GetEntities<CatalogElement>(uri, "items");
 
@@ -560,7 +543,7 @@ namespace MZPO.AmoRepo
             }
             catch (Exception e) 
             { 
-                throw new Exception($"Unable to accept unsorted: {e.Message}"); 
+                throw new InvalidOperationException($"Unable to accept unsorted: {e.Message}"); 
             }
         }
         #endregion

@@ -526,7 +526,7 @@ namespace MZPO.ReportProcessors
                 {
                     BandedRange = new BandedRange()
                     {
-                        Range = new GridRange() { SheetId = 0, StartRowIndex = 1, EndRowIndex = managersRet.Count + 1 },
+                        Range = new GridRange() { SheetId = 0, StartRowIndex = 1, EndRowIndex = managersRet.Count() + 1 },
                         BandedRangeId = 0,
                         RowProperties = new BandingProperties()
                         {

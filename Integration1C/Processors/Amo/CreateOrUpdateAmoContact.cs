@@ -79,11 +79,7 @@ namespace Integration1C
 
                     if (contact.custom_fields_values is null) contact.custom_fields_values = new();
 
-                    contact.custom_fields_values.Add(new Custom_fields_value()
-                    {
-                        field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = value } }
-                    });
+                    contact.AddNewCF(FieldLists.Contacts[acc_id][p.Name], value);
                 }
         }
 
@@ -165,13 +161,11 @@ namespace Integration1C
 
                     #region Checking contact
                     List<Contact> similarContacts = new();
-                    if (_client1C.phone is not null &&
-                        _client1C.phone != "")
-                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "")}"));
+                    if (!string.IsNullOrEmpty(_client1C.phone))
+                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.phone}"));
 
-                    if (_client1C.email is not null &&
-                        _client1C.email != "")
-                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.email.Trim().Replace(" ", "")}"));
+                    if (!string.IsNullOrEmpty(_client1C.email))
+                        similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.email}"));
 
                     if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
                         _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { id = x.id, account_id = x.account_id }), Formatting.Indented)}");

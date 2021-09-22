@@ -22,19 +22,19 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove(_uid);
+                _processQueue.Remove($"unsorted_{_uid}");
                 return Task.FromCanceled(_token);
             }
             try
             {
                 _leadRepo.AcceptUnsorted(_uid);                                                                             //принимаем из Неразобранного по uid
-                _processQueue.Remove(_uid);
+                _processQueue.Remove($"unsorted_{_uid}");
                 _log.Add($"Unsorted accepted: {_uid}");
                 return Task.CompletedTask;
             }
             catch (Exception e) 
             {
-                _processQueue.Remove(_uid);
+                _processQueue.Remove($"unsorted_{_uid}");
                 _log.Add($"Error: Unable to accept unsorted: {_uid}:{e.Message}");
                 return Task.FromException(e);
             }

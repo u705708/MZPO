@@ -68,7 +68,7 @@ namespace MZPO.ReportProcessors
             Lazy<IReportProcessor> reportProcessor = new(() => ReportFactory(reportParams, acc, processQueue, gSheets, dateFrom, dateTo, token));
 
             Task task = Task.Run(() => reportProcessor.Value.Run());
-            processQueue.AddTask(task, cts, reportParams.TaskId, acc.name, reportParams.ReportName);
+            processQueue.AddTask(task, cts, reportParams.TaskId, acc.name, "Reports");
         }
     }
 }

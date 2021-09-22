@@ -11,7 +11,7 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Returns amoCRM authentication token.
         /// </summary>
-        public string GetToken();
+        public Task<string> GetToken();
 
         /// <summary>
         /// Returns amoCRM account id.
@@ -22,5 +22,10 @@ namespace MZPO.AmoRepo
         /// Returns semaphore to ratelimit outgoing requests.
         /// </summary>
         public SemaphoreSlim GetSemaphoreSlim();
+
+        /// <summary>
+        /// Refreshes auth credential from db.
+        /// </summary>
+        public Task RefreshAmoAccountFromDBAsync();
     }
 }

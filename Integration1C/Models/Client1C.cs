@@ -10,11 +10,31 @@ namespace Integration1C
 #pragma warning disable IDE1006 // Naming Styles
         public Guid? client_id_1C { get; set; }
         public List<Amo_id> amo_ids { get; set; }
-        public string email { get; set; }
-        public string phone { get; set; }
+
+        private string _email;
+        public string email {
+            get
+            { return _email; }
+            set
+            { _email = value.Trim().Replace(" ", ""); }
+        }
+
+        private string _phone;
+        public string phone {
+            get
+            {
+                if (_phone.StartsWith("89"))
+                    return $"7{_phone[1..]}";
+                return _phone; 
+            }
+            set
+            { _phone = value.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", ""); }
+        }
+
         public string name { get; set; }
-        //[JsonConverter(typeof(DateFormatConverter))]
-        //public DateTime? dob { get; set; }
+        [JsonConverter(typeof(DateFormatConverter))]
+        public DateTime? dob { get; set; }
+        public string snils { get; set; }
         public string pass_serie { get; set; }
         public string pass_number { get; set; }
         public string pass_issued_by { get; set; }
@@ -31,9 +51,7 @@ namespace Integration1C
             }
             set
             {
-                if (value < DateTime.UnixEpoch)
-                    _pass_issued_at = DateTime.UnixEpoch;
-                else _pass_issued_at = value;
+                _pass_issued_at = value < DateTime.UnixEpoch ? DateTime.UnixEpoch : value;
             }
         }
 #pragma warning restore IDE1006 // Naming Styles    

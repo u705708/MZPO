@@ -18,8 +18,9 @@ namespace MZPO.LeadProcessors
         private readonly FormRequest _formRequest;
         private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
+        private readonly string _taskname;
 
-        public SiteFormCorpProcessor(AmoAccount acc, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token)
+        public SiteFormCorpProcessor(AmoAccount acc, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token, string taskname)
         {
             _leadRepo = acc.GetRepo<Lead>();
             _contRepo = acc.GetRepo<Contact>();
@@ -28,6 +29,7 @@ namespace MZPO.LeadProcessors
             _formRequest = formRequest;
             _processQueue = processQueue;
             _token = token;
+            _taskname = taskname;
         }
 
         private readonly Dictionary<string, int> fieldIds = new()
@@ -53,7 +55,7 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove($"FormSiteCorp");
+                _processQueue.Remove(_taskname);
                 return Task.FromCanceled(_token);
             }
             try
@@ -67,7 +69,7 @@ namespace MZPO.LeadProcessors
                     _formRequest.phone == ""))
                 {
                     _log.Add("Request without contacts");
-                    _processQueue.Remove($"FormSiteCorp");
+                    _processQueue.Remove(_taskname);
                     return Task.CompletedTask;
                 }
 
@@ -243,13 +245,13 @@ namespace MZPO.LeadProcessors
                     throw;
                 }
                 
-                _processQueue.Remove($"FormSiteCorp");
+                _processQueue.Remove(_taskname);
                 return Task.CompletedTask;
             }
             catch (Exception e)
             {
                 _log.Add($"Не получилось добавить заявку с сайта: {e}.");
-                _processQueue.Remove($"FormSiteCorp");
+                _processQueue.Remove(_taskname);
                 return Task.FromException(e);
             }
         }

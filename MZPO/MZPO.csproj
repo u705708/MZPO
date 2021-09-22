@@ -21,13 +21,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="log.txt" />
+    <None Remove="logs\log.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="log.txt">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
+    <Content Include="logs\log.txt" />
   </ItemGroup>
 
   <ItemGroup>

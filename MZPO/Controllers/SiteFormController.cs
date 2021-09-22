@@ -18,6 +18,7 @@ namespace MZPO.Controllers
         private readonly Amo _amo;
         private readonly Log _log;
         private readonly GSheets _gSheets;
+        private readonly string _path;
 
         public SiteFormController(Amo amo, ProcessQueue processQueue, Log log, GSheets gSheets)
         {
@@ -25,6 +26,7 @@ namespace MZPO.Controllers
             _processQueue = processQueue;
             _log = log;
             _gSheets = gSheets;
+            _path = $@"logs\siteform\{DateTime.Today.Year}-{DateTime.Today.Month}-{DateTime.Today.Day}.log";
         }
 
         // POST: siteform/retail
@@ -47,7 +49,7 @@ namespace MZPO.Controllers
             #endregion
 
             #region Adding to log
-            using StreamWriter sw = new($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} siteform/retail ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(col)));
             sw.WriteLine("-----");
@@ -56,13 +58,14 @@ namespace MZPO.Controllers
             #endregion
 
             CancellationTokenSource cts = new();
-            CancellationToken token = cts.Token;
+
+            string taskName = $"FormSiteRet-{DateTime.Now.ToLongTimeString()}";
 
             var leadProcessor = new Lazy<ILeadProcessor>(() =>
-                   new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, token, _gSheets));
+                   new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName));
 
             Task task = Task.Run(() => leadProcessor.Value.Run());
-            _processQueue.AddTask(task, cts, $"FormSiteRet", "ret2corp", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, taskName, "mzpoeducationsale", "SiteForm");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }
@@ -87,7 +90,7 @@ namespace MZPO.Controllers
             #endregion
 
             #region Adding to log
-            using StreamWriter sw = new($"siteform_requests_{DateTime.Today.ToShortDateString()}.log", true, System.Text.Encoding.Default);
+            using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} siteform/corp ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(col)));
             sw.WriteLine("-----");
@@ -96,13 +99,14 @@ namespace MZPO.Controllers
             #endregion
 
             CancellationTokenSource cts = new();
-            CancellationToken token = cts.Token;
+
+            string taskName = $"FormSiteCorp-{DateTime.Now.ToLongTimeString()}";
 
             var leadProcessor = new Lazy<ILeadProcessor>(() =>
-                   new SiteFormCorpProcessor(_amo.GetAccountById(19453687), _log, formRequest, _processQueue, token));
+                   new SiteFormCorpProcessor(_amo.GetAccountById(19453687), _log, formRequest, _processQueue, cts.Token, taskName));
 
             Task task = Task.Run(() => leadProcessor.Value.Run());
-            _processQueue.AddTask(task, cts, $"FormSiteCorp", "ret2corp", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, taskName, "mzpoeducation", "SiteForm");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }

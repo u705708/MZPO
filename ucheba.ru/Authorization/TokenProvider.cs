@@ -2,18 +2,32 @@
 using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace MZPO.ucheba.ru
 {
     internal static class TokenProvider
     {
-        private static Token GetCurrentToken()
+        internal static async Task<string> GetAuthToken()
+        {
+            Token token = await GetCurrentToken();
+
+            if (token.expiresAt <= DateTime.Now.AddSeconds(-5))
+            {
+                token = await UpdateToken();
+                await SaveNewToken(token);
+            }
+
+            return token.token;
+        }
+
+        private static async Task<Token> GetCurrentToken()
         {
             try
             {
                 using FileStream stream = new("ucheba_token.json", FileMode.Open, FileAccess.Read);
                 using StreamReader sr = new(stream);
-                return JsonConvert.DeserializeObject<Token>(sr.ReadToEndAsync().Result);
+                return JsonConvert.DeserializeObject<Token>(await sr.ReadToEndAsync());
             }
             catch (Exception e)
             {
@@ -21,28 +35,15 @@ namespace MZPO.ucheba.ru
             }
         }
 
-        private static void SaveNewToken(Token token)
+        private static async Task SaveNewToken(Token token)
         {
             using StreamWriter sw = new("ucheba_token.json", false, System.Text.Encoding.Default);
-            sw.WriteLine(JsonConvert.SerializeObject(token, Formatting.Indented));
+            await sw.WriteLineAsync(JsonConvert.SerializeObject(token, Formatting.Indented));
         }
 
-        private static Token UpdateToken()
+        private static async Task<Token> UpdateToken()
         {
-            return Auth.GetNewToken();
-        }
-
-        internal static string GetAuthToken()
-        {
-            Token token = GetCurrentToken();
-
-            if (token.expiresAt <= DateTime.Now.AddSeconds(-5))
-            {
-                token = UpdateToken();
-                SaveNewToken(token);
-            }
-
-            return token.token;
+            return await Auth.GetNewToken();
         }
     }
 }

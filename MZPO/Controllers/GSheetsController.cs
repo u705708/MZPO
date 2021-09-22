@@ -51,7 +51,40 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => leadProcessor.Value.CorpKP());
 
-            _processQueue.AddTask(task, cts, $"SentKP-{leadNumber}", "KP_sent", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, $"SentKP-{leadNumber}", "mzpoeducation", "GoogleSheets");                                            //Запускаем и добавляем в очередь
+
+            return Ok();
+        }
+
+        // POST: gsheets/meeting
+        [ActionName("Meeting")]
+        [HttpPost]
+        public IActionResult Meeting()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[status][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[add][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return Ok();
+
+            CancellationTokenSource cts = new();
+            CancellationToken token = cts.Token;
+
+            Lazy<GSheetsProcessor> leadProcessor = new(() =>
+                   new GSheetsProcessor(leadNumber, _amo, _gSheets, _processQueue, _log, token));
+
+            Task task = Task.Run(() => leadProcessor.Value.CorpMeetings());
+
+            _processQueue.AddTask(task, cts, $"CorpMeeting-{leadNumber}", "mzpoeducation", "GoogleSheets");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }
@@ -84,7 +117,7 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => leadProcessor.Value.DOD());
 
-            _processQueue.AddTask(task, cts, $"DOD-{leadNumber}", "DOD", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, $"DOD-{leadNumber}", "mzpoeducationsale", "GoogleSheets");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }
@@ -117,7 +150,7 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => leadProcessor.Value.NPS());
 
-            _processQueue.AddTask(task, cts, $"NPS-{leadNumber}", "NPS", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, $"NPS-{leadNumber}", "mzpoeducationsale", "GoogleSheets");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }
@@ -150,7 +183,7 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => leadProcessor.Value.Reprimands());
 
-            _processQueue.AddTask(task, cts, $"Reprimands-{leadNumber}", "Reprimands", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, $"Reprimands-{leadNumber}", "mzpoeducationsale", "GoogleSheets");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }
@@ -183,9 +216,76 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => leadProcessor.Value.Poll());
 
-            _processQueue.AddTask(task, cts, $"Poll-{leadNumber}", "Poll", "LeadProcessor");                                            //Запускаем и добавляем в очередь
+            _processQueue.AddTask(task, cts, $"Poll-{leadNumber}", "mzpoeducationsale", "GoogleSheets");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }
+
+        // POST: gsheets/retail
+        [ActionName("Retail")]
+        [HttpPost]
+        public IActionResult Retail()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[status][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[add][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return Ok();
+
+            CancellationTokenSource cts = new();
+            CancellationToken token = cts.Token;
+
+            Lazy<GSheetsProcessor> leadProcessor = new(() =>
+                   new GSheetsProcessor(leadNumber, _amo, _gSheets, _processQueue, _log, token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Retail());
+
+            _processQueue.AddTask(task, cts, $"Retail-{leadNumber}", "mzpoeducationsale", "GoogleSheets");                                            //Запускаем и добавляем в очередь
+
+            return Ok();
+        }
+
+        // POST: gsheets/openlesson
+        [ActionName("OpenLesson")]
+        [HttpPost]
+        public IActionResult OpenLesson()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[status][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[add][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return Ok();
+
+            CancellationTokenSource cts = new();
+            CancellationToken token = cts.Token;
+
+            Lazy<GSheetsProcessor> leadProcessor = new(() =>
+                   new GSheetsProcessor(leadNumber, _amo, _gSheets, _processQueue, _log, token));
+
+            Task task = Task.Run(() => leadProcessor.Value.OpenLesson());
+
+            _processQueue.AddTask(task, cts, $"OpenLesson-{leadNumber}", "mzpoeducationsale", "GoogleSheets");                                            //Запускаем и добавляем в очередь
+
+            return Ok();
+        }
+
     }
 }

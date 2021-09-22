@@ -5,11 +5,11 @@ namespace MZPO.DBRepository
 {
     public interface ICFRepo
     {
-        public Task<List<CF>> GetAllCFs();
-        public Task<CF> GetCFById(int id, int amoId);
-        public Task<CF> GetCFByName(string name, int amoId);
-        public Task<int> AddCF(CF cf);
-        public Task<int> RemoveCF(CF cf);
-        public Task<int> UpdateCF(CF cf);
+        public Task<List<CF>> GetAllCFsAsync();
+        public Task<CF> GetCFByIdAsync(int id, int amoId);
+        public Task<CF> GetCFByNameAsync(string name, int amoId);
+        public Task<int> AddCFAsync(CF cf);
+        public Task<int> RemoveCFAsync(CF cf);
+        public Task<int> UpdateCFAsync(CF cf);
     }
 }

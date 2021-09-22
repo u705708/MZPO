@@ -14,6 +14,7 @@ namespace MZPO.LeadProcessors
 {
     public class GSheetsProcessor
     {
+        #region Definition
         private readonly Amo _amo;
         private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
@@ -31,38 +32,39 @@ namespace MZPO.LeadProcessors
             _service = gSheets.GetService();
         }
 
-        protected static readonly List<(int, string)> managers = new()
-        {
+        protected static readonly (int, string)[] managers = {
             (2576764, "Администратор"),
             (2375107, "Кристина Гребенникова"),
             (2375143, "Екатерина Белоусова"),
             (2976226, "Вера Гладкова"),
             (3835801, "Наталья Кубышина"),
             (6158035, "Анастасия Матюк"),
-            (6769426, "Рюмина Наталья"),
-            (6929800, "Саида Исмаилова"),
             (2375152, "Карен Оганисян"),
-            (3813670, "Федорова Александра"),
+            (3813670, "Александра Федорова"),
             (6102562, "Валерия Лукьянова"),
-            (6872548, "Оксана Полукеева"),
-            (2375116, "Киреева Светлана"),
-            (2375131, "Алферова Лилия"),
-            (6904255, "Виктория Корчагина"),
-            (6909061, "Оксана Строганова"),
-            (2884132, "Ирина Сорокина"),
-            (6028753, "Алена Федосова"),
+            (6929800, "Саида Исмаилова"),
+            (7358368, "Лидия Ковш"),
+            (2375116, "Светлана Киреева"),
+            (2375122, "Елена Васина"),
+            (7358626, "Эллада Саланович"),
+            (2375131, "Лилия Алферова"),
             (6630727, "Елена Зубатых"),
+            (6028753, "Алена Федосова"),
             (6697522, "Наталья Филатова"),
-            (3770773, "Шталева Лидия"),
-            (6200629, "Харшиладзе Леван"),
-            (6346882, "Мусихина Юлия")
+            (2884132, "Ирина Сорокина"),
+            (3770773, "Лидия Шталева"),
+            (6200629, "Леван Харшиладзе"),
+            (6346882, "Юлия Мусихина"),
+            (7448173, "Инна Апостол"),
         };
 
         private class FormulaCell
         {
             public string formula;
         }
+        #endregion
 
+        #region Supplementary methods
         private static string GetManager(int? id)
         {
             if (id is null) return "";
@@ -108,7 +110,9 @@ namespace MZPO.LeadProcessors
                     Start = new GridCoordinate() { ColumnIndex = 0, RowIndex = 0, SheetId = sheetId },
                     Rows = new List<RowData>() { new RowData() { Values = new List<CellData>(){
                             new CellData(){ UserEnteredFormat = header, UserEnteredValue = new ExtendedValue() { StringValue = title} },
-            } } } } } );
+            } } }
+                }
+            });
 
             requestContainer.Add(new Request()
             {
@@ -150,7 +154,7 @@ namespace MZPO.LeadProcessors
                     }
                 }
 
-            }); 
+            });
             #endregion
 
             #region Adjusting column width
@@ -256,26 +260,78 @@ namespace MZPO.LeadProcessors
             int sheetId = BitConverter.ToUInt16(hashed, 0) + BitConverter.ToUInt16(hashed, 3) + BitConverter.ToUInt16(hashed, 6) + BitConverter.ToUInt16(hashed, 8);
 
             #region Adding sheet
-            List<Request> requestContainer = new() { new()
+            List<Request> requestContainer = new()
             {
-                AddSheet = new AddSheetRequest()
+                new()
                 {
-                    Properties = new SheetProperties()
+                    AddSheet = new AddSheetRequest()
                     {
-                        GridProperties = new GridProperties()
+                        Properties = new SheetProperties()
                         {
-                            ColumnCount = 11,
-                            FrozenRowCount = 2,
-                            RowCount = 152
-                        },
-                        Title = title,
-                        SheetId = sheetId
+                            GridProperties = new GridProperties()
+                            {
+                                ColumnCount = 11,
+                                FrozenRowCount = 2,
+                                RowCount = 152
+                            },
+                            Title = title,
+                            SheetId = sheetId
+                        }
                     }
                 }
-            }};
+            };
             #endregion
 
             requestContainer.AddRange(GetWebinarHeaderRequests(sheetId, title));
+
+            var batchRequest = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = requestContainer
+            };
+
+            service.Spreadsheets.BatchUpdate(batchRequest, spreadsheetId).Execute();
+
+            return sheetId;
+        }
+
+        private static int GetManagerSheetId(int managerId, SheetsService service, string spreadsheetId)
+        {
+            #region Retrieving spreadsheet
+            var spreadsheet = service.Spreadsheets.Get(spreadsheetId).Execute();
+            #endregion
+
+            #region Checking for existing sheets for this manager
+            if (spreadsheet.Sheets.Any(x => x.Properties.SheetId == managerId))
+                return managerId;
+
+            if (managers.Any(x => x.Item1 == managerId) &&
+                spreadsheet.Sheets.Any(x => x.Properties.Title.Contains(managers.First(x => x.Item1 == managerId).Item2)))
+                return (int)spreadsheet.Sheets.First(x => x.Properties.Title.Contains(managers.First(x => x.Item1 == managerId).Item2)).Properties.SheetId;
+            #endregion
+
+            int sheetId = managerId;
+
+            #region Adding sheet
+            List<Request> requestContainer = new()
+            {
+                new()
+                {
+                    AddSheet = new AddSheetRequest()
+                    {
+                        Properties = new SheetProperties()
+                        {
+                            GridProperties = new GridProperties()
+                            {
+                                ColumnCount = 5,
+                                RowCount = 10000
+                            },
+                            Title = (managers.Any(x => x.Item1 == managerId)) ? managers.First(x => x.Item1 == managerId).Item2 : managerId.ToString(),
+                            SheetId = sheetId
+                        }
+                    }
+                }
+            };
+            #endregion
 
             var batchRequest = new BatchUpdateSpreadsheetRequest
             {
@@ -353,7 +409,7 @@ namespace MZPO.LeadProcessors
                 case "n": return "Нет";
                 default: return input;
             }
-               
+
         }
 
         private static async Task SaveData(SheetsService service, string spreadsheetId, int sheetId, params object[] cellData)
@@ -416,7 +472,8 @@ namespace MZPO.LeadProcessors
             };
 
             await service.Spreadsheets.BatchUpdate(batchRequest, spreadsheetId).ExecuteAsync();
-        }
+        } 
+        #endregion
 
         public async Task NPS()
         {
@@ -628,6 +685,8 @@ namespace MZPO.LeadProcessors
                     lead._embedded.companies is null)
                     return;
 
+                int sheetId = GetManagerSheetId((int)lead.responsible_user_id, _service, spreadsheetId);
+
                 string date = $"{DateTime.UtcNow.AddHours(3).ToShortDateString()} {DateTime.UtcNow.AddHours(3).ToShortTimeString()}";
                 string leadId = lead.id.ToString();
                 string leadName = lead.name;
@@ -636,7 +695,7 @@ namespace MZPO.LeadProcessors
                 try { companyName = compRepo.GetById(lead._embedded.companies.First().id).name; }
                 catch { companyName = ""; }
 
-                await SaveData(_service, spreadsheetId, (int)lead.responsible_user_id, date, leadId, leadName, companyName);
+                await SaveData(_service, spreadsheetId, sheetId, date, leadId, leadName, companyName);
                 _processQueue.Remove($"SentKP-{_leadNumber}");
             }
             catch (Exception e)
@@ -703,6 +762,162 @@ namespace MZPO.LeadProcessors
             catch (Exception e)
             {
                 _log.Add($"Не получилось записать мероприятие сделки {_leadNumber}: {e.Message}");
+                throw;
+            }
+        }
+
+        public async Task Retail()
+        {
+            if (_token.IsCancellationRequested)
+            {
+                _processQueue.Remove($"Retail-{_leadNumber}");
+                return;
+            }
+            try
+            {
+                string spreadsheetId = "12SjOuDW3kCABnYgxUSN3vXaB1S9dyRfdlA7YZFbuAw0";
+                int sheetId = 855929522;
+                int accountId = 28395871;
+
+                IAmoRepo<Lead> leadRepo = _amo.GetAccountById(accountId).GetRepo<Lead>();
+                IAmoRepo<Contact> contRepo = _amo.GetAccountById(accountId).GetRepo<Contact>();
+
+                Lead lead = leadRepo.GetById(_leadNumber);
+
+                if (lead is null ||
+                    lead._embedded is null ||
+                    lead._embedded.contacts is null)
+                    return;
+
+                string date = DateTime.Now.ToShortDateString();
+                
+                string company = lead.GetCFStringValue(645965);
+                string companyShortName = "";
+                if (company.Contains("МЦПО")) companyShortName = "МЦПО";
+                if (company.Contains("МИРК")) companyShortName = "МИРК";
+                
+                string manager = GetManager(lead.responsible_user_id).Split(" ")[1];
+
+                Contact contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
+
+                string name = contact.name;
+                
+                string course = "";
+                if (lead._embedded is not null &&
+                    lead._embedded.catalog_elements is not null &&
+                    lead._embedded.catalog_elements.Any())
+                {
+                    CatalogElement catalogElement = leadRepo.GetCEById(lead._embedded.catalog_elements.First().id);
+                    if (catalogElement is not null)
+                        course = catalogElement.name;
+                }
+
+                string email = contact.GetCFStringValue(264913);
+                
+                string phone = contact.GetCFStringValue(264911);
+                
+                string length = lead.GetCFStringValue(644757).Replace("ак.ч.","");
+                
+                string examDate = DateTimeOffset.FromUnixTimeSeconds(lead.GetCFIntValue(644915)).UtcDateTime.AddHours(3).ToShortDateString();
+
+                await SaveData(_service, spreadsheetId, sheetId, date, "", companyShortName, manager, name, course, email, phone, length, examDate);
+                _processQueue.Remove($"Retail-{_leadNumber}");
+            }
+            catch (Exception e)
+            {
+                _processQueue.Remove($"Retail-{_leadNumber}");
+                _log.Add($"Не получилось передать успешную продажу в таблицу для сделки {_leadNumber}: {e.Message}");
+                throw;
+            }
+        }
+
+        public async Task CorpMeetings()
+        {
+            if (_token.IsCancellationRequested)
+            {
+                _processQueue.Remove($"CorpMeeting-{_leadNumber}");
+                return;
+            }
+            try
+            {
+                string spreadsheetId = "19jH7uZY5swnly0KF-BGBO9iGo3wIvBh8DnknfRh8gc0";
+                int accountId = 19453687;
+
+                IAmoRepo<Lead> leadRepo = _amo.GetAccountById(accountId).GetRepo<Lead>();
+                IAmoRepo<Company> compRepo = _amo.GetAccountById(accountId).GetRepo<Company>();
+
+                Lead lead = leadRepo.GetById(_leadNumber);
+
+                if (lead is null ||
+                    lead._embedded is null ||
+                    lead._embedded.companies is null)
+                    return;
+
+                int sheetId = GetManagerSheetId((int)lead.responsible_user_id, _service, spreadsheetId);
+
+                string date = $"{DateTime.UtcNow.AddHours(3).ToShortDateString()} {DateTime.UtcNow.AddHours(3).ToShortTimeString()}";
+                FormulaCell leadId = new() { formula = $@"=HYPERLINK(""https://mzpoeducation.amocrm.ru/leads/detail/{lead.id}"", ""{lead.id}"")" };
+                string leadName = lead.name;
+
+                string companyName;
+                try { companyName = compRepo.GetById(lead._embedded.companies.First().id).name; }
+                catch { companyName = ""; }
+
+                string meetingResult = lead.GetCFStringValue(757953);
+
+                await SaveData(_service, spreadsheetId, sheetId, date, leadId, leadName, companyName, meetingResult);
+                _processQueue.Remove($"CorpMeeting-{_leadNumber}");
+            }
+            catch (Exception e)
+            {
+                _processQueue.Remove($"CorpMeeting-{_leadNumber}");
+                _log.Add($"Не получилось учесть встречу для сделки {_leadNumber}: {e.Message}");
+                throw;
+            }
+        }
+
+        public async Task OpenLesson()
+        {
+            if (_token.IsCancellationRequested)
+            {
+                _processQueue.Remove($"OpenLesson-{_leadNumber}");
+                return;
+            }
+            try
+            {
+                int accountId = 28395871;
+
+                IAmoRepo<Lead> leadRepo = _amo.GetAccountById(accountId).GetRepo<Lead>();
+                IAmoRepo<Contact> contRepo = _amo.GetAccountById(accountId).GetRepo<Contact>();
+
+                Lead lead = leadRepo.GetById(_leadNumber);
+
+                if (lead is null ||
+                    lead._embedded is null ||
+                    lead._embedded.contacts is null)
+                    return;
+
+                Contact contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
+
+                if (contact is null ||
+                    contact.custom_fields_values is null ||
+                    !contact.custom_fields_values.Any())
+                    return;
+
+                string inDate = DateTimeOffset.FromUnixTimeSeconds(lead.GetCFIntValue(724347)).UtcDateTime.AddHours(3).ToString();
+                string inName = $"Пробный урок по массажу";
+                string inPerson = contact.name;
+                string inPhone = contact.GetCFStringValue(264911);
+                string inEmail = contact.GetCFStringValue(264913);
+
+                await Webinar(inDate, inName, 0, inPerson, inPhone, inEmail);
+
+                _processQueue.Remove($"OpenLesson-{_leadNumber}");
+            }
+            catch (Exception e)
+            {
+                _processQueue.Remove($"OpenLesson-{_leadNumber}");
+                _log.Add($"Не получилось добавить информацию об открытом уроке из сделки {_leadNumber}: {e.Message}");
                 throw;
             }
         }
