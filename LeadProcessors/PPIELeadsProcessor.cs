@@ -1,6 +1,7 @@
 ﻿using MZPO.AmoRepo;
 using MZPO.Services;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -53,10 +54,28 @@ namespace MZPO.LeadProcessors
 
             try
             {
+                bool model = false;
+
+                var lead = _leadRepo.GetById(_leadNumber);
+
+                if (lead?._embedded?.tags is not null &&
+                    lead._embedded.tags.Any(x => x.name == "WA"))
+                {
+                    var events = _leadRepo.GetEntityEvents(_leadNumber);
+
+                    if (events.Any(x => x.type == "incoming_chat_message" &&
+                                        x.value_after is not null &&
+                                        x.value_after.Any(x => x.message is not null &&
+                                                               x.message.origin == "wahelp.whatbot.1")))
+                        model = true;
+                }
+
                 _leadRepo.Save(new Lead()
                 {
                     id = lead.id,
-                    name = "Новая сделка"
+                    name = "Новая сделка",
+                    pipeline_id = model ? 4647979 : 4289935,
+                    status_id = model ? 42656578 : 40102252
                 });
 
                 _processQueue.Remove($"initial_{_leadNumber}");

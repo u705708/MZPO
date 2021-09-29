@@ -128,7 +128,7 @@ namespace MZPO.Controllers
 
             CancellationTokenSource cts = new();
 
-            Lazy<ILeadProcessor> leadProcessor = new Lazy<ILeadProcessor>(() =>                                                                                     //Создаём экземпляр процессора сделки
+            Lazy<ILeadProcessor> leadProcessor = new(() =>                                                                                     //Создаём экземпляр процессора сделки
                                new PPIELeadsProcessor(leadNumber, acc, _processQueue, _log, cts.Token));
 
             Task task = Task.Run(() => leadProcessor.Value.Run());
@@ -349,59 +349,64 @@ namespace MZPO.Controllers
         [HttpGet]
         public async Task<IActionResult> Nightly()
         {
-            var leads = await ucheba.ru.LeadSource.GetLeads();
-
-            List<FormRequest> formRequests = new();
-
-            foreach (var lead in leads)
+            try
             {
-                if (lead is null ||
-                    lead.person is null ||
-                    lead.lastActivity is null ||
-                    lead.lastActivity.type is null ||
-                    lead.person.fullName == "" ||
-                    (lead.person.email == "" && lead.person.phone == ""))
-                    continue;
+                var leads = await ucheba.ru.LeadSource.GetLeads();
 
-                if (lead.lastActivity.type.value == "learning_request" &&
-                    lead.lastActivity.learningRequest is not null &&
-                    lead.lastActivity.learningRequest.program is not null)
-                    formRequests.Add(new()
-                    {
-                        name = lead.person.fullName,
-                        phone = lead.person.phone,
-                        email = lead.person.email,
-                        form_name_site = "Заявка с формы Запись на обучение с сайта ucheba.ru",
-                        site = "ucheba.ru",
-                        comment = $"Заявка на обучение с сайта ucheba.ru по программе: {lead.lastActivity.learningRequest.program.name}"
-                    });
+                List<FormRequest> formRequests = new();
 
-                if (lead.lastActivity.type.value == "question" &&
-                    lead.lastActivity.question is not null)
-                    formRequests.Add(new()
-                    {
-                        name = lead.person.fullName,
-                        phone = lead.person.phone,
-                        email = lead.person.email,
-                        form_name_site = "Заявка с формы Вопрос с сайта ucheba.ru",
-                        site = "ucheba.ru",
-                        comment = $"Вопрос с сайта ucheba.ru: {lead.lastActivity.question.text}"
-                    });
+                foreach (var lead in leads)
+                {
+                    if (lead is null ||
+                        lead.person is null ||
+                        lead.lastActivity is null ||
+                        lead.lastActivity.type is null ||
+                        lead.person.fullName == "" ||
+                        (lead.person.email == "" && lead.person.phone == ""))
+                        continue;
+
+                    if (lead.lastActivity.type.value == "learning_request" &&
+                        lead.lastActivity.learningRequest is not null &&
+                        lead.lastActivity.learningRequest.program is not null)
+                        formRequests.Add(new() {
+                            name = lead.person.fullName,
+                            phone = lead.person.phone,
+                            email = lead.person.email,
+                            form_name_site = "Заявка с формы Запись на обучение с сайта ucheba.ru",
+                            site = "ucheba.ru",
+                            comment = $"Заявка на обучение с сайта ucheba.ru по программе: {lead.lastActivity.learningRequest.program.name}"
+                        });
+
+                    if (lead.lastActivity.type.value == "question" &&
+                        lead.lastActivity.question is not null)
+                        formRequests.Add(new() {
+                            name = lead.person.fullName,
+                            phone = lead.person.phone,
+                            email = lead.person.email,
+                            form_name_site = "Заявка с формы Вопрос с сайта ucheba.ru",
+                            site = "ucheba.ru",
+                            comment = $"Вопрос с сайта ucheba.ru: {lead.lastActivity.question.text}"
+                        });
+                }
+
+                int i = 0;
+
+                foreach (var formRequest in formRequests)
+                {
+                    CancellationTokenSource cts = new();
+
+                    string taskName = $"FormSiteRet-{i++}";
+
+                    var leadProcessor = new Lazy<ILeadProcessor>(() =>
+                           new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName));
+
+                    Task task = Task.Run(() => leadProcessor.Value.Run());
+                    _processQueue.AddTask(task, cts, taskName, "mzpoeducationsale", "SiteForm");
+                }
             }
-
-            int i = 0;
-
-            foreach (var formRequest in formRequests)
+            catch (Exception e)
             {
-                CancellationTokenSource cts = new();
-
-                string taskName = $"FormSiteRet-{i++}";
-
-                var leadProcessor = new Lazy<ILeadProcessor>(() =>
-                       new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName));
-
-                Task task = Task.Run(() => leadProcessor.Value.Run());
-                _processQueue.AddTask(task, cts, taskName, "mzpoeducationsale", "SiteForm");
+                _log.Add($"ATTENTION! Unable to get ucheba.ru leads: {e.Message}");
             }
 
             return Ok();

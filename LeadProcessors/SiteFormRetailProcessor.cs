@@ -198,7 +198,7 @@ namespace MZPO.LeadProcessors
             Lead lead = new()
             {
                 id = oldLead.id,
-                pipeline_id = demoLesson? 4586602 : 3198184,
+                pipeline_id = demoLesson ? 4586602 : 3198184,
                 status_id = demoLesson ? 42430264 : 32532880
             };
 
@@ -287,7 +287,9 @@ namespace MZPO.LeadProcessors
                         price == 0 &&
                         !webinar &&
                         _formRequest.pipeline is null &&
-                        _formRequest.status is null)
+                        _formRequest.status is null &&
+                        similarLeads.First().pipeline_id != 3338257 &&
+                        similarLeads.First().pipeline_id != 4234969)
                         processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log, demoLesson);
                     else
                         processedIds = AddNewLead(similarContacts, price, webinar, events, _formRequest, fieldIds, _leadRepo, _log, demoLesson);

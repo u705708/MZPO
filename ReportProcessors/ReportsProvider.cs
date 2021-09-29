@@ -18,7 +18,9 @@ namespace MZPO.ReportProcessors
         Doubles,
         Cards,
         Uber,
-        SuccessCalls
+        SuccessCalls,
+        AbandonedCompanies,
+        CompaniesLastContacts
     }
 
     public static class ReportsProvider
@@ -35,6 +37,8 @@ namespace MZPO.ReportProcessors
             { Reports.Cards, new("1nyq_aub7I85oOe4bq5mp0RSvrwTlqeHnrcRUglBB5BA", "Cards", "report_cards_completion", 28395871) },
             { Reports.Uber, new("1bRqUIHgN0VOcwdVv5iAIqinF1iW4arFMUPu7kgLJF5M", "Uber", "report_uber_distribution", 28395871) },
             { Reports.SuccessCalls, new("1Op2AKmTmFO6_NwS9maUwLK-gFKgRaY1fmIHaFj3aWJM", "Calls", "report_success_calls", 28395871) },
+            { Reports.AbandonedCompanies, new("1g1iPfrshZhIMvLm-R6Z9D4Qerl6fonhigq6pYNzE-fc", "AbandonedCompanies", "report_corp_abandoned", 19453687) },
+            { Reports.CompaniesLastContacts, new("1Xv-B5rpUOvn4RmouGMzjlVhNJXFO1lGA8b2ZFOjZoLs", "CompaniesLastContacts", "report_corp_last_contact", 19453687) },
         };
 
         private static IReportProcessor ReportFactory(ReportParams reportParams, AmoAccount acc, ProcessQueue processQueue, GSheets gSheets, long dateFrom, long dateTo, CancellationToken token)
@@ -44,13 +48,15 @@ namespace MZPO.ReportProcessors
                 "CorporateSales" => new CorpReportProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "KPI" => new RetailKPIProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "LongLeads" => new LongLeadsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
-                "UnfinishedCompanies" => new UnfinishedContactsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
+                "UnfinishedCompanies" => new UnfinishedCompaniesProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "WeeklyReport" => new WeeklyKPIReportProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "KPI_monthly" => new MonthlyKPIProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Doubles" => new DoublesListProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Cards" => new LeadscompletionReportProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Uber" => new UberLeadsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 "Calls" => new SuccessLeadsCallsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
+                "AbandonedCompanies" => new AbandonedCompaniesProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
+                "CompaniesLastContacts" => new CompaniesLastContactsProcessor(acc, processQueue, gSheets, reportParams.SheetId, dateFrom, dateTo, reportParams.TaskId, token),
                 _ => throw new Exception($"Unknown report type: {reportParams.ReportName}"),
             };
         }

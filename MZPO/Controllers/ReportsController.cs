@@ -40,6 +40,7 @@ namespace MZPO.Controllers.ReportProcessors
             return (dateFrom, dateTo);
         }
 
+        #region Without dates
         // GET: reports/unfinishedcompanies
         [ActionName("UnfinishedCompanies")]
         [HttpGet]
@@ -50,8 +51,29 @@ namespace MZPO.Controllers.ReportProcessors
             return Ok("Requested.");
         }
 
+        // GET: reports/abandonedcompanies
+        [ActionName("AbandonedCompanies")]
+        [HttpGet]
+        public IActionResult AbandonedCompanies()
+        {
+            ReportsProvider.StartReport(Reports.AbandonedCompanies, _amo, _processQueue, _gSheets, 0, 0);
+
+            return Ok("Requested.");
+        }
+
+        // GET: reports/companieslastcontacts
+        [ActionName("CompaniesLastContacts")]
+        [HttpGet]
+        public IActionResult CompaniesLastContacts()
+        {
+            ReportsProvider.StartReport(Reports.CompaniesLastContacts, _amo, _processQueue, _gSheets, 0, 0);
+
+            return Ok("Requested.");
+        }
+        #endregion
+
         #region CorporateSales
-        // GET reports/corporatesales/1627765200,1630425599
+        // GET reports/corporatesales/1630443600,1633035599
         [ActionName("CorporateSales")]
         [HttpGet("{from},{to}")]                                                                                                                //Запрашиваем отчёт для диапазона дат
         public IActionResult CorporateSales(string from, string to)

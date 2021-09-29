@@ -21,6 +21,15 @@ namespace MZPO.ucheba.ru
             return token.token;
         }
 
+        internal static async Task<string> GetNewToken()
+        {
+            Token token = await UpdateToken();
+            await SaveNewToken(token);
+
+            return token.token;
+        }
+
+
         private static async Task<Token> GetCurrentToken()
         {
             try

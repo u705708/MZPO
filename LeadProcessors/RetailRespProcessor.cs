@@ -43,7 +43,7 @@ namespace MZPO.LeadProcessors
 
         private static readonly int[] seniorsA = new[]
         {
-            111
+            2375107     //Кристина Гребенникова
         };
 
         private static readonly int[] managersA = new[]
@@ -53,12 +53,11 @@ namespace MZPO.LeadProcessors
             3835801,    //Наталья Кубышина
             6158035,    //Анастасия Матюк
             7448173,    //Инна Апостол
-
         };
 
         private static readonly int[] seniorsB = new[]
         {
-            222
+            2375152     //Карен Оганисян
         };
 
         private static readonly int[] managersB = new[]

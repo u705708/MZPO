@@ -103,6 +103,7 @@ namespace MZPO.AmoRepo
             public class Message
             {
                 public string id { get; set; }
+                public string origin { get; set; }
             }
 
             public class LeadStatus
