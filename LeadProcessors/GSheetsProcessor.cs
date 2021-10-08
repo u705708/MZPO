@@ -56,6 +56,7 @@ namespace MZPO.LeadProcessors
             (6200629, "Леван Харшиладзе"),
             (6346882, "Юлия Мусихина"),
             (7448173, "Инна Апостол"),
+            (2375146, "Системный Администратор")
         };
 
         private class FormulaCell
@@ -563,8 +564,11 @@ namespace MZPO.LeadProcessors
                 string phone = contact.GetCFStringValue(264911);
                 string course = lead.GetCFStringValue(357005);
                 string educationForm = lead.GetCFStringValue(643207);
+                string dateTime = $"{DateTime.UtcNow.AddHours(3).ToShortDateString()} {DateTime.UtcNow.AddHours(3).ToShortTimeString()}";
+                var examDate = lead.GetCFIntValue(644915);
+                string examDateString = examDate > 0 ? DateTimeOffset.FromUnixTimeSeconds(examDate).UtcDateTime.AddHours(3).ToShortDateString() : "";
 
-                await SaveData(_service, spreadsheetId, sheetId, name, phone, course, educationForm, answer1, answer2);
+                await SaveData(_service, spreadsheetId, sheetId, name, phone, course, educationForm, answer1, answer2, dateTime, examDateString);
                 _processQueue.Remove($"Poll-{_leadNumber}");
             }
             catch (Exception e)
@@ -762,6 +766,38 @@ namespace MZPO.LeadProcessors
             catch (Exception e)
             {
                 _log.Add($"Не получилось записать мероприятие сделки {_leadNumber}: {e.Message}");
+                throw;
+            }
+        }
+
+        public async Task Conference(int manager, string company, string client, string email, string phone, bool paid, int price, string comments)
+        {
+            if (_token.IsCancellationRequested)
+            {
+                return;
+            }
+            try
+            {
+                string spreadsheetId = "1rriGJJjE9Q_BylQnGoMmdV-nDFZXuI1iJgyuCtTOnMw";
+                int sheetId = 0;
+
+                FormulaCell A = new() { formula = $@"=HYPERLINK(""https://mzpoeducation.amocrm.ru/leads/detail/{_leadNumber}"", ""{_leadNumber}"")" };
+                string B = GetManager(manager);
+                string C = company ?? "";
+                string D = client ?? "";
+                string E = email ?? "";
+                string F = phone ?? "";
+                string G = "";
+                string H = paid ? "Да" : "Нет";
+                string I = $"{price}";
+                string J = "";
+                string K = comments ?? "";
+
+                await SaveData(_service, spreadsheetId, sheetId, A, B, C, D, E, F, G, H, I, J, K);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Не получилось записать конференцию для сделки {_leadNumber}: {e.Message}");
                 throw;
             }
         }

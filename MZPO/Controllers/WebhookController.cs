@@ -250,11 +250,11 @@ namespace MZPO.Controllers
             return Ok();
         }
 
-        // POST ret2corp/send
+        // POST wh/ret2corp/send
         [Route("ret2corp/[action]")]
         [ActionName("Send")]
         [HttpPost]
-        public IActionResult Send()
+        public IActionResult R2CSend()
         {
             var col = Request.Form;
             int leadNumber = 0;
@@ -281,11 +281,11 @@ namespace MZPO.Controllers
             return Ok();
         }
 
-        // POST ret2corp/success
+        // POST wh/ret2corp/success
         [Route("ret2corp/[action]")]
         [ActionName("Success")]
         [HttpPost]
-        public IActionResult Success()
+        public IActionResult R2CSuccess()
         {
             var col = Request.Form;
             int leadNumber = 0;
@@ -312,11 +312,11 @@ namespace MZPO.Controllers
             return Ok();
         }
 
-        // POST ret2corp/fail
+        // POST wh/ret2corp/fail
         [Route("ret2corp/[action]")]
         [ActionName("Fail")]
         [HttpPost]
-        public IActionResult Fail()
+        public IActionResult R2CFail()
         {
             var col = Request.Form;
             int leadNumber = 0;
@@ -340,6 +340,108 @@ namespace MZPO.Controllers
 
             Task task = Task.Run(() => leadProcessor.Value.Fail());
             _processQueue.AddTask(task, cts, $"corp2ret-{leadNumber}", "ret2corp", "WebHook");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
+
+        // POST wh/corp2ret/send
+        [Route("corp2ret/[action]")]
+        [ActionName("Send")]
+        [HttpPost]
+        public IActionResult C2RSend()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0)
+                return BadRequest("Incorrect lead number");
+
+            CancellationTokenSource cts = new();
+
+            Lazy<SendToRetProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new SendToRetProcessor(_amo, _log, _processQueue, leadNumber, cts.Token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Send());
+            _processQueue.AddTask(task, cts, $"corp2ret-{leadNumber}", "corp2ret", "WebHook");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
+
+        // POST wh/corp2ret/success
+        [Route("corp2ret/[action]")]
+        [ActionName("Success")]
+        [HttpPost]
+        public IActionResult C2RSuccess()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0)
+                return BadRequest("Incorrect lead number");
+
+            CancellationTokenSource cts = new();
+
+            Lazy<SendToRetProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new SendToRetProcessor(_amo, _log, _processQueue, leadNumber, cts.Token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Success());
+            _processQueue.AddTask(task, cts, $"ret2corp-{leadNumber}", "corp2ret", "WebHook");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
+
+        // POST wh/corp2ret/fail
+        [Route("corp2ret/[action]")]
+        [ActionName("Fail")]
+        [HttpPost]
+        public IActionResult C2RFail()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0)
+                return BadRequest("Incorrect lead number");
+
+            CancellationTokenSource cts = new();
+
+            Lazy<SendToRetProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new SendToRetProcessor(_amo, _log, _processQueue, leadNumber, cts.Token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Fail());
+            _processQueue.AddTask(task, cts, $"ret2corp-{leadNumber}", "corp2ret", "WebHook");                                            //Запускаем и добавляем в очередь
             return Ok();
         }
 
@@ -401,13 +503,79 @@ namespace MZPO.Controllers
                            new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName));
 
                     Task task = Task.Run(() => leadProcessor.Value.Run());
-                    _processQueue.AddTask(task, cts, taskName, "mzpoeducationsale", "SiteForm");
+                    _processQueue.AddTask(task, cts, taskName, "ucheba.ru", "WebHook");
                 }
             }
             catch (Exception e)
             {
                 _log.Add($"ATTENTION! Unable to get ucheba.ru leads: {e.Message}");
             }
+
+            return Ok();
+        }
+
+        // POST wh/conferencepaid
+        [Route("[action]")]
+        [ActionName("ConferencePaid")]
+        [HttpPost]
+        public IActionResult ConferencePaid()
+        {
+            if (Request.ContentType != "application/x-www-form-urlencoded")
+                return BadRequest();
+
+            var col = Request.Form;
+
+            if (!col.ContainsKey("phone") ||
+                !col.TryGetValue("phone", out var phone) ||
+                !col.ContainsKey("email") ||
+                !col.TryGetValue("email", out var email))
+                return BadRequest();
+
+            _log.Add($"Поступила информация об оплате от клиента {phone} {email}");
+
+            CancellationTokenSource cts = new();
+
+            string taskName = $"FormSiteRet-{DateTime.Now.ToLongTimeString()}";
+
+            var leadProcessor = new Lazy<ILeadProcessor>(() =>
+                   new ConferencePaidProcessor(_amo, _log, _processQueue, cts.Token, _gSheets, taskName, phone, email ));
+
+            Task task = Task.Run(() => leadProcessor.Value.Run());
+            _processQueue.AddTask(task, cts, taskName, "conferencePaid", "WebHook");                                            //Запускаем и добавляем в очередь
+
+            return Ok();
+        }
+
+        // POST wh/retailpaid
+        [Route("[action]")]
+        [ActionName("RetailPaid")]
+        [HttpPost]
+        public IActionResult RetailPaid()
+        {
+            if (Request.ContentType != "application/x-www-form-urlencoded")
+                return BadRequest();
+
+            var col = Request.Form;
+
+            if (!col.ContainsKey("phone") ||
+                !col.TryGetValue("phone", out var phone) ||
+                !col.ContainsKey("email") ||
+                !col.TryGetValue("email", out var email) ||
+                !col.ContainsKey("price") ||
+                !col.TryGetValue("price", out var price))
+                return BadRequest();
+
+            _log.Add($"Поступила информация об оплате на сумму {price} от клиента {phone} {email}");
+
+            CancellationTokenSource cts = new();
+
+            string taskName = $"FormSiteRet-{DateTime.Now.ToLongTimeString()}";
+
+            var leadProcessor = new Lazy<ILeadProcessor>(() =>
+                   new RetailPaidProcessor(_amo, _log, _processQueue, cts.Token, _gSheets, taskName, phone, email, price));
+
+            Task task = Task.Run(() => leadProcessor.Value.Run());
+            _processQueue.AddTask(task, cts, taskName, "retailPaid", "WebHook");                                            //Запускаем и добавляем в очередь
 
             return Ok();
         }

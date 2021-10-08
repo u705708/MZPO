@@ -30,6 +30,8 @@
         public string events { get;set; }
         public string date { get; set; }
         public string price { get; set; }
+        public string paid { get; set; }
+        public string responsible { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

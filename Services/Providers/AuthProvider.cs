@@ -14,7 +14,7 @@ namespace MZPO.Services
     {
         #region Definition
 
-        private const int _concurrentRequestsAmount = 6;
+        private readonly int _concurrentRequestsAmount;
 
         private readonly AmoProvider _amoProvider;
         private readonly SemaphoreSlim _amoConnectionsSemaphore;
@@ -24,8 +24,9 @@ namespace MZPO.Services
         private string _refrToken;
         private DateTime _validity;
 
-        public AuthProvider(AmoAccountAuth acc, AmoProvider prov)
+        public AuthProvider(AmoAccountAuth acc, AmoProvider prov, int concurrentConnections)
         {
+            _concurrentRequestsAmount = concurrentConnections;
             _amoProvider = prov;
             _amoConnectionsSemaphore = new(_concurrentRequestsAmount, _concurrentRequestsAmount);
             _tokenUpdateSemaphore = new(1, 1);

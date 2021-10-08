@@ -88,7 +88,10 @@ namespace MZPO.LeadProcessors
             new() { id = 276831, name = "Мероприятие" },
             new() { id = 277455, name = "WZ (mzpokurs)" },
             new() { id = 300469, name = "turbo.mirk.msk" },
-            new() { id = 300471, name = "turbo.mirk.msk" }
+            new() { id = 300471, name = "turbo.mirk.msk" },
+
+            new() { id = 302489, name = "Сделка из корп. отдела" },
+            new() { id = 1212821, name = "Сделка из розницы" },
         };
 
         public static Tag GetTagByName(string name)

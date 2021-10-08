@@ -72,7 +72,6 @@ namespace MZPO.Services
 
         private async Task Distribute()
         {
-            distributing = true;
             while (distributing)
             {
                 
@@ -199,12 +198,18 @@ namespace MZPO.Services
 
         public void AddToQueue(UberLead lead)
         {
-            if (_leads.Count > 12) return; //Для тестирования
-            
-            if (!_leads.Any(x => x.leadId == lead.leadId))
-                _leads.Enqueue(lead);
+            if (_leads.Count > 12) return; //Для тестирования, на бою убрать
+            lock (_locker)
+            {
+                if (!_leads.Any(x => x.leadId == lead.leadId))
+                    _leads.Enqueue(lead);
+            }
 
-            if (!distributing) Task.Run(() => Distribute());
+            if (!distributing)
+            {
+                distributing = true;
+                Task.Run(() => Distribute());
+            }
         }
     }
 }

@@ -8,8 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace MZPO.LeadProcessors
-{ 
-    public class SendToCorpProcessor
+{
+    public class SendToRetProcessor
     {
         private readonly Log _log;
         private readonly int _leadNumber;
@@ -18,42 +18,34 @@ namespace MZPO.LeadProcessors
 
         private readonly IAmoRepo<Lead> _leadRepo;
         private readonly IAmoRepo<Contact> _contRepo;
-        private readonly IAmoRepo<Company> _compRepo;
 
         private readonly IAmoRepo<Lead> _sourceLeadRepo;
         private readonly IAmoRepo<Contact> _sourceContRepo;
 
-        public SendToCorpProcessor(Amo amo, Log log, ProcessQueue processQueue, int leadNumber, CancellationToken token)
+        public SendToRetProcessor(Amo amo, Log log, ProcessQueue processQueue, int leadNumber, CancellationToken token)
         {
             _log = log;
             _leadNumber = leadNumber;
             _processQueue = processQueue;
             _token = token;
 
-            _leadRepo = amo.GetAccountById(19453687).GetRepo<Lead>();
-            _contRepo = amo.GetAccountById(19453687).GetRepo<Contact>();
-            _compRepo = amo.GetAccountById(19453687).GetRepo<Company>();
+            _leadRepo = amo.GetAccountById(28395871).GetRepo<Lead>();
+            _contRepo = amo.GetAccountById(28395871).GetRepo<Contact>();
 
-            _sourceLeadRepo = amo.GetAccountById(28395871).GetRepo<Lead>();
-            _sourceContRepo = amo.GetAccountById(28395871).GetRepo<Contact>();
+            _sourceLeadRepo = amo.GetAccountById(19453687).GetRepo<Lead>();
+            _sourceContRepo = amo.GetAccountById(19453687).GetRepo<Contact>();
         }
 
         private int GetResponsibleUserId(int id)
         {
-            return id switch
-            {
-                5761144 => 2375131,//Алферова Лилия
-                3903853 => 2884132,//Ирина Сорокина
-                7149397 => 2375116,//Киреева Светлана
-                _ => 2375146,
-            };
+            return 2576764;
         }
 
         public Task Send()
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove($"ret2corp-{_leadNumber}");
+                _processQueue.Remove($"corp2ret-{_leadNumber}");
                 return Task.FromCanceled(_token);
             }
             try
@@ -69,8 +61,7 @@ namespace MZPO.LeadProcessors
                 var sourceContacts = _sourceContRepo.BulkGetById(sourceLead._embedded.contacts.Select(x => (int)x.id));
                 #endregion
 
-                Lead lead = new()
-                {
+                Lead lead = new() {
                     name = sourceLead.name,
                     responsible_user_id = GetResponsibleUserId((int)sourceLead.responsible_user_id),
                     _embedded = new()
@@ -82,54 +73,26 @@ namespace MZPO.LeadProcessors
                 foreach (var c in sourceContacts)
                 {
                     #region Prepare contacts
-                    string phone = c.GetCFStringValue(264911);
-                    string email = c.GetCFStringValue(264913);
+                    string phone = c.GetCFStringValue(33575);
+                    string email = c.GetCFStringValue(33577);
 
                     phone = phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
                     phone = phone.StartsWith("89") ? $"7{phone[1..]}" : phone;
 
                     email = email.Trim().Replace(" ", "");
 
-                    if (phone == "" && email == "") continue;
+                    if (phone == "" && email == "")
+                        continue;
                     #endregion
 
                     var contactNotes = _sourceContRepo.GetEntityNotes((int)c.id);
                     notes.AddRange(contactNotes.Where(x => x.note_type == "common"));
                     calls.AddRange(contactNotes.Where(x => x.note_type == "call_in" || x.note_type == "call_out"));
 
-                    #region Checking for companies
-                    List<Company> similarCompanies = new();
-                    try
-                    {
-                        if (phone != "")
-                            similarCompanies.AddRange(_compRepo.GetByCriteria($"query={phone}"));
-
-                        if (email != "")
-                            similarCompanies.AddRange(_compRepo.GetByCriteria($"query={email}"));
-                    }
-                    catch (Exception e) { _log.Add($"Не удалось осуществить поиск похожих компаний: {e}"); }
-
-                    if (similarCompanies.Any() &&
-                        lead._embedded.companies is null)
-                    {
-                        _log.Add($"Найдена похожая компания: {similarCompanies.First().id}.");
-                        lead._embedded.companies = new()
-                        {
-                            new()
-                            {
-                                responsible_user_id = similarCompanies.First().responsible_user_id,
-                                id = similarCompanies.First().id
-                            }
-                        };
-                        lead.responsible_user_id = similarCompanies.First().responsible_user_id;
-                    }
-                    #endregion
-
                     #region Checking for contacts
                     List<Contact> similarContacts = new();
 
-                    Contact contact = new()
-                    {
+                    Contact contact = new() {
                         name = c.name,
                         responsible_user_id = lead.responsible_user_id,
                     };
@@ -144,26 +107,6 @@ namespace MZPO.LeadProcessors
                     }
                     catch (Exception e) { _log.Add($"Не удалось осуществить поиск похожих контактов: {e}"); }
 
-                    if (!similarCompanies.Any() &&
-                        lead._embedded.companies is null &&
-                        similarContacts.Any(x => x._embedded.companies is not null &&
-                                                 x._embedded.companies.Any()))
-                    {
-                        lead._embedded.companies = new()
-                        {
-                            new()
-                            {
-                                responsible_user_id = similarContacts.First(x => x._embedded.companies is not null &&
-                                                                x._embedded.companies.Any())._embedded.companies.First().responsible_user_id,
-                                id = similarContacts.First(x => x._embedded.companies is not null &&
-                                                                x._embedded.companies.Any())._embedded.companies.First().id
-                            }
-                        };
-
-                        lead.responsible_user_id = similarContacts.First(x => x._embedded.companies is not null &&
-                                                            x._embedded.companies.Any())._embedded.companies.First().responsible_user_id;
-                    }
-
                     if (similarContacts.Any())
                     {
                         contact.id = similarContacts.First().id;
@@ -176,10 +119,10 @@ namespace MZPO.LeadProcessors
                         contact.custom_fields_values = new();
 
                         if (email != "")
-                            contact.AddNewCF(33577, email);
+                            contact.AddNewCF(264913, email);
 
                         if (phone != "")
-                            contact.AddNewCF(33575, phone);
+                            contact.AddNewCF(264911, phone);
                     }
 
                     lead._embedded.contacts = new() { contact };
@@ -188,8 +131,8 @@ namespace MZPO.LeadProcessors
                 }
 
                 #region Setting pipeline and status if any
-                lead.pipeline_id = 3558781;
-                lead.status_id = 35001112;
+                lead.pipeline_id = 3198184;
+                lead.status_id = 32532880;
                 #endregion
 
                 #region Getting comments
@@ -199,8 +142,8 @@ namespace MZPO.LeadProcessors
 
                 StringBuilder sb = new();
 
-                if (sourceLead.HasCF(639075))     //Тип обращения
-                    sb.Append($"{sourceLead.GetCFStringValue(639075)}\r\n");
+                if (sourceLead.HasCF(748383))     //Тип обращения
+                    sb.Append($"{sourceLead.GetCFStringValue(748383)}\r\n");
 
                 foreach (var n in notes)
                     sb.Append($"{n.parameters.text}\r\n");
@@ -209,7 +152,7 @@ namespace MZPO.LeadProcessors
                 #endregion
 
                 #region Tags
-                List<Tag> tags = new() { TagList.GetTagByName("Сделка из розницы") };
+                List<Tag> tags = new() { TagList.GetTagByName("Сделка из корп. отдела") };
                 if (sourceLead._embedded is not null &&
                     sourceLead._embedded.tags is not null &&
                     sourceLead._embedded.tags.Any())
@@ -219,7 +162,20 @@ namespace MZPO.LeadProcessors
                 lead._embedded.tags = new(tags);
                 #endregion
 
-                lead.AddNewCF(752191, sourceLead.id);
+                #region Custom fields
+                lead.AddNewCF(724771, sourceLead.id);       //поле corp_id
+
+                if (sourceLead.HasCF(748383))               //Тип обращения
+                    lead.AddNewCF(639075, sourceLead.GetCFValue(748383));
+                if (sourceLead.HasCF(758213))               //Сайт
+                    lead.AddNewCF(639081, sourceLead.GetCFValue(758213));
+                if (sourceLead.HasCF(758215))               //Посадочная страница
+                    lead.AddNewCF(639083, sourceLead.GetCFValue(758215));
+                if (sourceLead.HasCF(748385))               //Маркер
+                    lead.AddNewCF(639085, sourceLead.GetCFValue(748385));
+                if (sourceLead.HasCF(758217))               //roistat
+                    lead.AddNewCF(639073, sourceLead.GetCFValue(758217)); 
+                #endregion
 
                 var created = _leadRepo.AddNewComplex(lead);
 
@@ -233,21 +189,21 @@ namespace MZPO.LeadProcessors
                 if (created.Any() &&
                     calls.Any())
                     foreach (var n in calls.Select(x => new Note() {
-                                                                entity_id = created.First(),
-                                                                note_type = x.note_type,
-                                                                parameters = x.parameters
-                                                                    }))
+                                                                        entity_id = created.First(),
+                                                                        note_type = x.note_type,
+                                                                        parameters = x.parameters
+                    }))
                         _leadRepo.AddNotes(n);
                 #endregion
 
-                _processQueue.Remove($"ret2corp-{_leadNumber}");
+                _processQueue.Remove($"corp2ret-{_leadNumber}");
 
                 return Task.CompletedTask;
             }
             catch (Exception e)
             {
-                _processQueue.Remove($"ret2corp-{_leadNumber}");
-                _log.Add($"Не получилось перенести сделку {_leadNumber} из розницы в корп.: {e.Message}.");
+                _processQueue.Remove($"corp2ret-{_leadNumber}");
+                _log.Add($"Не получилось перенести сделку {_leadNumber} из корп. в розницу: {e.Message}.");
                 return Task.FromException(e);
             }
         }
@@ -256,7 +212,7 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove($"corp2ret-{_leadNumber}");
+                _processQueue.Remove($"ret2corp-{_leadNumber}");
                 return Task.FromCanceled(_token);
             }
 
@@ -264,27 +220,26 @@ namespace MZPO.LeadProcessors
             {
                 Lead lead = _leadRepo.GetById(_leadNumber);
 
-                var retLeadId = lead.GetCFIntValue(752191);
+                var retLeadId = lead.GetCFIntValue(724771);
 
                 if (retLeadId == 0)
                 {
-                    _processQueue.Remove($"corp2ret-{_leadNumber}");
+                    _processQueue.Remove($"ret2corp-{_leadNumber}");
                     return Task.CompletedTask;
                 }
 
-                _sourceLeadRepo.Save(new Lead()
-                {
+                _sourceLeadRepo.Save(new Lead() {
                     id = retLeadId,
-                    pipeline_id = 2231320,
+                    pipeline_id = 3558781,
                     status_id = 142
                 });
 
-                _processQueue.Remove($"corp2ret-{_leadNumber}");
+                _processQueue.Remove($"ret2corp-{_leadNumber}");
                 return Task.CompletedTask;
             }
             catch (Exception e)
             {
-                _processQueue.Remove($"corp2ret-{_leadNumber}");
+                _processQueue.Remove($"ret2corp-{_leadNumber}");
                 _log.Add($"Не получилось синхронизировать сделку {_leadNumber} из корп. в розницу: {e.Message}.");
                 return Task.FromException(e);
             }
@@ -294,7 +249,7 @@ namespace MZPO.LeadProcessors
         {
             if (_token.IsCancellationRequested)
             {
-                _processQueue.Remove($"corp2ret-{_leadNumber}");
+                _processQueue.Remove($"ret2corp-{_leadNumber}");
                 return Task.FromCanceled(_token);
             }
 
@@ -302,27 +257,26 @@ namespace MZPO.LeadProcessors
             {
                 Lead lead = _leadRepo.GetById(_leadNumber);
 
-                var retLeadId = lead.GetCFIntValue(752191);
+                var retLeadId = lead.GetCFIntValue(724771);
 
                 if (retLeadId == 0)
                 {
-                    _processQueue.Remove($"corp2ret-{_leadNumber}");
+                    _processQueue.Remove($"ret2corp-{_leadNumber}");
                     return Task.CompletedTask;
                 }
 
-                _sourceLeadRepo.Save(new Lead()
-                {
+                _sourceLeadRepo.Save(new Lead() {
                     id = retLeadId,
-                    pipeline_id = 2231320,
+                    pipeline_id = 3558781,
                     status_id = 143
                 });
 
-                _processQueue.Remove($"corp2ret-{_leadNumber}");
+                _processQueue.Remove($"ret2corp-{_leadNumber}");
                 return Task.CompletedTask;
             }
             catch (Exception e)
             {
-                _processQueue.Remove($"corp2ret-{_leadNumber}");
+                _processQueue.Remove($"ret2corp-{_leadNumber}");
                 _log.Add($"Не получилось синхронизировать сделку {_leadNumber} из корп. в розницу: {e.Message}.");
                 return Task.FromException(e);
             }

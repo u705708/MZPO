@@ -51,7 +51,8 @@ namespace MZPO
             services.AddScoped<ITagRepo, TagRepo>();
             services.AddScoped<ICFRepo, CFRepo>();
 
-            services.AddSingleton<Amo>();
+            services.AddSingleton(x =>
+                ActivatorUtilities.CreateInstance<Amo>(x, 6));
             services.AddSingleton<ProcessQueue>();
             services.AddSingleton<LeadsSorter>();
             services.AddSingleton<Cred1C>();

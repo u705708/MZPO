@@ -12,11 +12,15 @@ namespace MZPO.Services
         #region Definition
         private readonly IList<AmoAccount> _accounts;
 
+        private readonly int _concurrentConnections;
+
         private readonly DataProvider dataProvider;
         private readonly AmoProvider amoProvider;
 
-        public Amo(IServiceScopeFactory scopeFactory)
+        public Amo(IServiceScopeFactory scopeFactory, int concurrentConnections = 7)
         {
+            _concurrentConnections = concurrentConnections;
+
             amoProvider = new AmoProvider(scopeFactory);
             dataProvider = new DataProvider(scopeFactory);
 
@@ -32,7 +36,7 @@ namespace MZPO.Services
                         id = acc.id,
                         name = acc.name,
                         subdomain = acc.subdomain,
-                        auth = new AuthProvider(acc, amoProvider),
+                        auth = new AuthProvider(acc, amoProvider, _concurrentConnections),
                         dataProvider = dataProvider
                     });
                 }
@@ -83,7 +87,7 @@ namespace MZPO.Services
             {
                 _accounts.First(x => x.id == id).name = name;
                 _accounts.First(x => x.id == id).subdomain = subdomain;
-                _accounts.First(x => x.id == id).auth = new AuthProvider(acc, amoProvider);
+                _accounts.First(x => x.id == id).auth = new AuthProvider(acc, amoProvider, _concurrentConnections);
             }
             else
             {
@@ -92,7 +96,7 @@ namespace MZPO.Services
                     id = id,
                     name = name,
                     subdomain = subdomain,
-                    auth = new AuthProvider(acc, amoProvider),
+                    auth = new AuthProvider(acc, amoProvider, _concurrentConnections),
                     dataProvider = dataProvider
                 });
             }
@@ -135,7 +139,7 @@ namespace MZPO.Services
             {
                 _accounts.First(x => x.id == id).name = name;
                 _accounts.First(x => x.id == id).subdomain = subdomain;
-                _accounts.First(x => x.id == id).auth = new AuthProvider(acc, amoProvider);
+                _accounts.First(x => x.id == id).auth = new AuthProvider(acc, amoProvider, _concurrentConnections);
             }
             else
             {
@@ -144,7 +148,7 @@ namespace MZPO.Services
                     id = id,
                     name = name,
                     subdomain = subdomain,
-                    auth = new AuthProvider(acc, amoProvider),
+                    auth = new AuthProvider(acc, amoProvider, _concurrentConnections),
                     dataProvider = dataProvider
                 });
             }

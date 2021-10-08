@@ -15,11 +15,26 @@ namespace Integration1C
         public int price { get; set; }
         public bool is_corporate { get; set; }
         public string lead_status { get; set; }
-        public string marketing_channel { get; set; }
-        public string marketing_source { get; set; }
         public string author { get; set; }
         public string responsible_user { get; set; }
         public List<Payment> payments { get; set; }
+
+        private string _marketing_channel;
+        public string marketing_channel 
+        { get
+            { return _marketing_channel; }
+            set
+            { _marketing_channel = value.Length > 255? value.Substring(0, 255) : value; } 
+        }
+
+        private string _marketing_source;
+        public string marketing_source
+        {
+            get
+            {return _marketing_source; }
+            set
+            { _marketing_source = value.Length > 255 ? value.Substring(0, 255) : value; }
+        }
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

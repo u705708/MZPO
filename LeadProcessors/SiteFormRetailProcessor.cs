@@ -25,14 +25,16 @@ namespace MZPO.LeadProcessors
         public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token, GSheets gSheets, string taskName)
         {
             _amo = amo;
-            _leadRepo = amo.GetAccountById(28395871).GetRepo<Lead>();
-            _contRepo = amo.GetAccountById(28395871).GetRepo<Contact>();
             _log = log;
             _formRequest = formRequest;
             _processQueue = processQueue;
             _token = token;
             _gSheets = gSheets;
             _taskname = taskName;
+
+            var acc = amo.GetAccountById(28395871);
+            _leadRepo = acc.GetRepo<Lead>();
+            _contRepo = acc.GetRepo<Contact>();
         }
 
         private readonly Dictionary<string, int> fieldIds = new() {

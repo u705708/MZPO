@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using MZPO.AmoRepo;
 using MZPO.Services;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace MZPO.Controllers
 {
@@ -60,10 +64,10 @@ namespace MZPO.Controllers
         public IActionResult Get()
         {
             //var repo = _amo.GetAccountById(29490250).GetRepo<Lead>();
-            //var _repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
-            //var _repo = _amo.GetAccountById(19453687).GetRepo<Contact>();
+            //var repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
+            //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
 
-            //return Ok(JsonConvert.SerializeObject(_repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+            //return Ok(JsonConvert.SerializeObject(repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
             int i = 0;
 
@@ -78,7 +82,7 @@ namespace MZPO.Controllers
 
                 _uber.AddToQueue(lead);
 
-                //Task.Delay(TimeSpan.FromSeconds(20)).Wait();
+                //Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             }
 
             return Ok("𓅮 𓃟 𓏵 𓀠𓀡");

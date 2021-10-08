@@ -103,7 +103,7 @@ namespace MZPO.Controllers
             string taskName = $"FormSiteCorp-{DateTime.Now.ToLongTimeString()}";
 
             var leadProcessor = new Lazy<ILeadProcessor>(() =>
-                   new SiteFormCorpProcessor(_amo.GetAccountById(19453687), _log, formRequest, _processQueue, cts.Token, taskName));
+                   new SiteFormCorpProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName));
 
             Task task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, taskName, "mzpoeducation", "SiteForm");                                            //Запускаем и добавляем в очередь
