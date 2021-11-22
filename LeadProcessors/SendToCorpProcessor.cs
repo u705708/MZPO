@@ -209,7 +209,7 @@ namespace MZPO.LeadProcessors
                 #endregion
 
                 #region Tags
-                List<Tag> tags = new() { TagList.GetTagByName("Сделка из розницы") };
+                List<Tag> tags = new() { TagList.GetRetTagByName("Сделка из розницы") };
                 if (sourceLead._embedded is not null &&
                     sourceLead._embedded.tags is not null &&
                     sourceLead._embedded.tags.Any())

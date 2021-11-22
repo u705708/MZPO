@@ -68,7 +68,7 @@ namespace MZPO.ReportProcessors
                 AddSheet = new AddSheetRequest() {
                     Properties = new SheetProperties() {
                         GridProperties = new GridProperties() {
-                            ColumnCount = 5,
+                            ColumnCount = 6,
                             FrozenRowCount = 1
                         },
                         Title = "Компании",
@@ -87,6 +87,7 @@ namespace MZPO.ReportProcessors
                     Rows = new List<RowData>() { new RowData() { Values = new List<CellData>(){
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "ID компании"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Название"} },
+                            new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Email"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Последний контакт"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Ответственный"} },
                             new CellData(){ UserEnteredFormat = centerAlignment, UserEnteredValue = new ExtendedValue() { StringValue = "Есть закрытая сделка?"} },
@@ -97,7 +98,7 @@ namespace MZPO.ReportProcessors
             #endregion
 
             #region Adjusting column width
-            var width = new List<int>() { 116, 600, 168, 180, 144 };
+            var width = new List<int>() { 116, 600, 202, 168, 180, 144 };
             int i = 0;
 
             foreach (var c in width)
@@ -120,9 +121,9 @@ namespace MZPO.ReportProcessors
             await UpdateSheetsAsync(requestContainer, _service, _spreadsheetId);
         }
 
-        private static CellData[] GetCellData(int A, string B, string C, string D, bool E)
+        private static CellData[] GetCellData(int A, string B, string C, string D, string E, bool F)
         {
-            string Et = E ? "Да" : "Нет";
+            string Ft = F ? "Да" : "Нет";
 
             return new[]{
                 new CellData(){
@@ -138,7 +139,10 @@ namespace MZPO.ReportProcessors
                     UserEnteredValue = new ExtendedValue(){ StringValue = D},
                     UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
                 new CellData(){
-                    UserEnteredValue = new ExtendedValue(){ StringValue = Et},
+                    UserEnteredValue = new ExtendedValue(){ StringValue = E},
+                    UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
+                new CellData(){
+                    UserEnteredValue = new ExtendedValue(){ StringValue = Ft},
                     UserEnteredFormat = new CellFormat(){ NumberFormat = new NumberFormat() { Type = "TEXT" } } },
             };
         }
@@ -257,9 +261,9 @@ namespace MZPO.ReportProcessors
             return companies;
         }
 
-        private Request ProcessResult(int compId, string companyName, string lastContact, int respManager, bool openLead)
+        private Request ProcessResult(int compId, string companyName, string email, string lastContact, int respManager, bool openLead)
         {
-            return GetRowRequest(0, GetCellData(compId, companyName, lastContact, GetManager(respManager), openLead));
+            return GetRowRequest(0, GetCellData(compId, companyName, email, lastContact, GetManager(respManager), openLead));
         }
         #endregion
 
@@ -282,7 +286,7 @@ namespace MZPO.ReportProcessors
                 return;
             }
 
-            List<(int, string, string, int, bool)> resultsList = new();
+            List<(int compId, string companyName, string email, string lastContact, int respManager, bool openLead)> resultsList = new();
             DateTime referenceDateTime = DateTime.UtcNow.AddHours(3).AddMonths(-6);
             var companies = GetAllCompanies(_compRepo);
 
@@ -303,6 +307,12 @@ namespace MZPO.ReportProcessors
                     List<long> timeStamps = new();
                     long contactTime = 0;
                     bool completed = false;
+
+                    string email = c.GetCFStringValue(33577);
+
+                    //Для отчёта по email компаний, чтобы не обрабатывать компании без почты
+                    //if (string.IsNullOrEmpty(email))
+                    //    return;
 
                     #region Collecting company notes and events
                     CheckCompanyRecent(c, referenceDateTime, out contactTime);
@@ -347,6 +357,7 @@ namespace MZPO.ReportProcessors
                     resultsList.Add(
                         (c.id,
                          c.name.Replace(";", " ").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " "),
+                         email,
                          $"{lastContactTime.ToShortDateString()} {lastContactTime.ToShortTimeString()}",
                          (int)c.responsible_user_id,
                          completed
@@ -360,7 +371,7 @@ namespace MZPO.ReportProcessors
                 if (_token.IsCancellationRequested)
                     break;
 
-                var result = ProcessResult(r.Item1, r.Item2, r.Item3, r.Item4, r.Item5);
+                var result = ProcessResult(r.compId, r.companyName, r.email, r.lastContact, r.respManager, r.openLead);
                 if (result is not null)
                     requestContainer.Add(result);
             }

@@ -153,7 +153,7 @@ namespace MZPO.LeadProcessors
                 pageURL.Contains("probnyy-urok-po-massazhu"))
             {
                 AddNote(@"ЗАЯВКА СО СТРАНИЦЫ ""ПРОБНЫЙ УРОК""");
-                SetTag("WeGym");
+                //SetTag("WeGym");
             }
             #endregion
 
@@ -247,7 +247,7 @@ namespace MZPO.LeadProcessors
 
             #region Курсы НМО
             if (lead.pipeline_id == 2231320)
-                SetTag("Вебинар НМО неврология");
+                SetTag("Семинар РОМС");
             #endregion
 
             try { SaveLead("Новая сделка"); }

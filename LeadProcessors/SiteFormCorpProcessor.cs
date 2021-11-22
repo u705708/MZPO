@@ -46,6 +46,7 @@ namespace MZPO.LeadProcessors
             //{ "page_title", 0 },
             { "roistat_marker", 748385 },
             { "roistat_visit", 758217 },
+            { "promocode", 758643 },
             //{ "city_name", 0 },
             //{ "_ym_uid", 0 },
             //{ "_ya_uid", 0 },
@@ -55,6 +56,27 @@ namespace MZPO.LeadProcessors
             //{ "utm_term", 0 },
             //{ "utm_content", 0 },
             //{ "utm_campaign", 0 },
+        };
+        private readonly string[] sites = {
+            "mirk.msk.ru",
+            "mzpo-s.ru",
+            "mzpo.education",
+            "mzpokurs.com",
+            "cruche-academy.ru",
+            //"курсы-сестринского-дела.рф",
+            //"obr-mast.ru",
+            //"inst-s.ru",
+            "skillbank.su",
+            "zoon",
+            "obr-byx.ru",
+            "2gis",
+            //"obr-komp.ru",
+            //"obr-sek.ru",
+            //"obr-diz.ru",
+            //"obr-men.ru",
+            //"курсы-косметологии.рф",
+            //"mirk.vrach.kosmetolog",
+            "ucheba.ru"
         };
 
         private static bool IsValidField(string field)
@@ -227,6 +249,16 @@ namespace MZPO.LeadProcessors
 
                         lead.AddNewCF(fieldIds[p.Name], value);
                     }
+                #endregion
+
+                #region Add tags
+                if (lead._embedded.tags is null) lead._embedded.tags = new();
+                lead._embedded.tags.Add(TagList.GetCorpTagByName("Заявка с сайта"));
+
+                if (!string.IsNullOrEmpty(_formRequest.site))
+                    foreach (var s in sites)
+                        if (_formRequest.site.Contains(s))
+                            lead._embedded.tags.Add(TagList.GetCorpTagByName(s)); 
                 #endregion
 
                 try
