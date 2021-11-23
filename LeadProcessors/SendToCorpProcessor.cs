@@ -38,6 +38,15 @@ namespace MZPO.LeadProcessors
             _sourceContRepo = amo.GetAccountById(28395871).GetRepo<Contact>();
         }
 
+        private static readonly (int retId, int corpId)[] fields = {
+            (639075,748383),	//form_name_site
+            (639081,758213),	//site
+            (639083,758215),	//page_url
+            (639085,748385),	//roistat_marker
+            (639073,758217),	//roistat_visit
+            (725309,758643),	//promocode
+        };
+
         private int GetResponsibleUserId(int id)
         {
             return id switch
@@ -209,14 +218,23 @@ namespace MZPO.LeadProcessors
                 #endregion
 
                 #region Tags
-                List<Tag> tags = new() { TagList.GetRetTagByName("Сделка из розницы") };
+                List<Tag> tags = new() { TagList.GetCorpTagByName("Сделка из розницы") };
                 if (sourceLead._embedded is not null &&
                     sourceLead._embedded.tags is not null &&
                     sourceLead._embedded.tags.Any())
                     foreach (var t in sourceLead._embedded.tags)
-                        tags.Add(new() { name = t.name });
+                        tags.Add(TagList.GetCorpTagByName(t.name));
 
                 lead._embedded.tags = new(tags);
+                #endregion
+
+                #region Fields
+                lead.price = sourceLead.price;
+
+                if (sourceLead.custom_fields_values is not null)
+                    foreach (var f in fields)
+                        if (sourceLead.HasCF(f.retId))
+                            lead.AddNewCF(f.corpId, sourceLead.GetCFValue(f.retId));
                 #endregion
 
                 lead.AddNewCF(752191, sourceLead.id);

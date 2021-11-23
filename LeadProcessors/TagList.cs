@@ -134,6 +134,7 @@ namespace MZPO.LeadProcessors
             new() { id = 1213545, name = "obr-byx.ru" },
             new() { id = 1213779, name = "zoon" },
             new() { id = 1217021, name = "сестринский форум" },
+            new() { id = 1217545, name = "Семинар РОМС" },
         };
 
 
