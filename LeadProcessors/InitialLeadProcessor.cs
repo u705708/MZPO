@@ -377,6 +377,16 @@ namespace MZPO.LeadProcessors
                 result.status_id = 32532883;                                                                            //Взят в работу
             }
 
+            if (CheckTag("Fb_probnii-urok-s-lepkoi"))                                                                   //Если пробный урок по лепке из FB
+            {
+                result = new() { pipeline_id = 4586602, status_id = 42430264 };
+
+                Lazy<GSheetsProcessor> leadProcessor = new(() =>
+                    new GSheetsProcessor(_leadNumber, _amo, _gSheets, _processQueue, _log, _token));
+
+                Task.Run(() => leadProcessor.Value.OpenLesson());
+            }
+
             try { SaveLead(result); }
             catch (Exception e) { throw new Exception($"Phase 2: {e.Message}"); }
         }
@@ -430,6 +440,16 @@ namespace MZPO.LeadProcessors
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }
 
                 result = new() { name = "Новая сделка", pipeline_id = 3198184, status_id = 32532880 };                  //Переводим сделку в основную воронку. Если переводить и менять ответственного одновременно, то срабатывает триггер в воронке, что может повлиять на запущенные процессы
+
+                if (CheckTag("Fb_probnii-urok-s-lepkoi"))                                                               //Если пробный урок по лепке из FB
+                {
+                    result = new() { name = "Новая сделка", pipeline_id = 4586602, status_id = 42430264 };
+
+                    Lazy<GSheetsProcessor> leadProcessor = new(() =>
+                           new GSheetsProcessor(_leadNumber, _amo, _gSheets, _processQueue, _log, _token));
+
+                    Task.Run(() => leadProcessor.Value.OpenLesson());
+                }
 
                 try { SaveLead(result); }
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }

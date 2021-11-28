@@ -91,6 +91,8 @@ namespace MZPO.LeadProcessors
             new() { id = 300471, name = "turbo.mirk.msk" },
             new() { id = 302489, name = "Сделка из корп. отдела" },
             new() { id = 305057, name = "Семинар РОМС" },
+            new() { id = 305051, name = "Fb_probnii-urok" },
+            new() { id = 305053, name = "Fb_probnii-urok-s-lepkoi" },
         };
 
         private static List<Tag> tagsCorp = new()

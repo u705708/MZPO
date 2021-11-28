@@ -103,7 +103,11 @@ namespace MZPO.LeadProcessors
             return "";
         }
 
-        protected bool CheckTag(string tagValue) => tags.Any(x => x.name == tagValue);
+        protected bool CheckTag(string tagValue)
+        {
+            UpdateLeadFromAmo();
+            return tags.Any(x => x.name == tagValue); 
+        }
 
         protected void UpdateLeadFromAmo()
         {
