@@ -30,7 +30,7 @@ namespace Integration1C
         {
             19453687,
             28395871,
-            29490250
+            //29490250
         };
 
         class ContactsComparer : IEqualityComparer<Contact>

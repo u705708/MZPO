@@ -64,10 +64,10 @@ namespace MZPO.Controllers
         public IActionResult Get()
         {
             //var repo = _amo.GetAccountById(29490250).GetRepo<Lead>();
-            var repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
+            //var repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
             //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
 
-            return Ok(JsonConvert.SerializeObject(repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+            //return Ok(JsonConvert.SerializeObject(repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
             int i = 0;
 

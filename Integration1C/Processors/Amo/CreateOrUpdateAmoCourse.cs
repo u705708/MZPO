@@ -23,7 +23,7 @@ namespace Integration1C
         {
             19453687,
             28395871,
-            29490250
+            //29490250
         };
 
         private static void AddUIDToEntity(Course1C course, int acc_id, CatalogElement ce)
