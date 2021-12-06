@@ -415,6 +415,20 @@ namespace MZPO.LeadProcessors
 
         }
 
+        private static int GetMarathoneCode(int leadId)
+        {
+            int id = leadId % 1000000;
+            int[] digits = new int[6];
+
+            for (int index = 0; index < 6; index++)
+            {
+                digits[index] = id % 10;
+                id /= 10;
+            }
+
+            return digits[0] * 10000 + digits[1] * 10 + digits[2] * 100000 + digits[3] * 1 + digits[4] * 1000 + digits[5] * 100;
+        }
+
         private static async Task SaveData(SheetsService service, string spreadsheetId, int sheetId, params object[] cellData)
         {
             List<Request> requestContainer = new();
@@ -956,6 +970,61 @@ namespace MZPO.LeadProcessors
             {
                 _processQueue.Remove($"OpenLesson-{_leadNumber}");
                 _log.Add($"Не получилось добавить информацию об открытом уроке из сделки {_leadNumber}: {e.Message}");
+                throw;
+            }
+        }
+
+        public async Task Marathon()
+        {
+            if (_token.IsCancellationRequested)
+            {
+                _processQueue.Remove($"Marathon-{_leadNumber}");
+                return;
+            }
+            try
+            {
+                string spreadsheetId = "1j7HGsZ_OkdZoblhHxb8xT8q3kCA9iE8aMZWiwxxIwHE";
+                int sheetId = 0;
+                int accountId = 28395871;
+
+                IAmoRepo<Lead> leadRepo = _amo.GetAccountById(accountId).GetRepo<Lead>();
+                IAmoRepo<Contact> contRepo = _amo.GetAccountById(accountId).GetRepo<Contact>();
+
+                Lead lead = leadRepo.GetById(_leadNumber);
+
+                if (lead is null ||
+                    lead._embedded is null ||
+                    lead._embedded.contacts is null)
+                    return;
+
+                Contact contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
+
+                FormulaCell leadId = new() { formula = $@"=HYPERLINK(""https://mzpoeducation.amocrm.ru/leads/detail/{_leadNumber}"", ""{_leadNumber}"")" };
+                int code = GetMarathoneCode(_leadNumber);
+                string name = contact.name;
+                string phone = contact.GetCFStringValue(264911);
+                string email = contact.GetCFStringValue(264913);
+                string course = lead.GetCFStringValue(357005);
+                int price = (int)lead.price;
+
+                await SaveData(_service, spreadsheetId, sheetId, leadId, code, name, phone, email, price, course);
+
+                if (lead.GetCFIntValue(725529) == 0)
+                {
+                    lead = new()
+                    {
+                        id = _leadNumber
+                    };
+                    lead.AddNewCF(725529, code);
+                    leadRepo.Save(lead);
+                }
+
+                _processQueue.Remove($"Marathon-{_leadNumber}");
+            }
+            catch (Exception e)
+            {
+                _processQueue.Remove($"Marathon-{_leadNumber}");
+                _log.Add($"Не получилось записать Марафон для сделки {_leadNumber}: {e.Message}");
                 throw;
             }
         }

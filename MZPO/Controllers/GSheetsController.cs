@@ -287,5 +287,37 @@ namespace MZPO.Controllers
             return Ok();
         }
 
+        // POST: gsheets/marathon
+        [ActionName("Marathon")]
+        [HttpPost]
+        public IActionResult Marathon()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[status][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[add][0][id]"))
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return Ok();
+
+            CancellationTokenSource cts = new();
+            CancellationToken token = cts.Token;
+
+            Lazy<GSheetsProcessor> leadProcessor = new(() =>
+                   new GSheetsProcessor(leadNumber, _amo, _gSheets, _processQueue, _log, token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Marathon());
+
+            _processQueue.AddTask(task, cts, $"Marathon-{leadNumber}", "mzpoeducationsale", "GoogleSheets");                                            //Запускаем и добавляем в очередь
+
+            return Ok();
+        }
     }
 }

@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace MZPO.Controllers
@@ -68,6 +70,33 @@ namespace MZPO.Controllers
             //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
 
             //return Ok(JsonConvert.SerializeObject(repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+
+            //List<int> codes = new();
+
+            //MD5 md5Hasher = MD5.Create();
+            //for (int leadId = 25615347; leadId < 26500000; leadId++)
+            //{
+            //    int value = 0;
+
+            //    int[] digits = new int[6];
+
+            //    int id = leadId % 1000000;
+
+            //    for (int index = 0; index < 6; index++ )
+            //    {
+            //        digits[index] = id % 10;
+            //        id /= 10;
+            //    }
+
+            //    value = digits[0] * 10000 + digits[1] * 10 + digits[2] * 100000 + digits[3] * 1 + digits[4] * 1000 + digits[5] * 100;
+
+
+            //    codes.Add(value % 1000000);
+            //}
+            
+            //md5Hasher.Dispose();
+
+            //return Ok(JsonConvert.SerializeObject((codes.Count, codes.Distinct().ToList().Count), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
             int i = 0;
 

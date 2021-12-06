@@ -87,6 +87,20 @@ namespace MZPO.LeadProcessors
             }
         }
 
+        private static string GetMarathoneCode(int leadId)
+        {
+            int id = leadId % 1000000;
+            int[] digits = new int[6];
+
+            for (int index = 0; index < 6; index++)
+            {
+                digits[index] = id % 10;
+                id /= 10;
+            }
+
+            return (digits[0] * 10000 + digits[1] * 10 + digits[2] * 100000 + digits[3] * 1 + digits[4] * 1000 + digits[5] * 100).ToString();
+        }
+
         #region Realization
         #region Название формы
         private void FormName()                                                                                         //Проверяем значение поля id_form и добавляем комментарий к сделке
@@ -248,6 +262,10 @@ namespace MZPO.LeadProcessors
             #region Курсы НМО
             if (lead.pipeline_id == 2231320)
                 SetTag("Семинар РОМС");
+            #endregion
+
+            #region Марафон
+            SetFieldValue(725529, GetMarathoneCode(_leadNumber));
             #endregion
 
             try { SaveLead("Новая сделка"); }
@@ -433,6 +451,10 @@ namespace MZPO.LeadProcessors
                 var referer = GetFieldValue(647449);
                 if (!string.IsNullOrEmpty(referer))
                     AddNote(referer);
+
+                #region Марафон
+                SetFieldValue(725529, GetMarathoneCode(_leadNumber));
+                #endregion
 
                 Lead result = new() { responsible_user_id = line.Item6 };                                               //Создаём экземпляр сделки для передачи в амо
 
