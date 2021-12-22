@@ -265,7 +265,8 @@ namespace MZPO.LeadProcessors
             #endregion
 
             #region Марафон
-            SetFieldValue(725529, GetMarathoneCode(_leadNumber));
+            if (DateTime.Now < new DateTime(2022, 01, 12))
+                SetFieldValue(725529, GetMarathoneCode(_leadNumber));
             #endregion
 
             try { SaveLead("Новая сделка"); }
@@ -453,7 +454,8 @@ namespace MZPO.LeadProcessors
                     AddNote(referer);
 
                 #region Марафон
-                SetFieldValue(725529, GetMarathoneCode(_leadNumber));
+                if (DateTime.Now < new DateTime(2022, 01, 12))
+                    SetFieldValue(725529, GetMarathoneCode(_leadNumber));
                 #endregion
 
                 Lead result = new() { responsible_user_id = line.Item6 };                                               //Создаём экземпляр сделки для передачи в амо

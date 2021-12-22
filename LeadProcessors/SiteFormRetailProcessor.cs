@@ -289,8 +289,8 @@ namespace MZPO.LeadProcessors
                     if (similarLeads.Any() &&
                         price == 0 &&
                         !webinar &&
-                        _formRequest.pipeline is null &&
-                        _formRequest.status is null &&
+                        !IsValidField(_formRequest.pipeline) &&
+                        !IsValidField(_formRequest.status) &&
                         similarLeads.First().pipeline_id != 3338257 &&
                         similarLeads.First().pipeline_id != 4234969)
                         processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log, demoLesson);

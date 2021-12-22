@@ -59,6 +59,7 @@ namespace MZPO.LeadProcessors
             (2375146, "Системный Администратор"),
             (7523557, "Бекташева Ленара"),
             (7532620, "Лоскутова Анастасия"),
+            (7744360, "Володина Мария"),
         };
 
         private class FormulaCell
@@ -992,10 +993,15 @@ namespace MZPO.LeadProcessors
 
                 Lead lead = leadRepo.GetById(_leadNumber);
 
-                if (lead is null ||
-                    lead._embedded is null ||
-                    lead._embedded.contacts is null)
+                if (lead is null
+                    || lead._embedded is null
+                    || lead._embedded.contacts is null
+                    || DateTime.Now > new DateTime(2022, 01, 12)
+                    )
+                {
+                    _processQueue.Remove($"Marathon-{_leadNumber}");
                     return;
+                }
 
                 Contact contact = contRepo.GetById((int)lead._embedded.contacts.First().id);
 
