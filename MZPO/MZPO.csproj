@@ -57,6 +57,7 @@
     <ProjectReference Include="..\ReportProcessors\ReportProcessors.csproj" />
     <ProjectReference Include="..\Services\Services.csproj" />
     <ProjectReference Include="..\ucheba.ru\ucheba.ru.csproj" />
+    <ProjectReference Include="..\webinar.ru\webinar.ru.csproj" />
   </ItemGroup>
 
   <ItemGroup>

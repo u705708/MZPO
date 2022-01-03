@@ -347,3 +347,4 @@ healthchecksdb
 /MZPO/ucheba_cred.json
 /MZPO/ucheba_token.json
 /MZPO/logs/*
+/MZPO/webinar_token.json

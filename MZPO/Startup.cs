@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MZPO.Services;
 using MZPO.DBRepository;
+using MZPO.webinar.ru;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -59,6 +60,7 @@ namespace MZPO
             services.AddSingleton<Log>();
             services.AddSingleton<Uber>();
             services.AddSingleton<RecentlyUpdatedEntityFilter>();
+            services.AddSingleton<Webinars>();
             services.AddTransient<GSheets>();
         }
 

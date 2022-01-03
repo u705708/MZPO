@@ -3,21 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31729.503
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MZPO", "MZPO\MZPO.csproj", "{4430CAD7-73C3-4012-AF0E-63C97F4F2B24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MZPO", "MZPO\MZPO.csproj", "{4430CAD7-73C3-4012-AF0E-63C97F4F2B24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmoRepository", "AmoRepository\AmoRepository.csproj", "{9015C5DA-90C7-4484-B09A-1D918CB3080C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmoRepository", "AmoRepository\AmoRepository.csproj", "{9015C5DA-90C7-4484-B09A-1D918CB3080C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBRepository", "DBRepository\DBRepository.csproj", "{B37406B3-1E0A-4E51-8817-CF36E9A7D944}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBRepository", "DBRepository\DBRepository.csproj", "{B37406B3-1E0A-4E51-8817-CF36E9A7D944}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Integration1C", "Integration1C\Integration1C.csproj", "{11D9C1B3-9421-4D2B-BA4A-75B19088142F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Integration1C", "Integration1C\Integration1C.csproj", "{11D9C1B3-9421-4D2B-BA4A-75B19088142F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeadProcessors", "LeadProcessors\LeadProcessors.csproj", "{21A2D2CC-E006-4C4B-8F74-62BF704E0EAC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LeadProcessors", "LeadProcessors\LeadProcessors.csproj", "{21A2D2CC-E006-4C4B-8F74-62BF704E0EAC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportProcessors", "ReportProcessors\ReportProcessors.csproj", "{BBF37388-14C2-43AE-BBC0-2CF2D241E386}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReportProcessors", "ReportProcessors\ReportProcessors.csproj", "{BBF37388-14C2-43AE-BBC0-2CF2D241E386}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "Services\Services.csproj", "{D97ACC1D-0CE6-4F88-8BA1-047E1B25C7BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Services.csproj", "{D97ACC1D-0CE6-4F88-8BA1-047E1B25C7BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ucheba.ru", "ucheba.ru\ucheba.ru.csproj", "{D076E8BA-55D7-4DC9-A12C-48EB8E22D939}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ucheba.ru", "ucheba.ru\ucheba.ru.csproj", "{D076E8BA-55D7-4DC9-A12C-48EB8E22D939}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webinar.ru", "webinar.ru\webinar.ru.csproj", "{4C7D7B53-0ADD-4129-94AF-424FBE86BC9B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{D076E8BA-55D7-4DC9-A12C-48EB8E22D939}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D076E8BA-55D7-4DC9-A12C-48EB8E22D939}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D076E8BA-55D7-4DC9-A12C-48EB8E22D939}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C7D7B53-0ADD-4129-94AF-424FBE86BC9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C7D7B53-0ADD-4129-94AF-424FBE86BC9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C7D7B53-0ADD-4129-94AF-424FBE86BC9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C7D7B53-0ADD-4129-94AF-424FBE86BC9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
