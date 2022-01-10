@@ -2,6 +2,7 @@
 using MZPO.AmoRepo;
 using MZPO.LeadProcessors;
 using MZPO.Services;
+using MZPO.webinar.ru;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,14 +19,16 @@ namespace MZPO.Controllers
         private readonly Log _log;
         private readonly RecentlyUpdatedEntityFilter _filter;
         private readonly GSheets _gSheets;
+        private readonly Webinars _webinars;
 
-        public WebhookController(Amo amo, ProcessQueue processQueue, Log log, RecentlyUpdatedEntityFilter filter, GSheets gSheets)
+        public WebhookController(Amo amo, ProcessQueue processQueue, Log log, RecentlyUpdatedEntityFilter filter, GSheets gSheets, Webinars webinars)
         {
             _amo = amo;
             _processQueue = processQueue;
             _log = log;
             _filter = filter;
             _gSheets = gSheets;
+            _webinars = webinars;
         }
 
         // GET wh/leadprocessor/5
@@ -500,7 +503,7 @@ namespace MZPO.Controllers
                     string taskName = $"FormSiteRet-{i++}";
 
                     var leadProcessor = new Lazy<ILeadProcessor>(() =>
-                           new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName));
+                           new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName, _webinars));
 
                     Task task = Task.Run(() => leadProcessor.Value.Run());
                     _processQueue.AddTask(task, cts, taskName, "ucheba.ru", "WebHook");
@@ -577,6 +580,37 @@ namespace MZPO.Controllers
             Task task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, taskName, "retailPaid", "WebHook");                                            //Запускаем и добавляем в очередь
 
+            return Ok();
+        }
+
+        // POST wh/checkwebinaradmission
+        [Route("[action]")]
+        [ActionName("CheckWebinarAdmission")]
+        [HttpPost]
+        public IActionResult CheckWebinarAdmission()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return BadRequest("Incorrect lead number");
+
+            CancellationTokenSource cts = new();
+
+            Lazy<CheckAdmissionProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new CheckAdmissionProcessor(_amo, _log, _processQueue, cts.Token, _webinars, $"webinaradmission-{leadNumber}", leadNumber));
+
+            Task task = Task.Run(() => leadProcessor.Value.Run());
+            _processQueue.AddTask(task, cts, $"webinaradmission-{leadNumber}", "webinars", "WebHook");                                            //Запускаем и добавляем в очередь
             return Ok();
         }
     }

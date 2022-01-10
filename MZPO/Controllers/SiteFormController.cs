@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MZPO.LeadProcessors;
 using MZPO.Services;
+using MZPO.webinar.ru;
 using Newtonsoft.Json;
 using System;
 using System.IO;
@@ -19,13 +20,15 @@ namespace MZPO.Controllers
         private readonly Log _log;
         private readonly GSheets _gSheets;
         private readonly string _path;
+        private readonly Webinars _webinars;
 
-        public SiteFormController(Amo amo, ProcessQueue processQueue, Log log, GSheets gSheets)
+        public SiteFormController(Amo amo, ProcessQueue processQueue, Log log, GSheets gSheets, Webinars webinars)
         {
             _amo = amo;
             _processQueue = processQueue;
             _log = log;
             _gSheets = gSheets;
+            _webinars = webinars;
             _path = $@"logs\siteform\{DateTime.Today.Year}-{DateTime.Today.Month}-{DateTime.Today.Day}.log";
         }
 
@@ -62,7 +65,7 @@ namespace MZPO.Controllers
             string taskName = $"FormSiteRet-{DateTime.Now.ToLongTimeString()}";
 
             var leadProcessor = new Lazy<ILeadProcessor>(() =>
-                   new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName));
+                   new SiteFormRetailProcessor(_amo, _log, formRequest, _processQueue, cts.Token, _gSheets, taskName, _webinars));
 
             Task task = Task.Run(() => leadProcessor.Value.Run());
             _processQueue.AddTask(task, cts, taskName, "mzpoeducationsale", "SiteForm");                                            //Запускаем и добавляем в очередь

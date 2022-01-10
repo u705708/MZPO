@@ -1,6 +1,7 @@
 ﻿using Google.Apis.Sheets.v4;
 using MZPO.AmoRepo;
 using MZPO.Services;
+using MZPO.webinar.ru;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -21,8 +22,9 @@ namespace MZPO.LeadProcessors
         private readonly ProcessQueue _processQueue;
         private readonly CancellationToken _token;
         private readonly string _taskname;
+        private readonly Webinars _webinars;
 
-        public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token, GSheets gSheets, string taskName)
+        public SiteFormRetailProcessor(Amo amo, Log log, FormRequest formRequest, ProcessQueue processQueue, CancellationToken token, GSheets gSheets, string taskName, Webinars webinars)
         {
             _amo = amo;
             _log = log;
@@ -31,6 +33,7 @@ namespace MZPO.LeadProcessors
             _token = token;
             _gSheets = gSheets;
             _taskname = taskName;
+            _webinars = webinars;
 
             var acc = amo.GetAccountById(28395871);
             _leadRepo = acc.GetRepo<Lead>();
@@ -267,7 +270,7 @@ namespace MZPO.LeadProcessors
                     foreach (var c in similarContacts)
                         if (c._embedded is not null &&
                             c._embedded.leads is not null)
-                            leadIds.AddRange(c._embedded.leads.Select(x => x .id));
+                            leadIds.AddRange(c._embedded.leads.Select(x => x.id));
 
                     if (leadIds.Any())
                         similarLeads.AddRange(_leadRepo.BulkGetById(leadIds.Distinct()).Where(x => x.status_id != 142 && x.status_id != 143));
@@ -279,7 +282,7 @@ namespace MZPO.LeadProcessors
                 bool.TryParse(_formRequest.events, out bool events);
                 int.TryParse(_formRequest.price, out int price);
 
-                bool demoLesson = _formRequest.form_name_site.Contains("Пробный урок");
+                bool demoLesson = _formRequest.form_name_site is not null && _formRequest.form_name_site.Contains("Пробный урок");
                 #endregion
 
                 try
@@ -296,6 +299,55 @@ namespace MZPO.LeadProcessors
                         processedIds = UpdateFoundLead(similarLeads.First(), _formRequest, fieldIds, _leadRepo, _log, demoLesson);
                     else
                         processedIds = AddNewLead(similarContacts, price, webinar, events, _formRequest, fieldIds, _leadRepo, _log, demoLesson);
+
+                    if (processedIds.Any() &&
+                        IsValidField(_formRequest.email) &&
+                        long.TryParse(_formRequest.webinar_id, out long webinarId))
+                    {
+                        var webinarEvent = _webinars.GetEvent(webinarId).Result;
+
+                        long eventSessionId = 0;
+                        long eventDateTime = 0;
+
+                        if (webinarEvent.eventSessions is not null &&
+                            webinarEvent.eventSessions.Any())
+                        {
+                            eventSessionId = webinarEvent.eventSessions.First().id;
+                            eventDateTime = ((DateTimeOffset)webinarEvent.eventSessions.First().startsAt).ToUnixTimeSeconds();
+                        }
+
+                        var response = _webinars.AddUserToEventSession(eventSessionId, _formRequest.email).Result;
+
+                        long participtionId = response.participationId;
+                        string link = response.link;
+
+                        //long contactId = 0;
+                        //if (response.contactId is null ||
+                        //    response.contactId == 0)
+                        //{
+                        //    var users = _webinars.SearchUser(_formRequest.email).Result;
+                        //    if (users.Any())
+                        //        contactId = (long)users.First().id;
+
+                        //}
+                        //else contactId = (long)response.contactId;
+
+                        Lead lead = new()
+                        {
+                            id = processedIds.First(),
+                            custom_fields_values = new()
+                        };
+
+                        lead.AddNewCF(725627, link);                     //Ссылка на регистрацию
+                        lead.AddNewCF(725629, eventDateTime);            //Дата мероприятия
+                        lead.AddNewCF(725631, webinarId);                //EventId
+                        lead.AddNewCF(725633, eventSessionId);           //EventSessionId
+                        lead.AddNewCF(725635, participtionId);           //ParticipationId
+
+                        _leadRepo.Save(lead);
+
+                        _leadRepo.AddNotes(processedIds.First(), $"Ссылка для регистрации на вебинар: {link}");
+                    }
 
                     if (processedIds.Any() &&
                         (IsValidField(_formRequest.comment) ||

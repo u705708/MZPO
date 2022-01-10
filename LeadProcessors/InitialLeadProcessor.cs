@@ -59,10 +59,11 @@ namespace MZPO.LeadProcessors
             4234969, //обучение дист
             3569908, //отдел сопровождения
             3245959, //модели
-            3199819, //вебинары
+            3199819, //вебинары бесплатные
             4586602, //пробный урок
             2263711, //подписка на рассылку
-            4666393  //трудоустройство
+            4666393, //трудоустройство
+            4977523, //вебинары платные
         };
         #endregion
 
@@ -432,6 +433,7 @@ namespace MZPO.LeadProcessors
                     (3812137, new List<string>(){"cruche-academy.ru", "facebook"}, "cruche-academy.ru", "cruche-academy.ru-facebook", "facebook", 2576764),
                     (4065031, new List<string>(){"ucheba.ru"}, "ucheba.ru", "Заявка с почты", "Заявка с почты uchebaru@mzpo-s.ru", 2576764),
                     (4648717, new List<string>(){"turbo.mirk.msk"}, "turbo.mirk.msk", "turbo.mirk.msk", "Заявка с сайта turbo.mirk.msk", 2576764),
+                    (5001193, new List<string>(){ "mzpo-s.ru", "telegram"}, "mzpo-s.ru", "mzpo-s.ru-telegram", "Telegram", 2576764),
                 };                            //Список воронок соцсетей и соответствующих значений полей
 
             if (pipelines.Any(x => x.Item1 == lead.pipeline_id))                                                        //Если сделка в одной из воронок из списка

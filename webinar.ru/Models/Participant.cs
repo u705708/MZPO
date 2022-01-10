@@ -20,7 +20,7 @@ namespace MZPO.webinar.ru
         public long userId { get; set; }
         public int isOnline { get; set; }
         public string registerStatus { get; set; }
-        public DateTime registerDate { get; set; }
+        public DateTime? registerDate { get; set; }
         public string paymentStatus { get; set; }
         public string url { get; set; }
         public List<AdditionalField> additionalFieldValues { get; set; }

@@ -51,7 +51,9 @@ namespace MZPO.LeadProcessors
             2375143,    //Екатерина Белоусова
             6158035,    //Анастасия Матюк
             7448173,    //Инна Апостол
+            3835801,    //Наталья Кубышина
             7744360,    //Володина Мария
+            3813670,    //Александра Федорова
         };
 
         private static readonly int[] seniorsB = new[]
@@ -61,10 +63,10 @@ namespace MZPO.LeadProcessors
 
         private static readonly int[] managersB = new[]
         {
-            3813670,    //Александра Федорова
             6102562,    //Валерия Лукьянова
             6929800,    //Саида Исмаилова
-            7358368     //Лидия Ковш
+            7358368,    //Лидия Ковш
+            7771945,    //Сиренко Оксана
         };
 
         private static bool IsChangeAllowed(int oldResp, int modResp)

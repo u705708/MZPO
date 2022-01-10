@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AmoRepository\AmoRepository.csproj" />
     <ProjectReference Include="..\Services\Services.csproj" />
+    <ProjectReference Include="..\webinar.ru\webinar.ru.csproj" />
   </ItemGroup>
 
 </Project>

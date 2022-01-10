@@ -15,14 +15,22 @@ namespace MZPO.webinar.ru
             _tokenProvider = new();
         }
 
+        public class AlreadyRegisteredException : InvalidOperationException
+        {
+            public AlreadyRegisteredException(string message)
+                : base(message)
+            { }
+        }
+
         private static async Task<O> GetResult<O>(WebinarRequest request, O o)
         {
             try
             {
                 var response = await request.GetResponseAsync();
                 if (response == "") return o;
-                JsonConvert.PopulateObject(WebUtility.UrlDecode(response), o);
+                JsonConvert.PopulateObject(response, o);
             }
+            catch (AlreadyRegisteredException) { throw; }
             catch (InvalidOperationException) { throw; }
             catch (Exception e) { throw new ArgumentException("Unable to process response from webinar.ru: " + e.Message); }
             return o;
@@ -93,6 +101,7 @@ namespace MZPO.webinar.ru
             return await GetResult(request, result);
         }
         public async Task<RegisterResponse> AddUserToEventSession(long eventSessionID, string email) => await AddUserToEventSession(eventSessionID, new User() { email = email });
+        public async Task<RegisterResponse> AddUserToEventSession(long eventSessionID, string email, string name) => await AddUserToEventSession(eventSessionID, new User() { email = email, name = name });
 
         public async Task<RegisterResponse> AddUserToEvent(long eventID, User payload)
         {
@@ -103,6 +112,6 @@ namespace MZPO.webinar.ru
             return await GetResult(request, result);
         }
         public async Task<RegisterResponse> AddUserToEvent(long eventID, string email) => await AddUserToEvent(eventID, new User() { email = email });
-
+        public async Task<RegisterResponse> AddUserToEvent(long eventID, string email, string name) => await AddUserToEvent(eventID, new User() { email = email, name = name });
     }
 }

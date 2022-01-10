@@ -33,6 +33,7 @@
         public string paid { get; set; }
         public string responsible { get; set; }
         public string promocode { get; set; }
+        public string webinar_id { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

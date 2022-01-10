@@ -36,6 +36,7 @@ namespace Integration1C
             (7261969, "Котова Елена"),
             (7523557, "Бекташева Ленара"),
             (7532620, "Лоскутова Анастасия"),
+            (7771945, "Сиренко Оксана"),
         };
 
         public static string Get1CUser(int? user_id_amo)

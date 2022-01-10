@@ -64,6 +64,7 @@ namespace MZPO.webinar.ru
             response = await getResponse;
 
             if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) throw new TooManyRequestsException($"ATTENTION!!! Request limit reached: {await response.Content.ReadAsStringAsync()}");
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict) throw new Webinars.AlreadyRegisteredException($"Already registered: {await response.Content.ReadAsStringAsync()}");
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) throw new InvalidOperationException($"Unathorized request: {await response.Content.ReadAsStringAsync()}");
             if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Bad response: {await response.Content.ReadAsStringAsync()} -- Request: {content}");
             return await response.Content.ReadAsStringAsync();
