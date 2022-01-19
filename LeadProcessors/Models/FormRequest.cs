@@ -28,6 +28,8 @@
         public string utm_campaign { get; set; }
         public string webinar { get; set; }
         public string events { get;set; }
+        public string event_name { get; set; }
+        public string event_address { get; set; }
         public string date { get; set; }
         public string price { get; set; }
         public string paid { get; set; }

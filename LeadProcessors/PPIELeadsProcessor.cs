@@ -74,8 +74,8 @@ namespace MZPO.LeadProcessors
                 {
                     id = lead.id,
                     name = "Новая сделка",
-                    pipeline_id = model ? 4647979 : 4289935,
-                    status_id = model ? 42656578 : 40102252
+                    pipeline_id = model ? 4647979 : null,
+                    status_id = model ? 42656578 : null
                 });
 
                 _processQueue.Remove($"initial_{_leadNumber}");

@@ -59,6 +59,8 @@ namespace MZPO.LeadProcessors
             { "utm_campaign", 640701 },
             { "date", 724347 },
             { "promocode", 725309 },
+            { "event_name", 725709 },
+            { "event_address", 725711 },
         };
 
         private class ContactsComparer : IEqualityComparer<Contact>

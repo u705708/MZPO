@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using MZPO.AmoRepo;
+using MZPO.LeadProcessors;
 using MZPO.Services;
 using MZPO.webinar.ru;
 using Newtonsoft.Json;
@@ -73,6 +74,8 @@ namespace MZPO.Controllers
             //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
 
             //return Ok(JsonConvert.SerializeObject(repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+
+            //return Ok(new MZPOEvent("Встреча \"Международного клуба выпускников\"").GetPropertiesAsync().GetAwaiter().GetResult());
 
             int i = 0;
 

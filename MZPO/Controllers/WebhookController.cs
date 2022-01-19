@@ -613,5 +613,36 @@ namespace MZPO.Controllers
             _processQueue.AddTask(task, cts, $"webinaradmission-{leadNumber}", "webinars", "WebHook");                                            //Запускаем и добавляем в очередь
             return Ok();
         }
+
+        // POST wh/processevents
+        [Route("[action]")]
+        [ActionName("ProcessEvents")]
+        [HttpPost]
+        public IActionResult ProcessEvents()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber)) return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0) return BadRequest("Incorrect lead number");
+
+            CancellationTokenSource cts = new();
+
+            Lazy<EventsProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new EventsProcessor(_amo, _log, _processQueue, cts.Token, _gSheets, $"eventsProcessor-{leadNumber}", leadNumber));
+
+            Task task = Task.Run(() => leadProcessor.Value.Run());
+            _processQueue.AddTask(task, cts, $"eventsProcessor-{leadNumber}", "processors", "WebHook");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
     }
 }
