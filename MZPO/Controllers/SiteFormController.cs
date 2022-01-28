@@ -44,17 +44,23 @@ namespace MZPO.Controllers
 
             FormRequest formRequest = new();
 
-            #region Parsing post
-            foreach (var p in formRequest.GetType().GetProperties())
-                if (col.ContainsKey(p.Name))
-                    if(col.TryGetValue(p.Name, out var value))
-                        p.SetValue(formRequest, (string)value);
-            #endregion
-
             #region Adding to log
             using StreamWriter sw = new(_path, true, System.Text.Encoding.Default);
             sw.WriteLine($"--{DateTime.Now} siteform/retail ----------------------------");
             sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(col)));
+            #endregion
+
+            #region Parsing post
+            foreach (var p in formRequest.GetType().GetProperties())
+                if (col.ContainsKey(p.Name))
+                    if (col.TryGetValue(p.Name, out var value))
+                    {
+                        string str = WebUtility.UrlDecode(value);
+                        p.SetValue(formRequest, str?[0..Math.Min(str.Length, 255)]);
+                    }
+            #endregion
+
+            #region Adding to log
             sw.WriteLine("-----");
             sw.WriteLine(WebUtility.UrlDecode(JsonConvert.SerializeObject(formRequest, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })));
             sw.WriteLine();

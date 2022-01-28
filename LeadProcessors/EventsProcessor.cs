@@ -48,6 +48,8 @@ namespace MZPO.LeadProcessors
 
                 if (!lead.HasCF(725709))
                     throw new InvalidOperationException("Lead has no event_name");
+
+                if (lead._embedded.tags is null) lead._embedded.tags = new();
                 #endregion
 
                 #region Getting event properties
@@ -59,32 +61,59 @@ namespace MZPO.LeadProcessors
                 #region Adding properties to lead
                 Lead result = new Lead()
                 {
-                    id = _leadNumber
+                    id = _leadNumber,
+                    _embedded = new()
                 };
 
                 result.AddNewCF(725711, eventProperties.event_address);
                 result.AddNewCF(725709, eventProperties.page_name);
-                result.AddNewCF(724347, ((DateTimeOffset)eventProperties.vrema).ToUnixTimeSeconds());
+                if (!lead.HasCF(724347))
+                    result.AddNewCF(724347, ((DateTimeOffset)eventProperties.vrema).ToUnixTimeSeconds());
                 #endregion
 
-                #region Setting pipeline and status
-                int pipeline_id = 5055190;
-                int status_id = 45469723;
-
-                if (eventProperties.page_name.Contains("Пробный урок"))
+                #region Setting tags, pipeline and status
+                switch (eventProperties.type)
                 {
-                    pipeline_id = 4586602;
-                    status_id = 42430264;
-                }
+                    case EventProperties.Type.dod:
+                        result.name = "dod";
+                        result.pipeline_id = 5055190;
+                        result.status_id = 45469723;
+                        result._embedded.tags = new(lead._embedded.tags);
+                        result._embedded.tags.Add(new() { id = 273459 });
+                        break;
 
-                if (eventProperties.page_name.Contains("День открытых дверей"))
-                {
-                    pipeline_id = 4586602;
-                    status_id = 42210046;
-                }
+                    case EventProperties.Type.openLesson:
+                        result.name = "Пробный урок";
+                        result.pipeline_id = 4586602;
+                        result.status_id = 42430264;
+                        result._embedded.tags = new(lead._embedded.tags);
+                        result._embedded.tags.Add(new() { id = 306665 });
+                        break;
 
-                result.pipeline_id = pipeline_id;
-                result.status_id = status_id;
+                    case EventProperties.Type.styx:
+                        result.name = "STYX";
+                        result.pipeline_id = 5055190;
+                        result.status_id = 45469723;
+                        result._embedded.tags = new(lead._embedded.tags);
+                        result._embedded.tags.Add(new() { id = 306661 });
+                        break;
+
+                    case EventProperties.Type.morizo:
+                        result.name = "Morizo";
+                        result.pipeline_id = 5055190;
+                        result.status_id = 45469723;
+                        result._embedded.tags = new(lead._embedded.tags);
+                        result._embedded.tags.Add(new() { id = 306663 });
+                        break;
+
+                    case EventProperties.Type.mkb:
+                        result.name = "МКБ";
+                        result.pipeline_id = 5055190;
+                        result.status_id = 45469723;
+                        result._embedded.tags = new(lead._embedded.tags);
+                        result._embedded.tags.Add(new() { id = 306659 });
+                        break;
+                }
                 #endregion
 
                 #region Saving lead
