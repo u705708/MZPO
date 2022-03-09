@@ -70,12 +70,49 @@ namespace MZPO.Controllers
         public IActionResult Get()
         {
             //var repo = _amo.GetAccountById(29490250).GetRepo<Lead>();
-            var repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
+            //var repo = _amo.GetAccountById(28395871).GetRepo<Lead>();
             //var repo = _amo.GetAccountById(19453687).GetRepo<Lead>();
 
-            return Ok(JsonConvert.SerializeObject(repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+            //return Ok(JsonConvert.SerializeObject(repo.GetTags(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
 
             //return Ok(new MZPOEvent("Встреча \"Международного клуба выпускников\"").GetPropertiesAsync().GetAwaiter().GetResult());
+
+            //List<int> leadIds = new();
+
+            //string seo = "seo_yandex";
+
+            //using FileStream stream = new($"{seo}.json", FileMode.Open, FileAccess.Read);
+            //using StreamReader sr = new(stream);
+            //JsonConvert.PopulateObject(sr.ReadToEndAsync().Result, leadIds);
+
+            //List<Lead> leads = repo.BulkGetById(leadIds).ToList();
+            //List<int> unprocessedIds = new();
+
+            //int c = 0;
+
+            //foreach (var l in leads)
+            //{
+            //    string source = l.GetCFStringValue(639085);
+            //    string roistat = l.GetCFStringValue(639073);
+
+            //    c++;
+
+            //    if (!string.IsNullOrEmpty(roistat))
+            //    {
+            //        unprocessedIds.Add(l.id);
+            //        continue;
+            //    }
+
+            //    Lead newLead = new()
+            //    {
+            //        id = l.id
+            //    };
+
+            //    newLead.SetCF(639085, new() { seo });
+            //    newLead.SetCF(639073, new() { seo });
+
+            //    repo.Save(newLead);
+            //}
 
             int i = 0;
 

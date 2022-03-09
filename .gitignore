@@ -348,3 +348,6 @@ healthchecksdb
 /MZPO/ucheba_token.json
 /MZPO/logs/*
 /MZPO/webinar_token.json
+/MZPO/seo_google.json
+/MZPO/seo_mail_.json
+/MZPO/seo_yandex.json

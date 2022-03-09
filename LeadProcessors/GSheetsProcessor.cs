@@ -1037,5 +1037,26 @@ namespace MZPO.LeadProcessors
                 throw;
             }
         }
+
+        public async Task LK(string name, string email, string phone, bool status, string id)
+        {
+            if (_token.IsCancellationRequested)
+            {
+                return;
+            }
+            try
+            {
+                string spreadsheetId = "1BfgXuyB1kJ9l8eLsAxOUwG966WNBq203cvF-uBvFa_Y";
+                int sheetId = 0;
+
+                await SaveData(_service, spreadsheetId, sheetId, name, email, phone, status ? "создан" : "не создан", id);
+            }
+            catch (Exception e)
+            {
+                _log.Add($"Не получилось записать результат создания ЛК для сделки {_leadNumber}: {e.Message}");
+                throw;
+            }
+        }
+
     }
 }

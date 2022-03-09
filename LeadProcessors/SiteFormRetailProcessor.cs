@@ -321,6 +321,7 @@ namespace MZPO.LeadProcessors
 
                         long participtionId = response.participationId;
                         string link = response.link;
+                        string eventName = webinarEvent.name;
 
                         //long contactId = 0;
                         //if (response.contactId is null ||
@@ -340,10 +341,12 @@ namespace MZPO.LeadProcessors
                         };
 
                         lead.AddNewCF(725627, link);                     //Ссылка на регистрацию
-                        lead.AddNewCF(725629, eventDateTime);            //Дата мероприятия
+                        lead.AddNewCF(725629, eventDateTime);            //Дата вебинара
+                        lead.AddNewCF(724347, eventDateTime);            //Дата и время мероприятия
                         lead.AddNewCF(725631, webinarId);                //EventId
                         lead.AddNewCF(725633, eventSessionId);           //EventSessionId
                         lead.AddNewCF(725635, participtionId);           //ParticipationId
+                        lead.AddNewCF(725709, eventName);                //Название мероприятия
 
                         _leadRepo.Save(lead);
 
