@@ -675,5 +675,73 @@ namespace MZPO.Controllers
             _processQueue.AddTask(task, cts, $"CreateLKProcessor-{leadNumber}", "processors", "WebHook");                                            //Запускаем и добавляем в очередь
             return Ok();
         }
+
+        // POST wh/corp2agr/send
+        [Route("corp2agr/[action]")]
+        [ActionName("Send")]
+        [HttpPost]
+        public IActionResult C2ASend()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0)
+                return BadRequest("Incorrect lead number");
+
+            CancellationTokenSource cts = new();
+
+            Lazy<SendToAgrProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new SendToAgrProcessor(_amo, _log, _processQueue, leadNumber, cts.Token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Send());
+            _processQueue.AddTask(task, cts, $"corp2agr-{leadNumber}", "corp2agr", "WebHook");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
+
+        // POST wh/corp2agr/back
+        [Route("corp2agr/[action]")]
+        [ActionName("Back")]
+        [HttpPost]
+        public IActionResult C2ABack()
+        {
+            var col = Request.Form;
+            int leadNumber = 0;
+
+            if (col.ContainsKey("leads[add][0][id]"))                                                                                           //Создана новая сделка
+            {
+                if (!Int32.TryParse(col["leads[add][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (col.ContainsKey("leads[status][0][id]"))                                                                                        //Смена статусв
+            {
+                if (!Int32.TryParse(col["leads[status][0][id]"], out leadNumber))
+                    return BadRequest("Incorrect lead number.");
+            }
+
+            if (leadNumber == 0)
+                return BadRequest("Incorrect lead number");
+
+            CancellationTokenSource cts = new();
+
+            Lazy<SendToAgrProcessor> leadProcessor = new(() =>                                                                                      //Создаём экземпляр процессора сделки
+                               new SendToAgrProcessor(_amo, _log, _processQueue, leadNumber, cts.Token));
+
+            Task task = Task.Run(() => leadProcessor.Value.Back());
+            _processQueue.AddTask(task, cts, $"corp2agr-{leadNumber}", "corp2agr", "WebHook");                                            //Запускаем и добавляем в очередь
+            return Ok();
+        }
     }
 }

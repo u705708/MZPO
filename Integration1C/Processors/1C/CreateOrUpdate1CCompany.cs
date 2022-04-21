@@ -114,7 +114,7 @@ namespace Integration1C
                         new()
                         {
                             field_id = FieldLists.Companies[_amo_acc]["company_id_1C"],
-                            values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = result.ToString("D") } }
+                            values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = result.ToString("D") } }
                         }
                     }
                 };

@@ -55,7 +55,7 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// ID аккаунта, в котором находится компания.
         /// </summary>
-        public int account_id { get; set; }
+        public int? account_id { get; set; }
         /// <summary>
         /// Ссылки компании.
         /// </summary>

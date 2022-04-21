@@ -56,6 +56,7 @@ namespace MZPO.ReportProcessors
             (7771945, "Сиренко Оксана"),
             (7744360, "Володина Мария"),
             (7824505, "Климчукова Жанна"),
+            (8101333, "Орлова Мария"),
         };
 
         protected static readonly (int, string)[] managersCorp = {

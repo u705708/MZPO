@@ -95,7 +95,7 @@ namespace MZPO.LeadProcessors
                 bool created = true;
                 string message = "Создан ЛК для клиента.";
 
-                if (string.IsNullOrEmpty(response.id))
+                if (response.user is null)
                 {
                     created = false;
                     message = $"Не удалось создать ЛК для клиента: {(response.email is not null ? response.email[0] : string.Empty)} {(response.phone is not null ? response.phone[0] : string.Empty)}";
@@ -112,7 +112,7 @@ namespace MZPO.LeadProcessors
                         id = contact.id
                     };
 
-                    createdLKContact.AddNewCF(726299, response.id);
+                    createdLKContact.AddNewCF(726299, response.user.ToString());
 
                     _contRepo.Save(createdLKContact);
                 }
@@ -120,7 +120,7 @@ namespace MZPO.LeadProcessors
 
                 #region Adding to google sheets
                 GSheetsProcessor gProcessor = new(_leadNumber, _amo, _gSheets, _processQueue, _log, _token);
-                gProcessor.LK(request.name, request.email, request.phone, created, created ? response.id : "") .Wait();
+                gProcessor.LK(request.name, request.email, request.phone, created, created ? response.user.ToString() : "") .Wait();
                 _log.Add($"Добавлены данные о создании ЛК из сделки {_leadNumber} в таблицу.");
                 #endregion
 

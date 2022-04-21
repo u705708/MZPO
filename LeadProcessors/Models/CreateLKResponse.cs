@@ -7,5 +7,6 @@
         public string id { get; set; }
         public bool? result { get; set; }
         public int? user { get; set; }
+        public string token { get; set; }
     }
 }

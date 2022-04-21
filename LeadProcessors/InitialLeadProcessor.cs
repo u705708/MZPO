@@ -329,14 +329,21 @@ namespace MZPO.LeadProcessors
                     SetFieldValue(639085, GetFieldValue(645583));                                                       //Источник(Маркер), roistat_marker
                     SetTag("Коллтрекинг");
                 }
-                #endregion
+            #endregion
             #region Instagram
                 else if (source.Contains("instagram"))
                 {
                     SetFieldValue(639075, "instagram");
                     SetTag("insta");
                 }
-                #endregion
+            #endregion
+            #region vk
+                else if (source.Contains("-vk"))
+                {
+                    SetFieldValue(639075, "vk");
+                    SetTag("vkontakte");
+                }
+            #endregion
             #region Прямой звонок
                 else if (tags.Any(x => x.name == "Прямой звонок") || source.Contains("Прямой звонок"))                  //Если прямой звонок
                 {
@@ -455,6 +462,10 @@ namespace MZPO.LeadProcessors
                 var referer = GetFieldValue(647449);
                 if (!string.IsNullOrEmpty(referer))
                     AddNote(referer);
+
+                var formText = GetFieldValue(647653);
+                if (!string.IsNullOrEmpty(formText))
+                    AddNote(formText);
 
                 #region Марафон
                 if (DateTime.Now < new DateTime(2022, 01, 12))

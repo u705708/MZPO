@@ -105,7 +105,7 @@ namespace MZPO.AmoRepo
             if (entity.custom_fields_values is null) entity.custom_fields_values = new();
             entity.custom_fields_values.Add( new Custom_fields_value() {
                 field_id = fieldId,
-                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = value } }
+                values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = value } }
             });
         }
 
@@ -120,7 +120,7 @@ namespace MZPO.AmoRepo
             entity.custom_fields_values.Add(new Custom_fields_value()
             {
                 field_id = fieldId,
-                values = values.Select(x => new Custom_fields_value.Values() { value = x }).ToArray()
+                values = values.Select(x => new Custom_fields_value.Value() { value = x }).ToArray()
             });
         }
 
@@ -135,7 +135,7 @@ namespace MZPO.AmoRepo
         {
             if (entity.HasCF(fieldId))
             {
-                entity.custom_fields_values.First(x => x.field_id == fieldId).values = values.Select(x => new Custom_fields_value.Values() { value = x }).ToArray();
+                entity.custom_fields_values.First(x => x.field_id == fieldId).values = values.Select(x => new Custom_fields_value.Value() { value = x }).ToArray();
                 return false;
             }
 

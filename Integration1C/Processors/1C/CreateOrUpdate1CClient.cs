@@ -77,7 +77,7 @@ namespace Integration1C
                     contact.custom_fields_values.Add(new Custom_fields_value()
                     {
                         field_id = FieldLists.Contacts[acc_id][p.Name],
-                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = value } }
+                        values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = value } }
                     });
                 }
         }
@@ -208,7 +208,7 @@ namespace Integration1C
                 id = amo_id.entity_id,
                 custom_fields_values = new() { new Custom_fields_value() {
                         field_id = FieldLists.Contacts[amo_id.account_id]["client_id_1C"],
-                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = uid.ToString("D") } }
+                        values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = uid.ToString("D") } }
             } } };
 
             try

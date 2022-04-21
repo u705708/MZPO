@@ -29,9 +29,9 @@ namespace MZPO.AmoRepo
         /// <summary>
         /// Массив значений поля
         /// </summary>
-        public Values[] values { get; set; }
+        public Value[] values { get; set; }
 
-        public class Values
+        public class Value
         {
             /// <summary>
             /// Значения поля.

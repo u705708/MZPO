@@ -36,7 +36,7 @@ namespace Integration1C
             lead.custom_fields_values.Add(new Custom_fields_value()
             {
                 field_id = FieldLists.Leads[acc_id]["lead_id_1C"],
-                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = lead1C.lead_id_1C.Value.ToString("D") } }
+                values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = lead1C.lead_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -52,7 +52,7 @@ namespace Integration1C
                     lead.custom_fields_values.Add(new Custom_fields_value()
                     {
                         field_id = FieldLists.Leads[acc_id][p.Name],
-                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = p.GetValue(lead1C) } }
+                        values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = p.GetValue(lead1C) } }
                     });
                 }
         }

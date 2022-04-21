@@ -84,7 +84,7 @@ namespace MZPO.LeadProcessors
                 custom_fields_values.Add(new Custom_fields_value()
                 {
                     field_id = fieldId,
-                    values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = fieldValue } }
+                    values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = fieldValue } }
                 });
             }
             return fieldValue;

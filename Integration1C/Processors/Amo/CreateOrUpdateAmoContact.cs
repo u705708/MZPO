@@ -56,7 +56,7 @@ namespace Integration1C
             contact.custom_fields_values.Add(new Custom_fields_value()
             {
                 field_id = FieldLists.Contacts[acc_id]["client_id_1C"],
-                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = client1C.client_id_1C.Value.ToString("D") } }
+                values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = client1C.client_id_1C.Value.ToString("D") } }
             });
         }
 

@@ -19,7 +19,7 @@ namespace MZPO.LeadProcessors
         public MZPOLK(CreateLKRequest request)
         {
             _httpMethod = HttpMethod.Post;
-            _uri = new Uri("http://lk.mzpo-s.ru/amo/register");
+            _uri = new Uri("https://lk.mzpo-s.ru/amo/register");
             _content = new StringContent(JsonConvert.SerializeObject(request, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
         }
         #endregion

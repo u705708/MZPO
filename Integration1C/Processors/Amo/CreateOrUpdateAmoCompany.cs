@@ -53,7 +53,7 @@ namespace Integration1C
             company.custom_fields_values.Add(new Custom_fields_value()
             {
                 field_id = FieldLists.Companies[amo_acc]["company_id_1C"],
-                values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = company1C.company_id_1C.Value.ToString("D") } }
+                values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = company1C.company_id_1C.Value.ToString("D") } }
             });
         }
 
@@ -69,7 +69,7 @@ namespace Integration1C
                     company.custom_fields_values.Add(new Custom_fields_value()
                     {
                         field_id = FieldLists.Companies[amo_acc][p.Name],
-                        values = new Custom_fields_value.Values[] { new Custom_fields_value.Values() { value = p.GetValue(company1C) } }
+                        values = new Custom_fields_value.Value[] { new Custom_fields_value.Value() { value = p.GetValue(company1C) } }
                     });
                 }
         }
