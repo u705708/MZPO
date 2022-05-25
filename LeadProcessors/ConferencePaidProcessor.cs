@@ -32,6 +32,7 @@ namespace MZPO.LeadProcessors
             _gSheets = gSheets;
             _taskName = taskName;
             _phone = phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
+            _phone = _phone.StartsWith("89") ? $"+7{_phone[1..]}" : $"+{_phone}";
             _email = email.Trim().Replace(" ", "");
 
             var acc = amo.GetAccountById(19453687);

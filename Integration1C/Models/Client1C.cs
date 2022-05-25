@@ -39,11 +39,13 @@ namespace Integration1C
             get
             {
                 if (_phone.StartsWith("89"))
-                    return $"7{_phone[1..]}";
+                    return $"+7{_phone[1..]}";
+                if (!_phone.StartsWith("+"))
+                    return $"+{_phone}";
                 return _phone; 
             }
             set
-            { _phone = value.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", ""); }
+            { _phone = $"+{value.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "")}"; }
         }
 
         public string name { get; set; }

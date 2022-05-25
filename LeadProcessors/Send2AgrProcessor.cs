@@ -34,12 +34,14 @@ namespace MZPO.LeadProcessors
 
         private static IEnumerable<Custom_fields_value> GetCFs(IEnumerable<Custom_fields_value> fields)
         {
+            if (fields is null) yield break;
+            
             foreach(var f in fields)
             {
                 yield return new Custom_fields_value() 
                 { 
                     field_id = f.field_id,
-                    values = f.values.Select(x => new Custom_fields_value.Value() { value = x.value }).ToArray()
+                    values = f.values.Select(x => new Custom_fields_value.Value() { value = x.value }).Take(1).ToArray()
                 };
             }
 
@@ -50,7 +52,7 @@ namespace MZPO.LeadProcessors
         {
             Lead.Embedded result = new();
 
-            result.contacts = embedded.contacts.Select(x => new Contact() { id = x.id }).ToList();
+            result.contacts = embedded.contacts.Select(x => new Contact() { id = x.id }).Take(1).ToList();
             result.companies = embedded.companies.Select(x => new Company() { id = x.id }).ToList();
             result.tags = embedded.tags.Select(x => new Tag() { id = x.id }).ToList();
 
@@ -73,9 +75,10 @@ namespace MZPO.LeadProcessors
                 Lead lead = new()
                 {
                     name = sourceLead.name,
+                    price = sourceLead.price,
                     pipeline_id = 5238031,
                     status_id = 46783762,
-                    responsible_user_id = 6200629, //пока Леван
+                    responsible_user_id = 8119492, //Елена Тропина
                     custom_fields_values = GetCFs(sourceLead.custom_fields_values).ToList(),
                     _embedded = GetEmbedded(sourceLead._embedded)
                 };
@@ -88,6 +91,15 @@ namespace MZPO.LeadProcessors
                 //Сохраняем новую сделку
                 int createdLeadNumber = _leadRepo.AddNew(lead).Select(x => x.id).First();
 
+                var contacts = sourceLead._embedded.contacts.Select(x => new Contact() { id = x.id }).Skip(1).ToList();
+                if (contacts.Count > 0)
+                    _leadRepo.LinkEntity(createdLeadNumber,
+                                         contacts.Select(x => new EntityLink()
+                                         {
+                                             to_entity_id = (int)x.id,
+                                             to_entity_type = "contacts",
+                                         }));
+
                 //Добавляем в старую сделку инфу о новой
                 sourceLead = new()
                 {
@@ -98,6 +110,26 @@ namespace MZPO.LeadProcessors
 
                 //Сохраняем старую сделку
                 _leadRepo.Save(sourceLead);
+
+                //Получаем примечания к сделке
+                var leadNotes = _leadRepo.GetEntityNotes(_leadNumber);
+                List<Note> notes = new(leadNotes.Where(x => x.note_type == "common"));
+
+                //Переносим примечания
+                if (notes.Any())
+                    foreach (var n in notes.Select(x => new Note()
+                    {
+                        entity_id = createdLeadNumber,
+                        created_by = x.created_by,
+                        updated_by = x.updated_by,
+                        created_at = x.created_at,
+                        updated_at = x.updated_at,
+                        responsible_user_id = x.responsible_user_id,
+                        group_id = x.group_id,
+                        note_type = x.note_type,
+                        parameters = x.parameters
+                    }))
+                        _leadRepo.AddNotes(n);
 
                 _log.Add($"Создана новая сделка из продаж в дог. отделе {createdLeadNumber}");
 

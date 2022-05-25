@@ -344,6 +344,13 @@ namespace MZPO.LeadProcessors
                     SetTag("vkontakte");
                 }
             #endregion
+            #region youtube
+                else if (source.Contains("-youtube"))
+                {
+                    SetFieldValue(639075, "youtube");
+                    SetTag("youtube");
+                }
+            #endregion
             #region Прямой звонок
                 else if (tags.Any(x => x.name == "Прямой звонок") || source.Contains("Прямой звонок"))                  //Если прямой звонок
                 {

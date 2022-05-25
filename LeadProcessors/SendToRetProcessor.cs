@@ -77,7 +77,7 @@ namespace MZPO.LeadProcessors
                     string email = c.GetCFStringValue(33577);
 
                     phone = phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
-                    phone = phone.StartsWith("89") ? $"7{phone[1..]}" : phone;
+                    phone = phone.StartsWith("89") ? $"+7{phone[1..]}" : $"+{phone}";
 
                     email = email.Trim().Replace(" ", "");
 
@@ -230,7 +230,7 @@ namespace MZPO.LeadProcessors
 
                 _sourceLeadRepo.Save(new Lead() {
                     id = retLeadId,
-                    pipeline_id = 3558781,
+                    pipeline_id = 5312269,
                     status_id = 142
                 });
 
@@ -267,7 +267,7 @@ namespace MZPO.LeadProcessors
 
                 _sourceLeadRepo.Save(new Lead() {
                     id = retLeadId,
-                    pipeline_id = 3558781,
+                    pipeline_id = 5312269,
                     status_id = 143
                 });
 

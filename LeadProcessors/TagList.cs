@@ -93,6 +93,7 @@ namespace MZPO.LeadProcessors
             new() { id = 305057, name = "Семинар РОМС" },
             new() { id = 305051, name = "Fb_probnii-urok" },
             new() { id = 305053, name = "Fb_probnii-urok-s-lepkoi" },
+            new() { id = 321041, name = "youtube" },
         };
 
         private static List<Tag> tagsCorp = new()

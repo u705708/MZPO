@@ -106,7 +106,10 @@ namespace MZPO.LeadProcessors
                 }
 
                 if (IsValidField(_formRequest.phone))
+                {
                     _formRequest.phone = _formRequest.phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
+                    _formRequest.phone = _formRequest.phone.StartsWith("89") ? $"+7{_formRequest.phone[1..]}" : $"+{_formRequest.phone}";
+                }
                 #endregion
 
                 Lead lead = new()

@@ -64,6 +64,15 @@ namespace MZPO.LeadProcessors
                     contact = contacts.First(x => x.HasCF(726297));
                 #endregion
 
+                #region Checking for 1c id
+                if (!contact.HasCF(710429) ||
+                    string.IsNullOrEmpty(contact.GetCFStringValue(710429)))
+                {
+                    _leadRepo.AddNotes(_leadNumber, "Не удалось создать личный кабинет. Контакт не привязан к 1С.");
+                    throw new InvalidOperationException("Contact has no 1C id");
+                }
+                #endregion
+
                 #region Creating request and getting response
                 DateTime birthdayDate = DateTimeOffset.FromUnixTimeSeconds(contact.GetCFIntValue(644285)).UtcDateTime.AddHours(3);
                 DateTime passDoiDate = DateTimeOffset.FromUnixTimeSeconds(contact.GetCFIntValue(718557)).UtcDateTime.AddHours(3);

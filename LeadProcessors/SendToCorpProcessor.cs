@@ -95,7 +95,7 @@ namespace MZPO.LeadProcessors
                     string email = c.GetCFStringValue(264913);
 
                     phone = phone.Trim().Replace("+", "").Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
-                    phone = phone.StartsWith("89") ? $"7{phone[1..]}" : phone;
+                    phone = phone.StartsWith("89") ? $"+7{phone[1..]}" : $"+{phone}";
 
                     email = email.Trim().Replace(" ", "");
 
@@ -197,8 +197,8 @@ namespace MZPO.LeadProcessors
                 }
 
                 #region Setting pipeline and status if any
-                lead.pipeline_id = 3558781;
-                lead.status_id = 35001112;
+                lead.pipeline_id = 5312269;
+                lead.status_id = 47317618;
                 #endregion
 
                 #region Getting comments
