@@ -32,6 +32,7 @@
         public string price { get; set; }
         public string paid { get; set; }
         public string responsible { get; set; }
+        public string promocode { get; set; }
 #pragma warning restore IDE1006 // Naming Styles
     }
 }

@@ -9,7 +9,7 @@ namespace MZPO.LeadProcessors
 {
     internal static class TagList
     {
-        private static List<Tag> tags = new()
+        private static List<Tag> tagsRet = new()
         {
             new() { id = 139175, name = "Заявка с сайта" },
             new() { id = 203033, name = "insta" },
@@ -89,23 +89,80 @@ namespace MZPO.LeadProcessors
             new() { id = 277455, name = "WZ (mzpokurs)" },
             new() { id = 300469, name = "turbo.mirk.msk" },
             new() { id = 300471, name = "turbo.mirk.msk" },
-
             new() { id = 302489, name = "Сделка из корп. отдела" },
-            new() { id = 1212821, name = "Сделка из розницы" },
+            new() { id = 305057, name = "Семинар РОМС" },
         };
 
-        public static Tag GetTagByName(string name)
+        private static List<Tag> tagsCorp = new()
         {
-            if (!tags.Any(x => x.name == name)) return null;
+            new() { id = 1109567, name = "Заявка с сайта" },
+            new() { id = 1187781, name = "mzpo-s.ru" },
+            new() { id = 1187783, name = "Коллтрекинг" },
+            new() { id = 1187785, name = "mirk.msk.ru" },
+            new() { id = 1187787, name = "Прямой звонок" },
+            new() { id = 1187789, name = "Обратная связь" },
+            new() { id = 1187791, name = "mzpo.education" },
+            new() { id = 1204077, name = "Возврат" },
+            new() { id = 1206153, name = "WZ (Elena Vasina WA 79099089037)" },
+            new() { id = 1206165, name = "WZ (Alex Putskov WA 79099088943)" },
+            new() { id = 1206169, name = "WZ (Irina Sorokina WA 79099094210)" },
+            new() { id = 1206219, name = "WZ (Sveta Kireeva WA 79099094247)" },
+            new() { id = 1206281, name = "WZ (Alena Fedosova WA 79099096546)" },
+            new() { id = 1206379, name = "WZ (Lilya WA 79099090045)" },
+            new() { id = 1207113, name = "WZ (CORP WA 74952780853)" },
+            new() { id = 1207147, name = "WZ (Levan WA 79099099571)" },
+            new() { id = 1207441, name = "VATS" },
+            new() { id = 1211417, name = "WZ (Elena Zubatykh WA 79099088943)" },
+            new() { id = 1211523, name = "WZ (Sveta WA 79099094247)" },
+            new() { id = 1212821, name = "Сделка из розницы" },
+            new() { id = 1212823, name = "Вебинар НМО неврология" },
+            new() { id = 1212825, name = "Ручная" },
+            new() { id = 1212829, name = "insta" },
+            new() { id = 1212835, name = "JivoSite" },
+            new() { id = 1213001, name = "mzpokurs.com" },
+            new() { id = 1213037, name = "Актуализация" },
+            new() { id = 1213039, name = "Взято в работу" },
+            new() { id = 1213051, name = "Отложенный спрос" },
+            new() { id = 1213063, name = "WZ (Natalya Filatova WA 79995532382)" },
+            new() { id = 1213081, name = "ucheba.ru" },
+            new() { id = 1213099, name = "2gis" },
+            new() { id = 1213181, name = "skillbank.su" },
+            new() { id = 1213213, name = "Отправлено КП" },
+            new() { id = 1213303, name = "Емейлтрекинг" },
+            new() { id = 1213325, name = "!I" },
+            new() { id = 1213341, name = "cruche-academy.ru" },
+            new() { id = 1213545, name = "obr-byx.ru" },
+            new() { id = 1213779, name = "zoon" },
+            new() { id = 1217021, name = "сестринский форум" },
+        };
 
-            return tags.First(x => x.name == name);
+
+        public static Tag GetRetTagByName(string name)
+        {
+            if (!tagsRet.Any(x => x.name == name)) return new() { id = 0, name = name };
+
+            return tagsRet.First(x => x.name == name);
         }
 
-        public static Tag GetTagByid(int id)
+        public static Tag GetRetTagByid(int id)
         {
-            if (!tags.Any(x => x.id == id)) return null;
+            if (!tagsRet.Any(x => x.id == id)) return null;
 
-            return tags.First(x => x.id == id);
+            return tagsRet.First(x => x.id == id);
+        }
+
+        public static Tag GetCorpTagByName(string name)
+        {
+            if (!tagsCorp.Any(x => x.name == name)) return new() { id = 0, name = name };
+
+            return tagsCorp.First(x => x.name == name);
+        }
+
+        public static Tag GetCorpTagByid(int id)
+        {
+            if (!tagsCorp.Any(x => x.id == id)) return null;
+
+            return tagsCorp.First(x => x.id == id);
         }
     }
 }

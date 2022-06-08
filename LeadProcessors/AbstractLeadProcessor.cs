@@ -92,7 +92,7 @@ namespace MZPO.LeadProcessors
 
         protected string SetTag(string tagValue)
         {
-            Tag tag = TagList.GetTagByName(tagValue);
+            Tag tag = TagList.GetRetTagByName(tagValue);
 
             if (tag is not null)
             {
