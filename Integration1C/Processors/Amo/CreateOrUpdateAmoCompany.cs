@@ -179,8 +179,8 @@ namespace Integration1C
                     return _company1C.amo_ids;
                 }
 
-                if (similarCompanies.Distinct(new CompaniesComparer()).Count() > 1)
-                    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarCompanies.Distinct(new CompaniesComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
+                //if (similarCompanies.Distinct(new CompaniesComparer()).Count() > 1)
+                //    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarCompanies.Distinct(new CompaniesComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
                 #endregion
 
                 #region Creating new company

@@ -167,8 +167,8 @@ namespace Integration1C
                     if (!string.IsNullOrEmpty(_client1C.email))
                         similarContacts.AddRange(contRepo.GetByCriteria($"query={_client1C.email}"));
 
-                    if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
-                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { id = x.id, account_id = x.account_id }), Formatting.Indented)}");
+                    //if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
+                    //    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { id = x.id, account_id = x.account_id }), Formatting.Indented)}");
                     #endregion
 
                     #region Updating found contact

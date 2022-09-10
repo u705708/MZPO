@@ -205,6 +205,7 @@ namespace MZPO.LeadProcessors
             Lead lead = new()
             {
                 id = oldLead.id,
+                responsible_user_id = oldLead.responsible_user_id,
                 pipeline_id = demoLesson ? 4586602 : 3198184,
                 status_id = demoLesson ? 42430264 : 32532880
             };

@@ -299,8 +299,8 @@ namespace Integration1C
                     if (!string.IsNullOrEmpty(client1C.email))
                         similarContacts.AddRange(anotherContRepo.GetByCriteria($"query={client1C.email}"));
 
-                    if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
-                        _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
+                    //if (similarContacts.Distinct(new ContactsComparer()).Count() > 1)
+                    //    _log.Add($"Check for doubles: {JsonConvert.SerializeObject(similarContacts.Distinct(new ContactsComparer()).Select(x => new { x.id, x.account_id }), Formatting.Indented)}");
                     #endregion
 
                     #region Check for UIDs

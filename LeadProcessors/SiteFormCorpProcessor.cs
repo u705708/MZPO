@@ -231,8 +231,8 @@ namespace MZPO.LeadProcessors
                 }
                 else
                 {
-                    lead.pipeline_id = 3558781;
-                    lead.status_id = 35001112;
+                    lead.pipeline_id = 5312269;
+                    lead.status_id = 47317618;
                 }
                 #endregion
 
