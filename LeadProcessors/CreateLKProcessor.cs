@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace MZPO.LeadProcessors
 {
@@ -19,6 +21,7 @@ namespace MZPO.LeadProcessors
         private readonly CancellationToken _token;
         private readonly string _taskName;
         private readonly int _leadNumber;
+        private readonly Result _result;
 
         public CreateLKProcessor(Amo amo, Log log, ProcessQueue processQueue, CancellationToken token, GSheets gSheets, string taskName, int leadNumber)
         {
@@ -29,10 +32,31 @@ namespace MZPO.LeadProcessors
             _token = token;
             _taskName = taskName;
             _leadNumber = leadNumber;
+            _result = new()
+            {
+                leadNumber = leadNumber,
+                name = "",
+                email = "",
+                phone = "",
+                course = "",
+                created = false,
+                message = ""
+            };
 
             var acc = amo.GetAccountById(28395871);
             _leadRepo = acc.GetRepo<Lead>();
             _contRepo = acc.GetRepo<Contact>();
+        }
+
+        private class Result
+        {
+            public int leadNumber;
+            public string name;
+            public string email;
+            public string phone;
+            public string course;
+            public bool created;
+            public string message;
         }
 
         public Task Run()
@@ -49,11 +73,11 @@ namespace MZPO.LeadProcessors
                 #endregion
 
                 #region Getting contact
-                if (lead._embedded?.contacts is null &&
+                if (lead._embedded?.contacts is null ||
                     !lead._embedded.contacts.Any())
                 {
                     _leadRepo.AddNotes(_leadNumber, "Не удалось создать личный кабинет. В сделке отсутствует контакт");
-                    throw new InvalidOperationException("Lead has no contacts");
+                    throw new InvalidOperationException("В сделке отсутствует контакт");
                 }
 
                 List<Contact> contacts = _contRepo.BulkGetById(lead._embedded.contacts.Select(x => (int)x.id)).ToList();
@@ -62,14 +86,42 @@ namespace MZPO.LeadProcessors
 
                 if (contacts.Any(x => x.HasCF(726297)))
                     contact = contacts.First(x => x.HasCF(726297));
+
+                _result.name = contact.name;
+                _result.email = contact.GetCFStringValue(264913);
+                _result.phone = contact.GetCFStringValue(264911);
+                #endregion
+
+                #region Getting list of available courses
+                List<string> courses = new();
+
+                try
+                {
+                    using FileStream stream = new("CoursesForLK.json", FileMode.Open, FileAccess.Read);
+                    using StreamReader sr = new(stream);
+                    JsonConvert.PopulateObject(sr.ReadToEnd(), courses);
+                }
+                catch (Exception e)
+                {
+                    throw new ArgumentException($"Не удалось обработать CoursesForLK.json: {e.Message}");
+                }
+                #endregion
+
+                #region Checking course
+                string leadCourse = lead.GetCFStringValue(357005);
+                _result.course = leadCourse;
+
+                if (string.IsNullOrEmpty(leadCourse) ||
+                    !courses.Contains(leadCourse))
+                    throw new InvalidOperationException("В сделке отсутствует подходящий курс");
                 #endregion
 
                 #region Checking for 1c id
                 if (!contact.HasCF(710429) ||
                     string.IsNullOrEmpty(contact.GetCFStringValue(710429)))
                 {
-                    _leadRepo.AddNotes(_leadNumber, "Не удалось создать личный кабинет. Контакт не привязан к 1С.");
-                    throw new InvalidOperationException("Contact has no 1C id");
+                    _leadRepo.AddNotes(_leadNumber, "Не удалось создать личный кабинет. Контакт не привязан к 1С");
+                    throw new InvalidOperationException("Контакт не привязан к 1С");
                 }
                 #endregion
 
@@ -108,7 +160,10 @@ namespace MZPO.LeadProcessors
                 {
                     created = false;
                     message = $"Не удалось создать ЛК для клиента: {(response.email is not null ? response.email[0] : string.Empty)} {(response.phone is not null ? response.phone[0] : string.Empty)}";
+                    _result.message = message;
                 }
+
+                _result.created = created;
 
                 _leadRepo.AddNotes(_leadNumber, message); 
                 #endregion
@@ -127,9 +182,18 @@ namespace MZPO.LeadProcessors
                 }
                 #endregion
 
+                #region Saving result to lead
+                Lead saveLead = new()
+                {
+                    id = _leadNumber
+                };
+                saveLead.AddNewCF(728583, created ? "Да" : "Нет");
+                _leadRepo.Save(saveLead); 
+                #endregion
+
                 #region Adding to google sheets
                 GSheetsProcessor gProcessor = new(_leadNumber, _amo, _gSheets, _processQueue, _log, _token);
-                gProcessor.LK(request.name, request.email, request.phone, created, created ? response.user.ToString() : "") .Wait();
+                gProcessor.LK(_leadNumber, leadCourse, request.name, request.email, request.phone, created, created ? response.user.ToString() : "", _result.message) .Wait();
                 _log.Add($"Добавлены данные о создании ЛК из сделки {_leadNumber} в таблицу.");
                 #endregion
 
@@ -138,6 +202,23 @@ namespace MZPO.LeadProcessors
             }
             catch (Exception e)
             {
+                try
+                {
+                    #region Saving result to lead
+                    Lead saveLead = new()
+                    {
+                        id = _leadNumber
+                    };
+                    saveLead.AddNewCF(728583, "Нет");
+                    _leadRepo.Save(saveLead);
+                    #endregion
+
+                    #region Adding to google sheets
+                    GSheetsProcessor gProcessor = new(_leadNumber, _amo, _gSheets, _processQueue, _log, _token);
+                    gProcessor.LK(_result.leadNumber, _result.course, _result.name, _result.email, _result.phone, false, "", e.Message).Wait();
+                    #endregion
+                }
+                catch { }
                 _log.Add($"Не удалось создать ЛК для сделки {_leadNumber}: {e}.");
                 _processQueue.Remove(_taskName);
                 return Task.FromException(e);

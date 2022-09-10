@@ -1038,7 +1038,7 @@ namespace MZPO.LeadProcessors
             }
         }
 
-        public async Task LK(string name, string email, string phone, bool status, string id)
+        public async Task LK(int leadnumber, string course, string name, string email, string phone, bool status, string id, string message = "")
         {
             if (_token.IsCancellationRequested)
             {
@@ -1048,8 +1048,9 @@ namespace MZPO.LeadProcessors
             {
                 string spreadsheetId = "1BfgXuyB1kJ9l8eLsAxOUwG966WNBq203cvF-uBvFa_Y";
                 int sheetId = 0;
+                FormulaCell leadId = new() { formula = $@"=HYPERLINK(""https://mzpoeducation.amocrm.ru/leads/detail/{leadnumber}"", ""{leadnumber}"")" };
 
-                await SaveData(_service, spreadsheetId, sheetId, name, email, phone, status ? "создан" : "не создан", id);
+                await SaveData(_service, spreadsheetId, sheetId, DateTime.Now.ToShortDateString(), leadId, course, name, email, phone, status ? "создан" : "не создан", id, message);
             }
             catch (Exception e)
             {
