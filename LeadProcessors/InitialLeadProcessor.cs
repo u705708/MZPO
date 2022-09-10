@@ -412,6 +412,10 @@ namespace MZPO.LeadProcessors
                 result.status_id = 32532883;                                                                            //Взят в работу
             }
 
+            if (GetFieldValue(639083).Contains("mzpo.education/aktsii") ||
+                GetFieldValue(639083).Contains("mzpokurs.com/aktcii"))
+                SetTag("Акция");
+
             if (CheckTag("Fb_probnii-urok-s-lepkoi"))                                                                   //Если пробный урок по лепке из FB
             {
                 result = new() { pipeline_id = 4586602, status_id = 42430264 };

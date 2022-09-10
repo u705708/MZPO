@@ -62,6 +62,9 @@
 
   <ItemGroup>
 	<Content Update="Configuration\web.config" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" Link="web.config" />
+	<Content Update="CoursesForLK.json">
+	  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	</Content>
   </ItemGroup>
 
 
