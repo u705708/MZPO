@@ -23,6 +23,7 @@ namespace MZPO.LeadProcessors
         }
 
         private readonly string[] sites = {
+            "lk.mzpo-s.ru",
             "mirk.msk.ru",
             "mzpo-s.ru",
             "mzpo.education",
@@ -488,7 +489,12 @@ namespace MZPO.LeadProcessors
                 try { SaveLead(result); }
                 catch (Exception e) { throw new Exception($"SocialNetwork: {e.Message}"); }
 
-                result = new() { name = "Новая сделка", pipeline_id = 3198184, status_id = 32532880 };                  //Переводим сделку в основную воронку. Если переводить и менять ответственного одновременно, то срабатывает триггер в воронке, что может повлиять на запущенные процессы
+                var pipeline = 3198184;
+                if (line.Item1 == 3467560)
+                {
+                    pipeline = 3467560;
+                }
+                result = new() { name = "Новая сделка", pipeline_id = pipeline, status_id = 32532880 };                  //Переводим сделку в основную воронку. Если переводить и менять ответственного одновременно, то срабатывает триггер в воронке, что может повлиять на запущенные процессы
 
                 if (CheckTag("Fb_probnii-urok-s-lepkoi"))                                                               //Если пробный урок по лепке из FB
                 {
