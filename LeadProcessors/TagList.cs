@@ -131,6 +131,7 @@ namespace MZPO.LeadProcessors
             new() { id = 246165, name = "mirk.msk.ru" },
             new() { id = 269475, name = "mirk.vrach.kosmetolog" },
             new() { id = 306663, name = "Morizo" },
+            new() { id = 366545, name = "lk.mzpo-s.ru" },
             new() { id = 246137, name = "mzpo-s.ru" },
             new() { id = 246171, name = "mzpo.education" },
             new() { id = 246141, name = "mzpokurs.com" },
