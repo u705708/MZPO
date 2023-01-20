@@ -195,7 +195,6 @@ namespace MZPO.LeadProcessors
             new() { id = 246292, name = "Коллтрекинг" },
             new() { id = 272921, name = "Коллтрекинг mzpo.education" },
             new() { id = 247089, name = "Консультация (БП)" },
-            new() { id = 247149, name = "Кузнецкий мост" },
             new() { id = 264293, name = "курсы-сестринского-дела.рф" },
             new() { id = 305713, name = "Марафон 2021" },
             new() { id = 247161, name = "Менделеевская" },
@@ -216,7 +215,6 @@ namespace MZPO.LeadProcessors
             new() { id = 267417, name = "Промоутер" },
             new() { id = 247887, name = "Прямой звонок" },
             new() { id = 348433, name = "прямой звонок" },
-            new() { id = 247157, name = "Пушкинская" },
             new() { id = 267359, name = "Распределение" },
             new() { id = 271285, name = "Рассылка логопедический массаж" },
             new() { id = 271741, name = "Рассылка фитнес-инструктор" },
@@ -273,7 +271,6 @@ namespace MZPO.LeadProcessors
             new() { id = 1213545, name = "obr-byx.ru" },
             new() { id = 1213779, name = "zoon" },
             new() { id = 1217021, name = "сестринский форум" },
-            new() { id = 1217545, name = "Семинар РОМС" },
         };
 
 
