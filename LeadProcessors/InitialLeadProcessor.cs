@@ -233,7 +233,7 @@ namespace MZPO.LeadProcessors
 
             #region Акции
             if (!string.IsNullOrEmpty(applicationType) &&
-                applicationType.Contains("Акция"))
+                (applicationType.Contains("Акция") || applicationType.Contains("акцию")))
             {
                 string[] words = applicationType.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -263,8 +263,8 @@ namespace MZPO.LeadProcessors
             #endregion
 
             #region Курсы НМО
-            if (lead.pipeline_id == 2231320)
-                SetTag("Семинар РОМС");
+            /*if (lead.pipeline_id == 2231320)
+                SetTag("Семинар РОМС");*/
             #endregion
 
             #region Марафон
@@ -405,13 +405,13 @@ namespace MZPO.LeadProcessors
 
             Lead result = new();
 
-            if (GetFieldValue(644675) == "Принят" &&                                                                    //Результат звонка
+            /*if (GetFieldValue(644675) == "Принят" &&                                                                    //Результат звонка
                 lead.pipeline_id == 3198184 &&                                                                          //Продажи(Розница)
                 lead.status_id == 32532880)                                                                             //Получен новый лид
             {
                 result.pipeline_id = 3198184;                                                                           //Продажа(Розница)
                 result.status_id = 32532883;                                                                            //Взят в работу
-            }
+            }*/
 
             if (GetFieldValue(639083).Contains("mzpo.education/aktsii") ||
                 GetFieldValue(639083).Contains("mzpokurs.com/aktcii"))
