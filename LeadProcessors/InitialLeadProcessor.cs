@@ -56,7 +56,7 @@ namespace MZPO.LeadProcessors
         private readonly int[] pipelinesToProcess = {
             3198184, //основная воронка
             2231320, //корп. отдел
-            3338257, //обучение очное
+            //3338257, //обучение очное
             4234969, //обучение дист
             3569908, //отдел сопровождения
             3245959, //модели
@@ -271,7 +271,7 @@ namespace MZPO.LeadProcessors
             if (DateTime.Now < new DateTime(2022, 01, 12))
                 SetFieldValue(725529, GetMarathoneCode(_leadNumber));
             #endregion
-
+            
             try { SaveLead("Новая сделка"); }
             catch (Exception e) { throw new Exception($"Phase 1: {e.Message}"); }
         }
